@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DevMentor
 
-## Getting Started
+Platforma ścieżek nauki dla programistów: uporządkowane ścieżki (moduły → lekcje → zadania praktyczne), śledzenie postępów i panel administracyjny.
 
-First, run the development server:
+## Stos technologiczny
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| Obszar | Technologia |
+| --- | --- |
+| Aplikacja | Next.js 16 (App Router, Cache Components), React 19, TypeScript |
+| Baza danych | PostgreSQL 17 + MikroORM 7 (migracje, seedy, pula połączeń) |
+| Dependency Injection | Awilix |
+| Frontend (strony publiczne) | Tailwind CSS 4 |
+| Backend (panel `/admin`) | shadcn/ui (Base UI) na tych samych tokenach Tailwind |
+| Monorepo | npm workspaces |
+
+## Architektura
+
+```
+packages/
+├── app/   @devmentor/app   aplikacja Next.js — strony, routing, composition root DI
+├── core/  @devmentor/core  domena: typy, porty (interfejsy repozytoriów), serwisy
+├── db/    @devmentor/db    MikroORM: encje, konfiguracja, migracje, seedy, repozytoria
+└── ui/    @devmentor/ui    shadcn/ui, `cn`, globalny arkusz Tailwind z tokenami motywu
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Zależności między pakietami
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```mermaid
+flowchart LR
+  app["@devmentor/app"] --> core["@devmentor/core"]
+  app --> db["@devmentor/db"]
+  app --> ui["@devmentor/ui"]
+  db --> core
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **`core`** jest niezależny od frameworka i ORM-a. Definiuje model domenowy (`LearningPath`, `Lesson`, `UserProgress`, …), **porty** (`LearningPathRepository`, `ProgressRepository`, `StatsRepository`) oraz serwisy (`LearningPathService`, `ProgressService`, `AdminService`), które zależą wyłącznie od portów.
+- **`db`** dostarcza adaptery: repozytoria MikroORM implementujące porty z `core` i mapujące encje na typy domenowe. Tu są też encje (`defineEntity`, bez dekoratorów), migracje i seedy.
+- **`ui`** zawiera komponenty shadcn/ui i wspólne tokeny motywu (konwencja shadcn: `--background`, `--primary`, `--muted-foreground`, …). Ciemny motyw przez `prefers-color-scheme`.
+- **`app`** spina wszystko w jednym miejscu (composition root) i renderuje strony.
 
-## Learn More
+Pakiety wewnętrzne eksportują źródła TypeScript (pole `exports`) — nie mają kroku build; kompiluje je Next.js (`transpilePackages`).
 
-To learn more about Next.js, take a look at the following resources:
+### Dependency Injection (Awilix)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`packages/app/lib/container.ts` tworzy kontener i wywołuje funkcje rejestracji z pakietów:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Rejestracja | Czas życia | Źródło |
+| --- | --- | --- |
+| `config` | singleton | `app` |
+| `orm` (instancja MikroORM = pula połączeń) | singleton (jedna na proces, przetrwa HMR) | `registerDb` |
+| `em` (`orm.em.fork()`) | scope żądania | `registerDb` |
+| `learningPathRepository`, `progressRepository`, `statsRepository` | scope żądania | `registerDb` |
+| `learningPathService`, `progressService`, `adminService` | scope żądania | `registerCore` |
 
-## Deploy on Vercel
+Scope żądania tworzy `getRequestContainer()` — raz na render dzięki `React.cache`, więc każde żądanie ma własną mapę tożsamości MikroORM. Komponenty serwerowe pobierają serwisy przez `resolve("learningPathService")`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Przepływ danych
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+Strona (Server Component, w <Suspense>)
+  → resolve("learningPathService")        # Awilix, scope żądania
+    → LearningPathService (core)          # logika domenowa
+      → LearningPathRepository (port)     # interfejs w core
+        → MikroLearningPathRepository (db) → EntityManager (fork) → PostgreSQL
+```
+
+Przy włączonym `cacheComponents` dostęp do bazy jest danymi czasu żądania (`getRequestContainer` wywołuje `connection()`): strony mają prerenderowany statyczny shell, a dane dochodzą strumieniowo. Dzięki temu `next build` nie potrzebuje bazy.
+
+### Frontend vs. backend
+
+| Część | Ścieżka | UI |
+| --- | --- | --- |
+| Strony publiczne | `packages/app/app/(site)/` — `/`, `/paths`, `/paths/[slug]`, `/paths/[slug]/[lesson]`, `/dashboard` | Tailwind + komponenty z `packages/app/components/` |
+| Panel administracyjny | `packages/app/app/admin/` — `/admin`, `/admin/paths` | shadcn/ui z `@devmentor/ui` |
+
+### Model danych
+
+`learning_path` 1─n `path_module` 1─n `lesson`; `app_user` n─n `learning_path` przez `enrollment`; `app_user` n─n `lesson` przez `lesson_completion`.
+
+## Uruchomienie lokalne
+
+Wymagania: Node.js 24+, Docker.
+
+```bash
+npm install
+cp .env.example .env          # opcjonalnie — domyślne wartości pasują do docker compose
+npm run db:up                 # PostgreSQL w Dockerze
+npm run db:migrate            # migracje
+npm run db:seed               # przykładowe ścieżki i konto demo
+npm run dev                   # http://localhost:3000
+```
+
+Do czasu wdrożenia uwierzytelniania „zalogowanym” użytkownikiem jest konto demo z seeda (`DEMO_USER_EMAIL`).
+
+## Skrypty
+
+| Skrypt | Opis |
+| --- | --- |
+| `npm run dev` / `build` / `start` | Aplikacja Next.js (`@devmentor/app`) |
+| `npm run typecheck` | `tsc` we wszystkich pakietach |
+| `npm run lint` | ESLint |
+| `npm run db:up` | Start PostgreSQL (docker compose) |
+| `npm run db:migrate` | Zastosuj migracje |
+| `npm run db:migration:create` | Wygeneruj migrację z różnicy encji i snapshotu |
+| `npm run db:seed` | Uruchom `DatabaseSeeder` (idempotentny) |
+
+Dodawanie komponentu shadcn/ui: `cd packages/app && npx shadcn@latest add <komponent>` — trafi do `packages/ui/src/components/`.
+
+## Dla agentów AI
+
+Zasady pracy (architektura, SDD, logi, lekcje) są w [AGENTS.md](AGENTS.md). Specyfikacje: `.ai/specs/`.

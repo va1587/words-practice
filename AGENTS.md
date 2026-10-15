@@ -2,6 +2,63 @@
 
 Ten plik opisuje, jak agenci AI (Claude, Codex, inne) mają pracować w tym repozytorium. Katalog `.ai/` jest jedynym miejscem, w którym przechowujemy specyfikacje (SDD), logi autonomicznych przebiegów i wnioski/lekcje wyniesione z pracy. Te zasady są obowiązkowe dla każdej sesji agenta pracującej w tym repo.
 
+## Architektura i stos technologiczny (obowiązkowe)
+
+DevMentor to platforma ścieżek nauki dla programistów. Poniższe założenia są wiążące — nie zmieniaj ich bez wyraźnej zgody użytkownika (a zmianę zapisz w specyfikacji w `.ai/specs/`).
+
+### Stos
+
+- **Next.js (najnowszy, App Router) + React + TypeScript** (`strict`). Next.js w tym repo ma `cacheComponents: true` — zanim napiszesz kod Next.js, przeczytaj odpowiedni rozdział w `node_modules/next/dist/docs/` (zob. `packages/app/AGENTS.md`, generowany przez `next dev`).
+- **PostgreSQL + MikroORM** (`@mikro-orm/postgresql`) — encje, migracje, seedy, pula połączeń.
+- **Awilix** — kontener Dependency Injection (`InjectionMode.PROXY`).
+- **Tailwind CSS** — strony frontendowe (publiczne, dla uczących się).
+- **shadcn/ui** — strony backendowe (panel administracyjny `/admin`).
+- **npm workspaces** — monorepo; menedżer pakietów to npm (nie dodawaj pnpm/yarn lockfile'ów).
+
+### Monorepo — `packages/`
+
+| Pakiet | Nazwa | Rola | Może zależeć od |
+| --- | --- | --- | --- |
+| `packages/app` | `@devmentor/app` | Aplikacja Next.js: routing, strony, composition root DI | `core`, `db`, `ui` |
+| `packages/core` | `@devmentor/core` | Części wielokrotnego użytku: typy domenowe, porty (interfejsy repozytoriów), serwisy, czysta logika | — (tylko `awilix`) |
+| `packages/db` | `@devmentor/db` | Zarządzanie danymi: encje MikroORM, konfiguracja, migracje, seedy, repozytoria (adaptery portów z `core`) | `core` |
+| `packages/ui` | `@devmentor/ui` | Komponenty UI wielokrotnego użytku (shadcn/ui), `cn`, globalny arkusz Tailwind z tokenami motywu | — |
+
+Reguły:
+
+1. **Kierunek zależności jest jednostronny**: `app → core/db/ui`, `db → core`. `core` nie importuje Next.js, Reacta ani MikroORM; `ui` nie importuje `core`/`db`. Nie twórz cykli.
+2. **Logika biznesowa w `core`**, nie w stronach ani w repozytoriach. Strony tylko pobierają dane przez serwisy i je renderują.
+3. **Dostęp do danych wyłącznie przez porty**: nowe zapytanie = metoda w interfejsie w `packages/core/src/domain/ports.ts` + implementacja w `packages/db/src/repositories/`. Repozytoria zwracają typy domenowe (nie encje ORM).
+4. **Pakiety eksportują źródła TS** przez pole `exports` (bez kroku build); nowy pakiet wewnętrzny dodaj do `transpilePackages` w `packages/app/next.config.ts`. Importuj przez nazwy pakietów (`@devmentor/core`), nigdy względnymi ścieżkami między pakietami.
+5. Nowy pakiet w `packages/` tylko gdy nie pasuje do żadnego z czterech powyższych — i opisz go w README oraz w tej tabeli.
+
+### Dependency Injection (Awilix)
+
+- Każdy pakiet udostępnia funkcję rejestracji (`registerCore`, `registerDb`) i typ fragmentu „cradle” (`CoreCradle`, `DbCradle`). **Kompozycja dzieje się tylko w `packages/app/lib/container.ts`.**
+- Kontener root trzyma singletony (`orm` = pula połączeń, `config`); scope per żądanie (`getRequestContainer`, `React.cache`) trzyma `em` (fork EntityManagera), repozytoria i serwisy (`.scoped()`).
+- Klasy przyjmują zależności przez destrukturyzację obiektu w konstruktorze (`constructor({ fooRepository })`) — nazwy kluczy = nazwy rejestracji.
+- W stronach/komponentach serwerowych używaj `resolve("nazwaSerwisu")` z `@/lib/container`. Nie twórz instancji serwisów/repozytoriów ręcznie i nie używaj globalnego `orm.em`.
+
+### Baza danych (MikroORM)
+
+- Encje definiujemy przez `defineEntity` + `setClass` (bez dekoratorów) w `packages/db/src/entities/`; każdą dodaj do tablicy `entities`.
+- **Każda zmiana schematu = migracja** (`npm run db:migration:create`), commitowana razem z encją i zaktualizowanym `.snapshot-*.json`. Nie edytuj zastosowanych migracji; nie używaj `schema:update` poza eksperymentami lokalnymi.
+- Seedy (`packages/db/src/seeders/`) muszą być idempotentne.
+- Konfiguracja runtime: `packages/db/src/config.ts` (bez rozszerzeń CLI); konfiguracja CLI: `packages/db/mikro-orm.config.ts`. Połączenie z `DATABASE_URL`.
+- Przy `cacheComponents` każdy dostęp do bazy jest danymi czasu żądania: `getRequestContainer()` wywołuje `connection()`, więc komponent czytający dane musi być w `<Suspense>` (albo trasa musi mieć `loading.tsx`). Cache treści (`'use cache'`) — tylko świadomie i opisane w specyfikacji.
+
+### UI
+
+- **Strony publiczne** (`packages/app/app/(site)/`): czysty Tailwind + lokalne komponenty z `packages/app/components/`. Bez komponentów shadcn/ui.
+- **Panel administracyjny** (`packages/app/app/admin/`): komponenty shadcn/ui z `@devmentor/ui/components/*`.
+- Nowe komponenty shadcn dodawaj z katalogu `packages/app`: `npx shadcn@latest add <nazwa>` — CLI zapisze je w `packages/ui/src/components/`.
+- Kolory wyłącznie przez tokeny motywu (`bg-background`, `text-muted-foreground`, `bg-primary`, `border-border`, …) z `packages/ui/src/styles/globals.css`; bez zahardkodowanych hexów. Kolor marki = `--primary`.
+- Interfejs jest po polsku.
+
+### Weryfikacja
+
+Przed zgłoszeniem zakończenia: `npm run typecheck`, `npm run lint`, `npm run build` (build nie wymaga bazy). Zmiany dotykające danych sprawdź na lokalnym Postgresie (`npm run db:up && npm run db:migrate && npm run db:seed`, potem `npm run dev`).
+
 ## Struktura `.ai/`
 
 ```

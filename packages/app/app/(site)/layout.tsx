@@ -1,0 +1,13 @@
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
+
+/** Public (learner-facing) pages — plain Tailwind, no shadcn/ui components. */
+export default function SiteLayout({ children }: LayoutProps<"/">) {
+  return (
+    <>
+      <SiteHeader />
+      <main className="flex-1">{children}</main>
+      <SiteFooter />
+    </>
+  );
+}
