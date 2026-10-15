@@ -1,24 +1,7 @@
-import { levelLabels } from "@devmentor/core";
-import { Badge } from "@devmentor/ui/components/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@devmentor/ui/components/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@devmentor/ui/components/table";
+import { Card, CardContent } from "@devmentor/ui/components/card";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
-import { resolve } from "@/lib/container";
+import { PathsTable, PathsTableSkeleton } from "@/components/admin/paths-table";
 
 export const metadata: Metadata = {
   title: "Ścieżki nauki",
@@ -26,58 +9,20 @@ export const metadata: Metadata = {
 
 export default function AdminPathsPage() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Ścieżki nauki</CardTitle>
-        <CardDescription>Wszystkie ścieżki w kolejności wyświetlania.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Suspense fallback={<div className="h-48 animate-pulse rounded-lg bg-muted" />}>
-          <PathsTable />
-        </Suspense>
-      </CardContent>
-    </Card>
-  );
-}
-
-async function PathsTable() {
-  const paths = await (await resolve("adminService")).paths();
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Tytuł</TableHead>
-          <TableHead>Poziom</TableHead>
-          <TableHead className="text-right">Moduły</TableHead>
-          <TableHead className="text-right">Lekcje</TableHead>
-          <TableHead className="text-right">Czas</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {paths.map((path) => (
-          <TableRow key={path.slug}>
-            <TableCell>
-              <Link href={`/paths/${path.slug}`} className="font-medium hover:underline">
-                {path.title}
-              </Link>
-              <div className="font-mono text-xs text-muted-foreground">{path.slug}</div>
-            </TableCell>
-            <TableCell>{levelLabels[path.level]}</TableCell>
-            <TableCell className="text-right tabular-nums">{path.modules}</TableCell>
-            <TableCell className="text-right tabular-nums">{path.lessons}</TableCell>
-            <TableCell className="text-right tabular-nums">{path.hours} h</TableCell>
-            <TableCell>
-              {path.featured ? (
-                <Badge>Polecana</Badge>
-              ) : (
-                <Badge variant="outline">Standardowa</Badge>
-              )}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Ścieżki nauki</h1>
+        <p className="text-sm text-muted-foreground">
+          Wszystkie ścieżki w kolejności wyświetlania.
+        </p>
+      </div>
+      <Card>
+        <CardContent>
+          <Suspense fallback={<PathsTableSkeleton />}>
+            <PathsTable />
+          </Suspense>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

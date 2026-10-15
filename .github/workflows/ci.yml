@@ -1,5 +1,7 @@
-# Continuous integration — mirrors the local scripts (see README "Skrypty").
-# Actions are pinned to commit SHAs (supply-chain policy); Renovate updates them after 14 days.
+# Continuous integration for every pull request — each requirement is a separate status check.
+# Steps mirror the local scripts (README "Skrypty"). Actions are pinned to commit SHAs
+# (supply-chain policy); Renovate updates them after 14 days.
+# Runner images are pinned (not `ubuntu-latest`) so an image migration never changes CI silently.
 name: CI
 
 on:
@@ -15,52 +17,45 @@ permissions:
   contents: read
 
 env:
-  # Git hooks are a local concern; skip `lefthook install` from the `prepare` script.
+  # Git hooks are a local concern: LEFTHOOK=0 disables running them (the `prepare` install is harmless).
   LEFTHOOK: "0"
 
 jobs:
-  checks:
-    name: Lint, types, unit & integration tests, build
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - run: npm ci
+      # `next build` does not need a database (data is read at request time).
+      - run: npm run build
+
+  lint:
+    name: Lint, format, types, dead code, audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ github.sha }}
-          restore-keys: turbo-${{ runner.os }}-
+          node-version-file: .nvmrc
+          cache: npm
       - run: npm ci
       - run: npm run format:check
-      # Integration tests start PostgreSQL via Testcontainers (Docker is available on ubuntu-latest).
-      - run: npx turbo run lint typecheck test test:coverage test:integration build
+      - run: npm run lint
+      - run: npm run typecheck
       - run: npm run knip
       - run: npm run audit
 
-  e2e:
-    name: E2E & accessibility (Playwright)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    services:
-      postgres:
-        image: postgres:17-alpine
-        env:
-          POSTGRES_USER: devmentor
-          POSTGRES_PASSWORD: devmentor
-          POSTGRES_DB: devmentor
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U devmentor"
-          --health-interval 2s
-          --health-timeout 5s
-          --health-retries 20
-    env:
-      DATABASE_URL: postgresql://devmentor:devmentor@localhost:5432/devmentor
+  unit:
+    name: Unit tests (100% coverage)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -68,14 +63,29 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
-        working-directory: packages/app
-      - run: npm run db:migrate
-      - run: npm run db:seed
-      - run: npm run test:e2e
+      # Vitest in every package; coverage thresholds are 100% (AGENTS.md) and fail the job below.
+      - run: npm run test:coverage
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: failure()
+        if: always()
         with:
-          name: playwright-report
-          path: packages/app/playwright-report
+          name: coverage
+          path: packages/*/coverage
           retention-days: 7
+
+  integration:
+    name: Integration tests (Testcontainers PostgreSQL + agent-browser)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Chrome for agent-browser plus its Linux system libraries.
+      - run: npx agent-browser install --with-deps
+        working-directory: packages/app
+      # db: repositories on a Testcontainers PostgreSQL.
+      # app: production build started against a Testcontainers PostgreSQL, driven by agent-browser.
+      - run: npm run test:integration

@@ -21,3 +21,7 @@ Format wpisu:
 - [ESLint 10 zablokowany przez eslint-config-next](lessons/eslint-10-blocked-by-next-config.md) — zostajemy na ESLint 9.x, dopóki wtyczki Next nie wspierają 10
 - [MikroORM importuje każdy plik z `seeders/` i `migrations/`](lessons/mikro-orm-seeders-dir-imports-all.md) — test w katalogu seederów psuł `db:seed`; weryfikuj na świeżej bazie
 - [Kontrast `--muted-foreground` shadcn](lessons/shadcn-muted-foreground-contrast.md) — domyślny token nie spełnia WCAG AA na `--muted`; po zmianach tokenów uruchom E2E z axe
+- [Prettier i `.prettierignore` z cwd](lessons/prettier-ignore-cwd.md) — formatuj tylko z roota, inaczej Prettier zmieni migracje
+- [Snapshot migratora w testach](lessons/mikro-orm-test-migrator-snapshot.md) — testy zapisywały `.snapshot-test.json` do repo; `snapshot: false` w helperze
+- [agent-browser w testach integracyjnych](lessons/agent-browser-integration.md) — format JSON, exit codes, `get attr`, audyt a11y, czekanie na dane PPR
+- [Lint padał tylko na CI](lessons/ci-clean-checkout-and-generated-types.md) — typy `next typegen` + cache Turborepo ukryły błąd lokalnie; weryfikuj przez `npm run ci:local`

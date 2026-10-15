@@ -8,9 +8,9 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/testing/**", "src/index.ts"],
-      // Engineering standards §5.2: core must stay ≥ 90% covered.
-      thresholds: { lines: 90, branches: 90, functions: 90, statements: 90 },
+      exclude: ["src/**/*.test.ts", "src/testing/**"],
+      // AGENTS.md: 100% unit test coverage.
+      thresholds: { lines: 100, branches: 100, functions: 100, statements: 100 },
     },
   },
 });

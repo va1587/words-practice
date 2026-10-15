@@ -28,7 +28,7 @@ export async function PathGrid({ featured = false }: { featured?: boolean }) {
 
 export function PathGridSkeleton({ count = 3 }: { count?: number }) {
   return (
-    <div className={gridClassName} aria-busy="true" aria-label="Ładowanie ścieżek">
+    <div className={gridClassName} role="status" aria-busy="true" aria-label="Ładowanie ścieżek">
       {Array.from({ length: count }, (_, i) => (
         <div key={i} className="h-52 animate-pulse rounded-2xl bg-muted" />
       ))}

@@ -67,34 +67,48 @@ Pełne uzasadnienie: `.ai/specs/2026-10-15-tech-stack-and-engineering-standards.
 - **Błędy**: oczekiwane błędy biznesowe jako wynik (`{ ok: false, error }`), wyjątki tylko dla błędów programistycznych/infrastruktury.
 - **React/Next**: Server Components domyślnie, `'use client'` możliwie nisko; dane tylko przez serwisy (`resolve`), do klienta wyłącznie serializowalne DTO; komponenty z danymi i hooki URL w `<Suspense>`.
 - **Baza**: indeks na każdym kluczu obcym, który nie jest pierwszą kolumną innego indeksu (`.index()` w encji); zmiany schematu wstecznie zgodne (expand → contract).
-- **Formatowanie**: Prettier (`.prettierrc.json`, sortowanie klas Tailwind) — nie formatuj ręcznie, nie spieraj się z formatterem.
+- **Formatowanie**: Prettier (`.prettierrc.json`, sortowanie klas Tailwind) — nie formatuj ręcznie, nie spieraj się z formatterem. Uruchamiaj go **z roota repo** (`npm run format`): Prettier czyta `.prettierignore` tylko z bieżącego katalogu, więc uruchomiony z pakietu sformatuje też wygenerowane migracje.
 - **Commity**: Conventional Commits (`feat(db): …`, `fix(app): …`) — sprawdza commitlint w hooku `commit-msg`. Hooki (lefthook) instaluje `npm install`; pre-commit formatuje i lintuje. Nie uruchamiaj `lefthook run pre-commit --all-files` na drzewie z niezastage'owanymi zmianami.
+- **Skrypty pakietów są samowystarczalne**: `lint`, `typecheck`, `test` każdego pakietu muszą działać na świeżym klonie bez wcześniejszego `build`/`dev`. Jeśli zależą od plików generowanych (np. typy tras Next.js `PageProps` z `next typegen` w `.next/types`), skrypt generuje je sam (`"lint": "next typegen && eslint"`). Nigdy nie polegaj na artefaktach, które przypadkiem istnieją lokalnie.
+- **CI**: obrazy runnerów przypięte do wersji (`runs-on: ubuntu-24.04`), nigdy `*-latest` — zmiana obrazu to świadoma zmiana w PR, przetestowana na branchu. Akcje przypięte do SHA.
 - **Martwy kod**: knip musi być czysty — usuwaj nieużywane eksporty, pliki i zależności; zależność deklaruj w pakiecie, który jej faktycznie używa.
 
 ### Testy (obowiązkowe)
 
-| Poziom     | Gdzie                              | Narzędzie               | Zasada                                                                                                                                                                     |
-| ---------- | ---------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit       | `packages/core/src/**/*.test.ts`   | Vitest                  | Serwisy testujemy z fake'owymi portami (`packages/core/src/testing/fixtures.ts`), bez bazy i Next.js. Pokrycie `core` ≥ 90% (próg w `vitest.config.ts` — CI pada poniżej). |
-| Integracja | `packages/db/src/**/*.int.test.ts` | Vitest + Testcontainers | Prawdziwy Postgres 17 z prawdziwymi migracjami i seedem (`src/testing/global-setup.ts`). Każda metoda repozytorium ma ≥ 1 test. Wymaga Dockera.                            |
-| E2E + a11y | `packages/app/e2e/*.spec.ts`       | Playwright + axe        | Na buildzie produkcyjnym (`next start`), na zmigrowanej i zaseedowanej bazie. Każda nowa strona: test treści + `expectNoSeriousA11yViolations` (WCAG 2.2 A/AA).            |
+> **Zasada 100%: każda nowa funkcja (i każda zmiana istniejącego kodu) musi mieć 100% pokrycia testami jednostkowymi — linii, gałęzi, funkcji i instrukcji — w pakiecie, którego dotyczy.** Progi `100` są ustawione w `vitest.config.ts` każdego pakietu, a job `unit` w CI pada przy jakimkolwiek spadku. Nie obniżaj progów, nie dodawaj wyłączeń z pomiaru (`exclude`, `/* v8 ignore */`) dla kodu aplikacji i nie zgłaszaj zadania jako skończonego, dopóki `npm run test:coverage` nie przechodzi. Z pomiaru wyłączone są wyłącznie: pliki testowe i infrastruktura testów (`testing/`, `integration/`), wygenerowane migracje oraz configi narzędzi.
+
+| Poziom                 | Gdzie                                               | Narzędzie                                       | Zasada                                                                                                                                                                                                                                                                    |
+| ---------------------- | --------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit                   | `**/*.test.ts(x)` obok kodu we wszystkich pakietach | Vitest (+ Testing Library i jsdom w `ui`/`app`) | 100% pokrycia (patrz wyżej). Bez bazy, sieci i Dockera.                                                                                                                                                                                                                   |
+| Integracja — dane      | `packages/db/src/**/*.int.test.ts`                  | Vitest + Testcontainers                         | Prawdziwy Postgres 17 z prawdziwymi migracjami i seedem (`@devmentor/db/testing` → `startTestDatabase()`). Każda metoda repozytorium ma ≥ 1 test.                                                                                                                         |
+| Integracja — aplikacja | `packages/app/integration/*.int.test.ts`            | Vitest + Testcontainers + **agent-browser**     | Tymczasowa instancja: Postgres z Testcontainers → build produkcyjny → `next start` (`integration/global-setup.ts`); przeglądarką steruje `integration/browser.ts`. Każda nowa strona/ścieżka użytkownika: test treści + `seriousA11yViolations()` = `[]` (WCAG 2.2 A/AA). |
+
+Wzorce testów jednostkowych:
+
+- **`core`**: serwisy z fake'owymi portami (`packages/core/src/testing/fixtures.ts`).
+- **`db`**: repozytoria i seeder z fake'owym `EntityManager` (`src/testing/fake-entity-manager.ts`); metadane encji przez `new MikroORM(createConfig({ discovery: { skipSyncDiscovery: false } }))` — bez połączenia z bazą.
+- **`app`**: mockuj `@/lib/container` (`resolveFrom` + `services()` z `testing/fixtures.ts`), `next/navigation`, `next/server`, `next/font/google`; `server-only` jest aliasowany na pusty moduł. Asynchroniczne Server Components testuj przez `render(await Component(props))`; komponenty asynchroniczne zagnieżdżone w `<Suspense>` wydzielaj do `components/` i testuj osobno, a w testach strony mockuj je prostym stubem.
+
+Zasady ogólne:
 
 - Naprawiony błąd = test regresyjny. Nazwy testów po angielsku, opisują zachowanie.
 - Testy deterministyczne: bez zależności od kolejności, czasu i stanu z innych testów.
-- **Nie umieszczaj testów ani helperów w `packages/db/src/migrations/` i `src/seeders/`** — MikroORM importuje każdy plik `.ts` z tych katalogów.
-- Lokatory E2E po rolach i nazwach dostępnych (`getByRole`), nie po klasach CSS.
+- **Nie umieszczaj testów ani helperów w `packages/db/src/migrations/` i `src/seeders/`** — MikroORM importuje każdy plik `.ts` z tych katalogów. Testy nie mogą zapisywać plików w repo (np. snapshotów migracji).
+- Selektory po rolach i nazwach dostępnych (`getByRole`, `find role … --name`), nie po klasach CSS.
 
 ### Weryfikacja i Definition of Done
 
-Przed zgłoszeniem zakończenia uruchom i potwierdź na zielono:
+Przed zgłoszeniem zakończenia uruchom i potwierdź na zielono (to samo robi CI na każdym PR — joby `build`, `lint`, `unit`, `integration`):
 
 1. `npm run check` — format, lint, typecheck, knip;
-2. `npm test` (unit) i `npm run test:integration` (Docker) — przy zmianach w `core`/`db`;
+2. `npm run test:coverage` — testy jednostkowe ze 100% pokrycia we wszystkich pakietach;
 3. `npm run build`;
-4. `npm run test:e2e` — przy zmianach w UI, routingu lub danych (wymaga `npm run db:up && npm run db:migrate && npm run db:seed`);
+4. `npm run test:integration` — przy zmianach w danych, UI lub routingu (wymaga Dockera; Postgres i aplikację uruchamia harness, lokalna baza nie jest potrzebna);
 5. `npm run audit` — przy zmianach zależności.
 
-Zmiana schematu: migracja + `migration:check` bez różnic. Nowa funkcjonalność bez testów na odpowiednim poziomie nie jest skończona. CI (`.github/workflows/ci.yml`) uruchamia te same kroki na każdym PR.
+Zmiana schematu: migracja + `migration:check` bez różnic. Nowa funkcjonalność bez testów jednostkowych (100%) i — gdy dotyczy — integracyjnych nie jest skończona.
+
+**Zmiany w CI, skryptach, konfiguracji narzędzi lub zależnościach** weryfikuj przez **`npm run ci:local`** (`scripts/ci-local.sh`), a nie przez polecenia w roboczym katalogu. Skrypt odtwarza wszystkie joby CI na czystym worktree z bieżącymi zmianami, z `turbo --force` i `pipefail`, i sprawdza, że testy nie zmieniły śledzonych plików. Lokalne gitignorowane artefakty (`.next/types`, `coverage`, `.turbo`) i cache Turborepo współdzielony między worktree potrafią ukryć błąd, który pojawi się dopiero na CI. Nowe pliki najpierw `git add` (skrypt bierze tylko śledzone). Ręczne polecenia weryfikacyjne w pipeline'ach shella uruchamiaj z `set -o pipefail` — inaczej `| tail`/`| grep` maskuje kod wyjścia.
 
 ### Zależności
 

@@ -2,13 +2,16 @@
   "name": "@devmentor/app",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "next typegen && eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:integration": "vitest run --project app:integration",
+    "test": "vitest run --project app:unit",
+    "test:coverage": "vitest run --project app:unit --coverage"
   },
   "dependencies": {
     "@devmentor/core": "*",
@@ -24,11 +27,10 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.13.0",
-    "@playwright/test": "^1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "agent-browser": "^0.38.1",
     "eslint": "^9",
     "eslint-config-next": "^16.4.1"
   }

@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts"
   },
   "scripts": {
     "lint": "eslint",
@@ -14,7 +15,8 @@
     "migration:create": "mikro-orm migration:create",
     "seed": "mikro-orm seeder:run",
     "test": "vitest run --project db:unit",
-    "test:integration": "vitest run --project db:integration"
+    "test:integration": "vitest run --project db:integration",
+    "test:coverage": "vitest run --project db:unit --coverage"
   },
   "dependencies": {
     "@devmentor/core": "*",

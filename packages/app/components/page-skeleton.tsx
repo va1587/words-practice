@@ -2,6 +2,7 @@ export function PageSkeleton() {
   return (
     <div
       className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-12 sm:px-6"
+      role="status"
       aria-busy="true"
       aria-label="Ładowanie"
     >

@@ -94,31 +94,35 @@ Do czasu wdrożenia uwierzytelniania „zalogowanym” użytkownikiem jest konto
 
 ## Skrypty
 
-| Skrypt                            | Opis                                                                                                      |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `npm run dev` / `build` / `start` | Aplikacja Next.js (`@devmentor/app`)                                                                      |
-| `npm run check`                   | Wszystkie statyczne sprawdzenia: `format:check`, `lint`, `typecheck`, `knip`                              |
-| `npm run typecheck`               | `tsc` we wszystkich pakietach                                                                             |
-| `npm run lint`                    | ESLint we wszystkich pakietach: coding standards (type-aware) i kierunek zależności (`eslint.shared.mjs`) |
-| `npm run format` / `format:check` | Prettier (z sortowaniem klas Tailwind)                                                                    |
-| `npm run knip`                    | Nieużywane pliki, eksporty i zależności                                                                   |
-| `npm test`                        | Testy jednostkowe (Vitest)                                                                                |
-| `npm run test:coverage`           | Testy `core` z progiem pokrycia 90%                                                                       |
-| `npm run test:integration`        | Testy repozytoriów na prawdziwym Postgresie (Testcontainers — wymaga Dockera)                             |
-| `npm run test:e2e`                | Playwright + axe na buildzie produkcyjnym (wymaga zmigrowanej i zaseedowanej bazy)                        |
-| `npm run audit`                   | Audyt zależności produkcyjnych (`audit-ci.jsonc`)                                                         |
-| `npm run db:up`                   | Start PostgreSQL (docker compose)                                                                         |
-| `npm run db:migrate`              | Zastosuj migracje                                                                                         |
-| `npm run db:migration:create`     | Wygeneruj migrację z różnicy encji i snapshotu                                                            |
-| `npm run db:seed`                 | Uruchom `DatabaseSeeder` (idempotentny)                                                                   |
+| Skrypt                            | Opis                                                                                                                                        |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev` / `build` / `start` | Aplikacja Next.js (`@devmentor/app`)                                                                                                        |
+| `npm run check`                   | Wszystkie statyczne sprawdzenia: `format:check`, `lint`, `typecheck`, `knip`                                                                |
+| `npm run ci:local`                | Odtwarza wszystkie joby CI na czystym worktree z bieżącymi zmianami (`-- --skip-integration` bez Dockera)                                   |
+| `npm run typecheck`               | `tsc` we wszystkich pakietach                                                                                                               |
+| `npm run lint`                    | ESLint we wszystkich pakietach: coding standards (type-aware) i kierunek zależności (`eslint.shared.mjs`)                                   |
+| `npm run format` / `format:check` | Prettier (z sortowaniem klas Tailwind)                                                                                                      |
+| `npm run knip`                    | Nieużywane pliki, eksporty i zależności                                                                                                     |
+| `npm test`                        | Testy jednostkowe (Vitest) we wszystkich pakietach                                                                                          |
+| `npm run test:coverage`           | Testy jednostkowe z wymaganym pokryciem 100% (linie, gałęzie, funkcje, instrukcje)                                                          |
+| `npm run test:integration`        | Integracja na Postgresie z Testcontainers (wymaga Dockera): repozytoria `db` + tymczasowa instancja aplikacji testowana przez agent-browser |
+| `npm run audit`                   | Audyt zależności produkcyjnych (`audit-ci.jsonc`)                                                                                           |
+| `npm run db:up`                   | Start PostgreSQL (docker compose)                                                                                                           |
+| `npm run db:migrate`              | Zastosuj migracje                                                                                                                           |
+| `npm run db:migration:create`     | Wygeneruj migrację z różnicy encji i snapshotu                                                                                              |
+| `npm run db:seed`                 | Uruchom `DatabaseSeeder` (idempotentny)                                                                                                     |
 
 Dodawanie komponentu shadcn/ui: `cd packages/app && npx shadcn@latest add <komponent>` — trafi do `packages/ui/src/components/`.
 
 ## CI i zależności
 
-- **GitHub Actions** (`.github/workflows/ci.yml`): job `checks` (format, lint, typecheck, testy unit + pokrycie, integracja na Testcontainers, build, knip, audit) i job `e2e` (Postgres jako service, migracje, seed, Playwright + axe). Akcje przypięte do SHA.
-- **Turborepo** (`turbo.json`) orkiestruje zadania pakietów i cache'uje wyniki (`lint`, `typecheck`, `test*`, `build`).
-- **Polityka wersji**: `.npmrc` instaluje tylko wersje starsze niż 14 dni (poza Next.js); **Renovate** (`renovate.json`) aktualizuje z tym samym opóźnieniem.
+- **GitHub Actions** (`.github/workflows/ci.yml`) — na każdym pull requeście cztery osobne statusy:
+  - `build` — `next build`;
+  - `lint` — Prettier, ESLint (type-aware + granice pakietów), typecheck, knip, audyt zależności;
+  - `unit` — Vitest we wszystkich pakietach, próg pokrycia **100%**;
+  - `integration` — PostgreSQL z **Testcontainers**: repozytoria `db` oraz tymczasowa instancja aplikacji (build produkcyjny + `next start`) testowana przez **[agent-browser](https://agent-browser.dev)** (treść, nawigacja, audyt dostępności axe).
+- **Turborepo** (`turbo.json`) orkiestruje zadania pakietów i cache'uje wyniki; integracja `app` zależy od `build`.
+- **Polityka wersji**: `.npmrc` instaluje tylko wersje starsze niż 14 dni (poza Next.js); **Renovate** (`renovate.json`) aktualizuje z tym samym opóźnieniem. Akcje GitHub przypięte do SHA.
 
 ## Dla agentów AI
 

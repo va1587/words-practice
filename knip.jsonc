@@ -2,16 +2,17 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["eslint.shared.mjs"]
+      "entry": ["eslint.shared.mjs"],
     },
     "packages/app": {},
     "packages/core": {},
     "packages/db": {
+      // Loaded implicitly by the MikroORM CLI to run TypeScript config/migrations.
+      "ignoreDependencies": ["tsx"],
       "entry": ["mikro-orm.config.ts", "src/seeders/*.ts", "src/migrations/*.ts"],
-      "ignoreDependencies": ["tsx"]
     },
     "packages/ui": {
-      "entry": ["src/components/*.tsx", "src/lib/*.ts"]
-    }
-  }
+      "entry": ["src/components/*.tsx", "src/lib/*.ts"],
+    },
+  },
 }

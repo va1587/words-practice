@@ -1,11 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
-  "description": "Supply-chain policy: only versions published ≥ 14 days ago (mirrors .npmrc min-release-age).",
+  "description": "Supply-chain policy: only versions published \u2265 14 days ago (mirrors .npmrc min-release-age).",
   "minimumReleaseAge": "14 days",
   "internalChecksFilter": "strict",
   "rangeStrategy": "bump",
-  "lockFileMaintenance": { "enabled": true, "schedule": ["before 6am on monday"] },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on monday"]
+  },
   "packageRules": [
     {
       "description": "Project requirement: the framework stays on the newest release.",
@@ -17,7 +20,10 @@
       "matchPackageNames": ["react", "react-dom", "@types/react", "@types/react-dom"],
       "groupName": "React"
     },
-    { "matchPackageNames": ["@mikro-orm/**"], "groupName": "MikroORM" },
+    {
+      "matchPackageNames": ["@mikro-orm/**"],
+      "groupName": "MikroORM"
+    },
     {
       "matchPackageNames": [
         "shadcn",
@@ -45,13 +51,17 @@
       "matchPackageNames": [
         "vitest",
         "@vitest/**",
-        "@playwright/test",
-        "@axe-core/playwright",
+        "@testing-library/**",
+        "jsdom",
+        "agent-browser",
         "@testcontainers/**"
       ],
       "groupName": "Testing"
     },
-    { "matchManagers": ["github-actions"], "groupName": "GitHub Actions" },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
     {
       "description": "eslint-config-next pins plugins that only support ESLint 9 (see .ai/lessons/eslint-10-blocked-by-next-config.md).",
       "matchPackageNames": ["eslint"],
