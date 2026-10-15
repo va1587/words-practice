@@ -1,7 +1,6 @@
 import { defineConfig, type Options } from "@mikro-orm/postgresql";
 import { entities } from "./entities";
-
-const DEFAULT_DATABASE_URL = "postgresql://devmentor:devmentor@localhost:5432/devmentor";
+import { readDbEnv } from "./env";
 
 /**
  * Runtime ORM configuration shared by the app and the CLI.
@@ -9,15 +8,16 @@ const DEFAULT_DATABASE_URL = "postgresql://devmentor:devmentor@localhost:5432/de
  * Next.js server bundle does not load CLI-only code.
  */
 export function createConfig(overrides: Options = {}): Options {
+  const env = readDbEnv();
   return defineConfig({
-    clientUrl: process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL,
+    clientUrl: env.DATABASE_URL,
     entities,
     pool: {
-      min: Number(process.env.DATABASE_POOL_MIN ?? 0),
-      max: Number(process.env.DATABASE_POOL_MAX ?? 10),
+      min: env.DATABASE_POOL_MIN,
+      max: env.DATABASE_POOL_MAX,
       idleTimeoutMillis: 30_000,
     },
-    debug: process.env.DATABASE_DEBUG === "true",
+    debug: env.DATABASE_DEBUG,
     ...overrides,
   });
 }

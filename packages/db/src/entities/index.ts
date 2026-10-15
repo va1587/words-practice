@@ -27,7 +27,7 @@ const PathModuleSchema = defineEntity({
     id: p.integer().primary(),
     title: p.string(),
     position: p.integer(),
-    path: () => p.manyToOne(LearningPath).deleteRule("cascade"),
+    path: () => p.manyToOne(LearningPath).deleteRule("cascade").index(),
     lessons: () => p.oneToMany(Lesson).mappedBy("module").orderBy({ position: "asc" }),
   },
 });
@@ -73,7 +73,7 @@ const EnrollmentSchema = defineEntity({
   properties: {
     id: p.integer().primary(),
     user: () => p.manyToOne(User).deleteRule("cascade"),
-    path: () => p.manyToOne(LearningPath).deleteRule("cascade"),
+    path: () => p.manyToOne(LearningPath).deleteRule("cascade").index(),
     enrolledAt: p.datetime().onCreate(() => new Date()),
   },
 });
@@ -86,18 +86,11 @@ const LessonCompletionSchema = defineEntity({
   properties: {
     id: p.integer().primary(),
     user: () => p.manyToOne(User).deleteRule("cascade"),
-    lesson: () => p.manyToOne(Lesson).deleteRule("cascade"),
+    lesson: () => p.manyToOne(Lesson).deleteRule("cascade").index(),
     completedAt: p.datetime().onCreate(() => new Date()),
   },
 });
 export class LessonCompletion extends LessonCompletionSchema.class {}
 LessonCompletionSchema.setClass(LessonCompletion);
 
-export const entities = [
-  LearningPath,
-  PathModule,
-  Lesson,
-  User,
-  Enrollment,
-  LessonCompletion,
-];
+export const entities = [LearningPath, PathModule, Lesson, User, Enrollment, LessonCompletion];

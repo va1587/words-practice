@@ -14,10 +14,7 @@ export class MikroProgressRepository implements ProgressRepository {
       User,
       { email },
       {
-        populate: [
-          "enrollments.path",
-          "completions.lesson.module.path",
-        ],
+        populate: ["enrollments.path", "completions.lesson.module.path"],
       },
     );
     if (!user) return null;
@@ -27,9 +24,7 @@ export class MikroProgressRepository implements ProgressRepository {
       name: user.name,
       streakDays: user.streakDays,
       completedLessons: new Set(
-        user.completions
-          .getItems()
-          .map((c) => lessonKey(c.lesson.module.path.slug, c.lesson.slug)),
+        user.completions.getItems().map((c) => lessonKey(c.lesson.module.path.slug, c.lesson.slug)),
       ),
       activePaths: user.enrollments.getItems().map((e) => e.path.slug),
     };

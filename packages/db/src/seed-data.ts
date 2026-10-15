@@ -102,10 +102,7 @@ export const seedPaths: SeedPath[] = [
       },
       {
         title: "Bezpieczeństwo",
-        lessons: [
-          lesson("auth", "Uwierzytelnianie", 40),
-          lesson("owasp", "OWASP Top 10", 45),
-        ],
+        lessons: [lesson("auth", "Uwierzytelnianie", 40), lesson("owasp", "OWASP Top 10", 45)],
       },
     ],
   },

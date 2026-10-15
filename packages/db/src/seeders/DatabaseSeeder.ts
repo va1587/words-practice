@@ -1,20 +1,13 @@
 import type { EntityManager } from "@mikro-orm/postgresql";
 import { Seeder } from "@mikro-orm/seeder";
-import {
-  Enrollment,
-  LearningPath,
-  Lesson,
-  LessonCompletion,
-  PathModule,
-  User,
-} from "../entities";
+import { Enrollment, LearningPath, Lesson, LessonCompletion, PathModule, User } from "../entities";
 import { seedDemoUser, seedPaths } from "../seed-data";
 
 /** Idempotent: skips when content already exists. */
 export class DatabaseSeeder extends Seeder {
   async run(em: EntityManager): Promise<void> {
     if ((await em.count(LearningPath)) > 0) {
-      console.log("DatabaseSeeder: content already present, skipping.");
+      console.info("DatabaseSeeder: content already present, skipping.");
       return;
     }
 
@@ -54,12 +47,20 @@ export class DatabaseSeeder extends Seeder {
       streakDays: seedDemoUser.streakDays,
     });
     for (const slug of seedDemoUser.activePaths) {
-      em.create(Enrollment, { user, path: paths.get(slug)! });
+      em.create(Enrollment, { user, path: required(paths, slug) });
     }
     for (const key of seedDemoUser.completedLessons) {
-      em.create(LessonCompletion, { user, lesson: lessons.get(key)! });
+      em.create(LessonCompletion, { user, lesson: required(lessons, key) });
     }
 
     await em.flush();
   }
+}
+
+function required<T>(map: ReadonlyMap<string, T>, key: string): T {
+  const value = map.get(key);
+  if (value === undefined) {
+    throw new Error(`DatabaseSeeder: seed data references unknown key "${key}".`);
+  }
+  return value;
 }

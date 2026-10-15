@@ -3,10 +3,11 @@ import "server-only";
 import { registerCore, type CoreCradle } from "@devmentor/core";
 import { getOrm, registerDb, type DbCradle } from "@devmentor/db";
 import { asValue, createContainer, InjectionMode, type AwilixContainer } from "awilix";
-import { connection } from "next/server";
+import { after, connection } from "next/server";
 import { cache } from "react";
+import { readAppEnv } from "./env";
 
-export type AppConfig = {
+type AppConfig = {
   /** Current user until authentication exists — the seeded demo account. */
   demoUserEmail: string;
 };
@@ -28,9 +29,7 @@ function getRootContainer(): Promise<AwilixContainer<Cradle>> {
       strict: true,
     });
     container.register({
-      config: asValue({
-        demoUserEmail: process.env.DEMO_USER_EMAIL ?? "ola@devmentor.dev",
-      }),
+      config: asValue({ demoUserEmail: readAppEnv().DEMO_USER_EMAIL }),
     });
     registerDb(container, await getOrm());
     registerCore(container);
@@ -50,10 +49,14 @@ function getRootContainer(): Promise<AwilixContainer<Cradle>> {
  * Next.js otherwise tries to prerender it (at build time, or in the background for dynamic
  * params) and fails on non-deterministic values such as `Date.now()` used by the ORM.
  * Render callers inside `<Suspense>` (or a route with `loading.tsx`).
+ *
+ * The scope is disposed after the response is sent (`after()`), releasing scoped resources.
  */
-export const getRequestContainer = cache(async () => {
+const getRequestContainer = cache(async () => {
   await connection();
-  return (await getRootContainer()).createScope();
+  const scope = (await getRootContainer()).createScope();
+  after(() => scope.dispose());
+  return scope;
 });
 
 export async function resolve<K extends keyof Cradle>(name: K): Promise<Cradle[K]> {

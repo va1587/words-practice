@@ -10,9 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const dashboard = await (await resolve("progressService")).dashboard(
-    await getCurrentUserEmail(),
-  );
+  const dashboard = await (await resolve("progressService")).dashboard(await getCurrentUserEmail());
   if (!dashboard) notFound();
 
   const { user, activePaths: active } = dashboard;
@@ -27,18 +25,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-      <h1 className="text-3xl font-semibold tracking-tight">
-        Cześć, {user.name} 👋
-      </h1>
+      <h1 className="text-3xl font-semibold tracking-tight">Cześć, {user.name} 👋</h1>
       <p className="mt-2 text-muted-foreground">Oto Twój postęp w nauce.</p>
 
       <dl className="mt-8 grid gap-4 sm:grid-cols-3">
         {stats.map((s) => (
           <div key={s.label} className="rounded-2xl border border-border p-5">
             <dt className="text-sm text-muted-foreground">{s.label}</dt>
-            <dd className="mt-1 text-3xl font-semibold tabular-nums">
-              {s.value}
-            </dd>
+            <dd className="mt-1 text-3xl font-semibold tabular-nums">{s.value}</dd>
           </div>
         ))}
       </dl>
@@ -48,12 +42,8 @@ export default async function DashboardPage() {
           href={`/paths/${continueWith.path.slug}/${continueWith.progress.nextLesson.slug}`}
           className="mt-8 flex flex-col gap-1 rounded-2xl bg-primary p-6 text-primary-foreground hover:opacity-90"
         >
-          <span className="text-sm opacity-80">
-            Kontynuuj naukę · {continueWith.path.title}
-          </span>
-          <span className="text-xl font-semibold">
-            {continueWith.progress.nextLesson.title} →
-          </span>
+          <span className="text-sm">Kontynuuj naukę · {continueWith.path.title}</span>
+          <span className="text-xl font-semibold">{continueWith.progress.nextLesson.title} →</span>
         </Link>
       )}
 
@@ -66,11 +56,8 @@ export default async function DashboardPage() {
               className="flex flex-col gap-3 rounded-2xl border border-border p-5 hover:border-primary sm:flex-row sm:items-center sm:gap-6"
             >
               <span className="font-medium sm:w-56">{path.title}</span>
-              <ProgressBar
-                percent={progress.percent}
-                label={`Postęp: ${path.title}`}
-              />
-              <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+              <ProgressBar percent={progress.percent} label={`Postęp: ${path.title}`} />
+              <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
                 {progress.done}/{progress.total} lekcji
               </span>
             </Link>
@@ -80,7 +67,7 @@ export default async function DashboardPage() {
 
       <p className="mt-8 text-sm text-muted-foreground">
         Szukasz czegoś nowego?{" "}
-        <Link href="/paths" className="text-primary hover:underline">
+        <Link href="/paths" className="text-primary underline underline-offset-4">
           Przeglądaj ścieżki
         </Link>
       </p>

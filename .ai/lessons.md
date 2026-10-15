@@ -16,3 +16,8 @@ Format wpisu:
 - [Dostęp do bazy przy Cache Components](lessons/cache-components-db-access.md) — dlaczego `getRequestContainer()` woła `connection()` i dane muszą być w `<Suspense>`; sprawdź przy błędach prerenderu z `Date.now()`
 - [`usePathname()` w layoucie a Suspense](lessons/cache-components-usepathname-suspense.md) — błąd buildu „URL data outside of Suspense” w nawigacji na trasach dynamicznych
 - [Monorepo npm + shadcn/ui](lessons/monorepo-npm-shadcn-setup.md) — peer `react-dom` w `ui`, konfiguracja shadcn dla monorepo, `--` w skryptach delegujących
+- [Jeden `.env` w roocie monorepo](lessons/monorepo-root-env-loading.md) — Next.js i MikroORM CLI nie czytają root `.env` same z siebie; jak to rozwiązano
+- [lefthook `--all-files` na brudnym drzewie](lessons/lefthook-all-files-dirty-tree.md) — ryzyko utraty niezastage'owanych zmian; do pełnego sprawdzenia używaj `npm run check`
+- [ESLint 10 zablokowany przez eslint-config-next](lessons/eslint-10-blocked-by-next-config.md) — zostajemy na ESLint 9.x, dopóki wtyczki Next nie wspierają 10
+- [MikroORM importuje każdy plik z `seeders/` i `migrations/`](lessons/mikro-orm-seeders-dir-imports-all.md) — test w katalogu seederów psuł `db:seed`; weryfikuj na świeżej bazie
+- [Kontrast `--muted-foreground` shadcn](lessons/shadcn-muted-foreground-contrast.md) — domyślny token nie spełnia WCAG AA na `--muted`; po zmianach tokenów uruchom E2E z axe

@@ -7,22 +7,52 @@
   ],
   "scripts": {
     "dev": "npm run dev -w @devmentor/app",
-    "build": "npm run build -w @devmentor/app",
+    "build": "turbo run build",
     "start": "npm run start -w @devmentor/app",
-    "lint": "npm run lint --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "check": "npm run format:check && turbo run lint typecheck && npm run knip",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "turbo run test:e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip",
     "db:up": "docker compose up -d postgres",
     "db:migrate": "npm run migrate -w @devmentor/db --",
     "db:migration:create": "npm run migration:create -w @devmentor/db --",
-    "db:seed": "npm run seed -w @devmentor/db"
+    "db:seed": "npm run seed -w @devmentor/db",
+    "prepare": "lefthook install",
+    "audit": "audit-ci --config audit-ci.jsonc"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
     "@types/node": "^24",
-    "typescript": "^5",
-    "eslint": "^9",
-    "typescript-eslint": "^8.71.2"
+    "@vitest/coverage-v8": "^5.0.3",
+    "audit-ci": "^7.1.0",
+    "eslint": "^9.39.5",
+    "knip": "^6.39.0",
+    "lefthook": "^2.1.15",
+    "prettier": "^3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "turbo": "^2.11.6",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.3"
   },
   "allowScripts": {
-    "unrs-resolver@1.12.2": true
-  }
+    "unrs-resolver@1.12.2": true,
+    "esbuild": false,
+    "fsevents": false,
+    "lefthook": false,
+    "protobufjs": false,
+    "ssh2": false
+  },
+  "engines": {
+    "node": ">=24 <25",
+    "npm": ">=11"
+  },
+  "packageManager": "npm@11.19.1"
 }

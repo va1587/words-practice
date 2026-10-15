@@ -12,7 +12,9 @@
     "mikro-orm": "mikro-orm",
     "migrate": "mikro-orm migration:up",
     "migration:create": "mikro-orm migration:create",
-    "seed": "mikro-orm seeder:run"
+    "seed": "mikro-orm seeder:run",
+    "test": "vitest run --project db:unit",
+    "test:integration": "vitest run --project db:integration"
   },
   "dependencies": {
     "@devmentor/core": "*",
@@ -20,10 +22,12 @@
     "@mikro-orm/migrations": "^7.2.5",
     "@mikro-orm/postgresql": "^7.2.5",
     "@mikro-orm/seeder": "^7.2.5",
-    "awilix": "^13.0.5"
+    "awilix": "^13.0.5",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@mikro-orm/cli": "^7.2.5",
+    "@testcontainers/postgresql": "^12.2.0",
     "tsx": "^4.23.15"
   }
 }

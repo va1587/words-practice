@@ -1,5 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": { "lib": ["esnext"] },
-  "include": ["src", "mikro-orm.config.ts"]
+  "compilerOptions": {
+    "lib": ["esnext"]
+  },
+  "include": ["src", "mikro-orm.config.ts", "vitest.config.ts"]
 }

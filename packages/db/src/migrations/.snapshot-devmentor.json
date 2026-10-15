@@ -180,6 +180,16 @@
       "indexes": [
         {
           "columnNames": [
+            "path_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "enrollment_path_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -718,6 +728,16 @@
       "indexes": [
         {
           "columnNames": [
+            "lesson_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "lesson_completion_lesson_id_index",
+          "primary": false,
+          "unique": false
+        },
+        {
+          "columnNames": [
             "id"
           ],
           "composite": false,
@@ -842,6 +862,16 @@
         }
       },
       "indexes": [
+        {
+          "columnNames": [
+            "path_id"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "path_module_path_id_index",
+          "primary": false,
+          "unique": false
+        },
         {
           "columnNames": [
             "id"

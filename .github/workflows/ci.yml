@@ -1,0 +1,81 @@
+# Continuous integration — mirrors the local scripts (see README "Skrypty").
+# Actions are pinned to commit SHAs (supply-chain policy); Renovate updates them after 14 days.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Git hooks are a local concern; skip `lefthook install` from the `prepare` script.
+  LEFTHOOK: "0"
+
+jobs:
+  checks:
+    name: Lint, types, unit & integration tests, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-${{ runner.os }}-
+      - run: npm ci
+      - run: npm run format:check
+      # Integration tests start PostgreSQL via Testcontainers (Docker is available on ubuntu-latest).
+      - run: npx turbo run lint typecheck test test:coverage test:integration build
+      - run: npm run knip
+      - run: npm run audit
+
+  e2e:
+    name: E2E & accessibility (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: devmentor
+          POSTGRES_PASSWORD: devmentor
+          POSTGRES_DB: devmentor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devmentor"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://devmentor:devmentor@localhost:5432/devmentor
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+        working-directory: packages/app
+      - run: npm run db:migrate
+      - run: npm run db:seed
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: playwright-report
+          path: packages/app/playwright-report
+          retention-days: 7

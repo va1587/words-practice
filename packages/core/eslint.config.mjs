@@ -1,4 +1,4 @@
-import { forbidWorkspace, packageConfig, restrictImports } from "../../eslint.boundaries.mjs";
+import { forbidWorkspace, packageConfig, restrictImports } from "../../eslint.shared.mjs";
 
 export default packageConfig(
   restrictImports([

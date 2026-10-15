@@ -13,9 +13,7 @@ export async function generateMetadata({
   return { title: result?.lesson.title };
 }
 
-export default async function LessonPage({
-  params,
-}: PageProps<"/paths/[slug]/[lesson]">) {
+export default async function LessonPage({ params }: PageProps<"/paths/[slug]/[lesson]">) {
   const { slug, lesson: lessonSlug } = await params;
   const [result, user] = await Promise.all([
     (await resolve("learningPathService")).getLesson(slug, lessonSlug),
@@ -39,9 +37,7 @@ export default async function LessonPage({
         <p className="text-sm text-muted-foreground">
           {lesson.minutes} min{done && " · ukończona ✓"}
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-          {lesson.title}
-        </h1>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{lesson.title}</h1>
         <p className="mt-3 text-lg text-muted-foreground">{lesson.summary}</p>
       </header>
 
@@ -75,10 +71,7 @@ export default async function LessonPage({
             {next.title} →
           </Link>
         ) : (
-          <Link
-            href={`/paths/${path.slug}`}
-            className="font-medium text-primary hover:underline"
-          >
+          <Link href={`/paths/${path.slug}`} className="font-medium text-primary hover:underline">
             Koniec ścieżki — wróć do przeglądu
           </Link>
         )}

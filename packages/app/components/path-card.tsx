@@ -3,13 +3,7 @@ import Link from "next/link";
 import { LevelBadge } from "./level-badge";
 import { ProgressBar } from "./progress-bar";
 
-export function PathCard({
-  path,
-  progress,
-}: {
-  path: LearningPath;
-  progress?: PathProgress;
-}) {
+export function PathCard({ path, progress }: { path: LearningPath; progress?: PathProgress }) {
   return (
     <Link
       href={`/paths/${path.slug}`}
@@ -22,9 +16,7 @@ export function PathCard({
         </span>
       </div>
       <div>
-        <h3 className="text-lg font-semibold group-hover:text-primary">
-          {path.title}
-        </h3>
+        <h3 className="text-lg font-semibold group-hover:text-primary">{path.title}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{path.tagline}</p>
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -40,9 +32,7 @@ export function PathCard({
       {progress && progress.done > 0 && (
         <div className="mt-auto flex items-center gap-3">
           <ProgressBar percent={progress.percent} label={`Postęp: ${path.title}`} />
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {progress.percent}%
-          </span>
+          <span className="text-xs text-muted-foreground tabular-nums">{progress.percent}%</span>
         </div>
       )}
     </Link>

@@ -27,11 +27,12 @@ export class LearningPathService {
 
     const lessons = getLessons(path);
     const index = lessons.findIndex((l) => l.slug === lessonSlug);
-    if (index === -1) return null;
+    const lesson = lessons[index];
+    if (!lesson) return null;
 
     return {
       path,
-      lesson: lessons[index],
+      lesson,
       prev: lessons[index - 1],
       next: lessons[index + 1],
     };

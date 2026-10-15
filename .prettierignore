@@ -1,0 +1,14 @@
+node_modules
+.next
+coverage
+playwright-report
+test-results
+package-lock.json
+packages/db/src/migrations
+.agents
+.claude
+skills-lock.json
+.ai/specs/implemented
+.ai/specs/archive
+.ai/runs
+.turbo

@@ -19,10 +19,7 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         </div>
         <Separator />
         <AdminNav />
-        <Link
-          href="/"
-          className="mt-auto px-2 text-sm text-muted-foreground hover:text-foreground"
-        >
+        <Link href="/" className="mt-auto px-2 text-sm text-muted-foreground hover:text-foreground">
           ← Wróć do serwisu
         </Link>
       </aside>

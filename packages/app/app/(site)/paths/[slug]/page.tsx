@@ -7,9 +7,7 @@ import { ProgressBar } from "@/components/progress-bar";
 import { resolve } from "@/lib/container";
 import { getCurrentUserProgress } from "@/lib/current-user";
 
-export async function generateMetadata({
-  params,
-}: PageProps<"/paths/[slug]">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/paths/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const path = await (await resolve("learningPathService")).get(slug);
   return { title: path?.title };
@@ -41,15 +39,13 @@ export default async function PathPage({ params }: PageProps<"/paths/[slug]">) {
           <span>·</span>
           <span>{progress.total} lekcji</span>
         </div>
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          {path.title}
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{path.title}</h1>
         <p className="max-w-2xl text-lg text-muted-foreground">{path.description}</p>
         <div className="flex flex-col gap-2 rounded-2xl border border-border p-5 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex-1">
             <div className="mb-2 flex justify-between text-sm">
               <span>Twój postęp</span>
-              <span className="tabular-nums text-muted-foreground">
+              <span className="text-muted-foreground tabular-nums">
                 {progress.done}/{progress.total}
               </span>
             </div>
@@ -89,7 +85,7 @@ export default async function PathPage({ params }: PageProps<"/paths/[slug]">) {
                       className="flex items-center gap-3 px-5 py-3 text-sm hover:bg-muted"
                     >
                       <span
-                        aria-label={done ? "Ukończona" : "Do zrobienia"}
+                        aria-hidden="true"
                         className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[10px] ${
                           done
                             ? "border-primary bg-primary text-primary-foreground"
@@ -99,6 +95,7 @@ export default async function PathPage({ params }: PageProps<"/paths/[slug]">) {
                         {done ? "✓" : ""}
                       </span>
                       <span className="flex-1">{l.title}</span>
+                      <span className="sr-only">{done ? "(ukończona)" : "(do zrobienia)"}</span>
                       <span className="text-muted-foreground">{l.minutes} min</span>
                     </Link>
                   </li>

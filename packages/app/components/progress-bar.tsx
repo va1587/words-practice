@@ -1,10 +1,4 @@
-export function ProgressBar({
-  percent,
-  label,
-}: {
-  percent: number;
-  label?: string;
-}) {
+export function ProgressBar({ percent, label }: { percent: number; label?: string }) {
   return (
     <div
       role="progressbar"

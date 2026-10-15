@@ -1,5 +1,6 @@
 export * from "./entities";
 export * from "./config";
+export * from "./env";
 export * from "./orm";
 export * from "./container";
 export * from "./repositories/learning-path-repository";

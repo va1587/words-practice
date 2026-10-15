@@ -4,14 +4,14 @@ Platforma ścieżek nauki dla programistów: uporządkowane ścieżki (moduły �
 
 ## Stos technologiczny
 
-| Obszar | Technologia |
-| --- | --- |
-| Aplikacja | Next.js 16 (App Router, Cache Components), React 19, TypeScript |
-| Baza danych | PostgreSQL 17 + MikroORM 7 (migracje, seedy, pula połączeń) |
-| Dependency Injection | Awilix |
-| Frontend (strony publiczne) | Tailwind CSS 4 |
-| Backend (panel `/admin`) | shadcn/ui (Base UI) na tych samych tokenach Tailwind |
-| Monorepo | npm workspaces |
+| Obszar                      | Technologia                                                     |
+| --------------------------- | --------------------------------------------------------------- |
+| Aplikacja                   | Next.js 16 (App Router, Cache Components), React 19, TypeScript |
+| Baza danych                 | PostgreSQL 17 + MikroORM 7 (migracje, seedy, pula połączeń)     |
+| Dependency Injection        | Awilix                                                          |
+| Frontend (strony publiczne) | Tailwind CSS 4                                                  |
+| Backend (panel `/admin`)    | shadcn/ui (Base UI) na tych samych tokenach Tailwind            |
+| Monorepo                    | npm workspaces                                                  |
 
 ## Architektura
 
@@ -44,13 +44,13 @@ Pakiety wewnętrzne eksportują źródła TypeScript (pole `exports`) — nie ma
 
 `packages/app/lib/container.ts` tworzy kontener i wywołuje funkcje rejestracji z pakietów:
 
-| Rejestracja | Czas życia | Źródło |
-| --- | --- | --- |
-| `config` | singleton | `app` |
-| `orm` (instancja MikroORM = pula połączeń) | singleton (jedna na proces, przetrwa HMR) | `registerDb` |
-| `em` (`orm.em.fork()`) | scope żądania | `registerDb` |
-| `learningPathRepository`, `progressRepository`, `statsRepository` | scope żądania | `registerDb` |
-| `learningPathService`, `progressService`, `adminService` | scope żądania | `registerCore` |
+| Rejestracja                                                       | Czas życia                                | Źródło         |
+| ----------------------------------------------------------------- | ----------------------------------------- | -------------- |
+| `config`                                                          | singleton                                 | `app`          |
+| `orm` (instancja MikroORM = pula połączeń)                        | singleton (jedna na proces, przetrwa HMR) | `registerDb`   |
+| `em` (`orm.em.fork()`)                                            | scope żądania                             | `registerDb`   |
+| `learningPathRepository`, `progressRepository`, `statsRepository` | scope żądania                             | `registerDb`   |
+| `learningPathService`, `progressService`, `adminService`          | scope żądania                             | `registerCore` |
 
 Scope żądania tworzy `getRequestContainer()` — raz na render dzięki `React.cache`, więc każde żądanie ma własną mapę tożsamości MikroORM. Komponenty serwerowe pobierają serwisy przez `resolve("learningPathService")`.
 
@@ -68,10 +68,10 @@ Przy włączonym `cacheComponents` dostęp do bazy jest danymi czasu żądania (
 
 ### Frontend vs. backend
 
-| Część | Ścieżka | UI |
-| --- | --- | --- |
-| Strony publiczne | `packages/app/app/(site)/` — `/`, `/paths`, `/paths/[slug]`, `/paths/[slug]/[lesson]`, `/dashboard` | Tailwind + komponenty z `packages/app/components/` |
-| Panel administracyjny | `packages/app/app/admin/` — `/admin`, `/admin/paths` | shadcn/ui z `@devmentor/ui` |
+| Część                 | Ścieżka                                                                                             | UI                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Strony publiczne      | `packages/app/app/(site)/` — `/`, `/paths`, `/paths/[slug]`, `/paths/[slug]/[lesson]`, `/dashboard` | Tailwind + komponenty z `packages/app/components/` |
+| Panel administracyjny | `packages/app/app/admin/` — `/admin`, `/admin/paths`                                                | shadcn/ui z `@devmentor/ui`                        |
 
 ### Model danych
 
@@ -79,11 +79,11 @@ Przy włączonym `cacheComponents` dostęp do bazy jest danymi czasu żądania (
 
 ## Uruchomienie lokalne
 
-Wymagania: Node.js 24+, Docker.
+Wymagania: Node.js 24 LTS (`.nvmrc`), npm 11, Docker. `npm install` instaluje też hooki git (lefthook).
 
 ```bash
 npm install
-cp .env.example .env          # opcjonalnie — domyślne wartości pasują do docker compose
+cp .env.example .env          # jeden .env w roocie; w dev domyślne wartości pasują do docker compose
 npm run db:up                 # PostgreSQL w Dockerze
 npm run db:migrate            # migracje
 npm run db:seed               # przykładowe ścieżki i konto demo
@@ -94,17 +94,31 @@ Do czasu wdrożenia uwierzytelniania „zalogowanym” użytkownikiem jest konto
 
 ## Skrypty
 
-| Skrypt | Opis |
-| --- | --- |
-| `npm run dev` / `build` / `start` | Aplikacja Next.js (`@devmentor/app`) |
-| `npm run typecheck` | `tsc` we wszystkich pakietach |
-| `npm run lint` | ESLint we wszystkich pakietach, łącznie z regułami kierunku zależności (`eslint.boundaries.mjs`) |
-| `npm run db:up` | Start PostgreSQL (docker compose) |
-| `npm run db:migrate` | Zastosuj migracje |
-| `npm run db:migration:create` | Wygeneruj migrację z różnicy encji i snapshotu |
-| `npm run db:seed` | Uruchom `DatabaseSeeder` (idempotentny) |
+| Skrypt                            | Opis                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `npm run dev` / `build` / `start` | Aplikacja Next.js (`@devmentor/app`)                                                                      |
+| `npm run check`                   | Wszystkie statyczne sprawdzenia: `format:check`, `lint`, `typecheck`, `knip`                              |
+| `npm run typecheck`               | `tsc` we wszystkich pakietach                                                                             |
+| `npm run lint`                    | ESLint we wszystkich pakietach: coding standards (type-aware) i kierunek zależności (`eslint.shared.mjs`) |
+| `npm run format` / `format:check` | Prettier (z sortowaniem klas Tailwind)                                                                    |
+| `npm run knip`                    | Nieużywane pliki, eksporty i zależności                                                                   |
+| `npm test`                        | Testy jednostkowe (Vitest)                                                                                |
+| `npm run test:coverage`           | Testy `core` z progiem pokrycia 90%                                                                       |
+| `npm run test:integration`        | Testy repozytoriów na prawdziwym Postgresie (Testcontainers — wymaga Dockera)                             |
+| `npm run test:e2e`                | Playwright + axe na buildzie produkcyjnym (wymaga zmigrowanej i zaseedowanej bazy)                        |
+| `npm run audit`                   | Audyt zależności produkcyjnych (`audit-ci.jsonc`)                                                         |
+| `npm run db:up`                   | Start PostgreSQL (docker compose)                                                                         |
+| `npm run db:migrate`              | Zastosuj migracje                                                                                         |
+| `npm run db:migration:create`     | Wygeneruj migrację z różnicy encji i snapshotu                                                            |
+| `npm run db:seed`                 | Uruchom `DatabaseSeeder` (idempotentny)                                                                   |
 
 Dodawanie komponentu shadcn/ui: `cd packages/app && npx shadcn@latest add <komponent>` — trafi do `packages/ui/src/components/`.
+
+## CI i zależności
+
+- **GitHub Actions** (`.github/workflows/ci.yml`): job `checks` (format, lint, typecheck, testy unit + pokrycie, integracja na Testcontainers, build, knip, audit) i job `e2e` (Postgres jako service, migracje, seed, Playwright + axe). Akcje przypięte do SHA.
+- **Turborepo** (`turbo.json`) orkiestruje zadania pakietów i cache'uje wyniki (`lint`, `typecheck`, `test*`, `build`).
+- **Polityka wersji**: `.npmrc` instaluje tylko wersje starsze niż 14 dni (poza Next.js); **Renovate** (`renovate.json`) aktualizuje z tym samym opóźnieniem.
 
 ## Dla agentów AI
 

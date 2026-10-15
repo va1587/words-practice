@@ -26,11 +26,12 @@ export default function Home() {
             Ścieżki nauki dla programistów
           </span>
           <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-            Od pierwszej linijki kodu do <span className="text-primary">pewnego siebie developera</span>.
+            Od pierwszej linijki kodu do{" "}
+            <span className="text-primary">pewnego siebie developera</span>.
           </h1>
           <p className="max-w-xl text-lg text-muted-foreground">
-            DevMentor prowadzi Cię krok po kroku przez frontend, backend i
-            architekturę — z praktycznymi zadaniami i śledzeniem postępów.
+            DevMentor prowadzi Cię krok po kroku przez frontend, backend i architekturę — z
+            praktycznymi zadaniami i śledzeniem postępów.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
@@ -62,9 +63,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
         <div className="mb-6 flex items-end justify-between gap-4">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Polecane ścieżki
-          </h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Polecane ścieżki</h2>
           <Link href="/paths" className="text-sm text-primary hover:underline">
             Wszystkie ścieżki →
           </Link>
