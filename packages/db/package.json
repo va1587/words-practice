@@ -7,6 +7,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "mikro-orm": "mikro-orm",
     "migrate": "mikro-orm migration:up",

@@ -10,6 +10,7 @@
     "./hooks/*": "./src/hooks/*.ts"
   },
   "scripts": {
+    "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {

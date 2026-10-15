@@ -26,7 +26,7 @@ DevMentor to platforma ścieżek nauki dla programistów. Poniższe założenia 
 
 Reguły:
 
-1. **Kierunek zależności jest jednostronny**: `app → core/db/ui`, `db → core`. `core` nie importuje Next.js, Reacta ani MikroORM; `ui` nie importuje `core`/`db`. Nie twórz cykli.
+1. **Kierunek zależności jest jednostronny**: `app → core/db/ui`, `db → core`. `core` nie importuje Next.js, Reacta ani MikroORM; `ui` nie importuje `core`/`db`. Nie twórz cykli. Reguły pilnuje ESLint (`no-restricted-imports`, wspólne bloki w `eslint.boundaries.mjs`, konfiguracja w `packages/*/eslint.config.mjs`) — nie wyłączaj ich, tylko przenieś kod do właściwego pakietu.
 2. **Logika biznesowa w `core`**, nie w stronach ani w repozytoriach. Strony tylko pobierają dane przez serwisy i je renderują.
 3. **Dostęp do danych wyłącznie przez porty**: nowe zapytanie = metoda w interfejsie w `packages/core/src/domain/ports.ts` + implementacja w `packages/db/src/repositories/`. Repozytoria zwracają typy domenowe (nie encje ORM).
 4. **Pakiety eksportują źródła TS** przez pole `exports` (bez kroku build); nowy pakiet wewnętrzny dodaj do `transpilePackages` w `packages/app/next.config.ts`. Importuj przez nazwy pakietów (`@devmentor/core`), nigdy względnymi ścieżkami między pakietami.

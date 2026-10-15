@@ -98,7 +98,7 @@ Do czasu wdrożenia uwierzytelniania „zalogowanym” użytkownikiem jest konto
 | --- | --- |
 | `npm run dev` / `build` / `start` | Aplikacja Next.js (`@devmentor/app`) |
 | `npm run typecheck` | `tsc` we wszystkich pakietach |
-| `npm run lint` | ESLint |
+| `npm run lint` | ESLint we wszystkich pakietach, łącznie z regułami kierunku zależności (`eslint.boundaries.mjs`) |
 | `npm run db:up` | Start PostgreSQL (docker compose) |
 | `npm run db:migrate` | Zastosuj migracje |
 | `npm run db:migration:create` | Wygeneruj migrację z różnicy encji i snapshotu |
