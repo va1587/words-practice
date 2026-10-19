@@ -2,34 +2,38 @@
   "name": "@devmentor/db",
   "version": "0.1.0",
   "private": true,
+  "description": "DevMentor — MikroORM configuration, entities and migrations",
   "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./testing": "./src/testing/index.ts"
+    "./entities": "./src/entities/index.ts",
+    "./config": "./src/config.ts"
   },
   "scripts": {
-    "lint": "eslint",
-    "typecheck": "tsc --noEmit",
-    "mikro-orm": "mikro-orm",
-    "migrate": "mikro-orm migration:up",
     "migration:create": "mikro-orm migration:create",
-    "seed": "mikro-orm seeder:run",
-    "test": "vitest run --project db:unit",
-    "test:integration": "vitest run --project db:integration",
-    "test:coverage": "vitest run --project db:unit --coverage"
+    "migration:up": "mikro-orm migration:up",
+    "migration:down": "mikro-orm migration:down",
+    "migration:list": "mikro-orm migration:list",
+    "schema:update": "mikro-orm schema:update --run",
+    "seed": "mikro-orm seeder:run"
   },
   "dependencies": {
-    "@devmentor/core": "*",
-    "@mikro-orm/core": "^7.2.5",
-    "@mikro-orm/migrations": "^7.2.5",
-    "@mikro-orm/postgresql": "^7.2.5",
-    "@mikro-orm/seeder": "^7.2.5",
-    "awilix": "^13.0.5",
-    "zod": "^4.6.5"
+    "@mikro-orm/core": "^7.1.14",
+    "@mikro-orm/migrations": "^7.1.14",
+    "@mikro-orm/postgresql": "^7.1.14",
+    "@mikro-orm/seeder": "^7.1.14",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@mikro-orm/cli": "^7.2.5",
-    "@testcontainers/postgresql": "^12.2.0",
-    "tsx": "^4.23.15"
+    "@mikro-orm/cli": "^7.1.14",
+    "dotenv": "^17.4.2",
+    "tsx": "^4.23.13"
+  },
+  "mikro-orm": {
+    "configPaths": [
+      "./src/mikro-orm.config.ts"
+    ]
   }
 }

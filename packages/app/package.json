@@ -2,36 +2,24 @@
   "name": "@devmentor/app",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "description": "DevMentor — Next.js host and composition root",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next typegen && eslint",
-    "typecheck": "next typegen && tsc --noEmit",
-    "test:integration": "vitest run --project app:integration",
-    "test": "vitest run --project app:unit",
-    "test:coverage": "vitest run --project app:unit --coverage"
+    "build": "NODE_ENV=production next build",
+    "start": "NODE_ENV=production next start"
   },
   "dependencies": {
     "@devmentor/core": "*",
     "@devmentor/db": "*",
     "@devmentor/ui": "*",
-    "@next/env": "^16.4.1",
-    "awilix": "^13.0.5",
-    "lucide-react": "^1.57.0",
-    "next": "16.4.1",
-    "react": "19.3.0",
-    "react-dom": "19.3.0",
-    "server-only": "^0.0.1",
-    "zod": "^4.6.5"
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@tailwindcss/turbopack": "^4",
+    "@tailwindcss/postcss": "^4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "agent-browser": "^0.38.1",
-    "eslint": "^9",
-    "eslint-config-next": "^16.4.1"
+    "tailwindcss": "^4"
   }
 }

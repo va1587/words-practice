@@ -1,176 +1,285 @@
 # AGENTS.md
 
-Ten plik opisuje, jak agenci AI (Claude, Codex, inne) mają pracować w tym repozytorium. Katalog `.ai/` jest jedynym miejscem, w którym przechowujemy specyfikacje (SDD), logi autonomicznych przebiegów i wnioski/lekcje wyniesione z pracy. Te zasady są obowiązkowe dla każdej sesji agenta pracującej w tym repo.
+Instructions for any AI agent (Claude Code, other CLIs, autonomous runs) working in
+this repository.
 
-## Architektura i stos technologiczny (obowiązkowe)
+## Project
 
-DevMentor to platforma ścieżek nauki dla programistów. Poniższe założenia są wiążące — nie zmieniaj ich bez wyraźnej zgody użytkownika (a zmianę zapisz w specyfikacji w `.ai/specs/`).
+**DevMentor** — a platform connecting developers with mentors. It is an npm-workspaces
+monorepo built on the latest Next.js + TypeScript + React.
 
-### Stos
+### Tech stack
 
-- **Next.js (najnowszy, App Router) + React + TypeScript** (`strict`). Next.js w tym repo ma `cacheComponents: true` — zanim napiszesz kod Next.js, przeczytaj odpowiedni rozdział w `node_modules/next/dist/docs/` (zob. `packages/app/AGENTS.md`, generowany przez `next dev`).
-- **PostgreSQL + MikroORM** (`@mikro-orm/postgresql`) — encje, migracje, seedy, pula połączeń.
-- **Awilix** — kontener Dependency Injection (`InjectionMode.PROXY`).
-- **Tailwind CSS** — strony frontendowe (publiczne, dla uczących się).
-- **shadcn/ui** — strony backendowe (panel administracyjny `/admin`).
-- **npm workspaces** — monorepo; menedżer pakietów to npm (nie dodawaj pnpm/yarn lockfile'ów).
+| Concern            | Choice                                             |
+| ------------------ | -------------------------------------------------- |
+| Framework          | Next.js 16 (App Router, Turbopack) + React 19      |
+| Language           | TypeScript 5 (strict), ESM everywhere              |
+| Database           | PostgreSQL                                          |
+| ORM                | MikroORM v7 (PostgreSQL driver) — migrations + pool |
+| Dependency injection | awilix v13 (`PROXY` mode, typed `Cradle`)        |
+| Config validation  | zod                                                |
+| Logging            | pino                                               |
+| Frontend styling   | Tailwind CSS v4 (public/marketing pages)           |
+| Backend/admin UI   | shadcn-ui components (in `@devmentor/ui`)          |
+| Package manager    | npm workspaces (Node ≥ 24)                          |
 
-### Monorepo — `packages/`
+### Monorepo layout
 
-| Pakiet          | Nazwa             | Rola                                                                                                      | Może zależeć od    |
-| --------------- | ----------------- | --------------------------------------------------------------------------------------------------------- | ------------------ |
-| `packages/app`  | `@devmentor/app`  | Aplikacja Next.js: routing, strony, composition root DI                                                   | `core`, `db`, `ui` |
-| `packages/core` | `@devmentor/core` | Części wielokrotnego użytku: typy domenowe, porty (interfejsy repozytoriów), serwisy, czysta logika       | — (tylko `awilix`) |
-| `packages/db`   | `@devmentor/db`   | Zarządzanie danymi: encje MikroORM, konfiguracja, migracje, seedy, repozytoria (adaptery portów z `core`) | `core`             |
-| `packages/ui`   | `@devmentor/ui`   | Komponenty UI wielokrotnego użytku (shadcn/ui), `cn`, globalny arkusz Tailwind z tokenami motywu          | —                  |
+Everything lives under `packages/*`. The dependency graph is strictly one-way:
 
-Reguły:
+```
+app ──> core ──> db
+ └────> ui
 
-1. **Kierunek zależności jest jednostronny**: `app → core/db/ui`, `db → core`. `core` nie importuje Next.js, Reacta ani MikroORM; `ui` nie importuje `core`/`db`. Nie twórz cykli. Reguły pilnuje ESLint (`no-restricted-imports`, wspólne bloki w `eslint.shared.mjs`, konfiguracja w `packages/*/eslint.config.mjs`) — nie wyłączaj ich, tylko przenieś kod do właściwego pakietu.
-2. **Logika biznesowa w `core`**, nie w stronach ani w repozytoriach. Strony tylko pobierają dane przez serwisy i je renderują.
-3. **Dostęp do danych wyłącznie przez porty**: nowe zapytanie = metoda w interfejsie w `packages/core/src/domain/ports.ts` + implementacja w `packages/db/src/repositories/`. Repozytoria zwracają typy domenowe (nie encje ORM).
-4. **Pakiety eksportują źródła TS** przez pole `exports` (bez kroku build); nowy pakiet wewnętrzny dodaj do `transpilePackages` w `packages/app/next.config.ts`. Importuj przez nazwy pakietów (`@devmentor/core`), nigdy względnymi ścieżkami między pakietami.
-5. Nowy pakiet w `packages/` tylko gdy nie pasuje do żadnego z czterech powyższych — i opisz go w README oraz w tej tabeli.
+packages/
+  app    @devmentor/app    Next.js host + composition root (the only package that
+                           may import every other package)
+  core   @devmentor/core   config (zod), logger (pino), awilix container, domain
+                           services. Knows about db; never imports react/next/ui.
+  db     @devmentor/db     MikroORM config, entities, migrations, seeders. The leaf —
+                           the only package that imports @mikro-orm/*. Knows nothing
+                           about the others.
+  ui     @devmentor/ui     shadcn-ui primitives + Tailwind design tokens.
+                           Presentational only — no core/db imports.
+```
 
-### Dependency Injection (Awilix)
+These boundaries are enforced by ESLint (`no-restricted-imports` in
+`eslint.config.mjs`); a cycle-introducing import fails `npm run lint`.
 
-- Każdy pakiet udostępnia funkcję rejestracji (`registerCore`, `registerDb`) i typ fragmentu „cradle” (`CoreCradle`, `DbCradle`). **Kompozycja dzieje się tylko w `packages/app/lib/container.ts`.**
-- Kontener root trzyma singletony (`orm` = pula połączeń, `config`); scope per żądanie (`getRequestContainer`, `React.cache`) trzyma `em` (fork EntityManagera), repozytoria i serwisy (`.scoped()`).
-- Klasy przyjmują zależności przez destrukturyzację obiektu w konstruktorze (`constructor({ fooRepository })`) — nazwy kluczy = nazwy rejestracji.
-- W stronach/komponentach serwerowych używaj `resolve("nazwaSerwisu")` z `@/lib/container`. Nie twórz instancji serwisów/repozytoriów ręcznie i nie używaj globalnego `orm.em`.
+### Domain concept convention
 
-### Baza danych (MikroORM)
+Domain code is not organized into `modules/`. Each concept (`auth`, `mentors`,
+`availability`, `bookings`, `payments`, `messages`, `favorites`, `reviews`, ...) is a
+same-named sub-folder repeated across the layers that need it:
 
-- Encje definiujemy przez `defineEntity` + `setClass` (bez dekoratorów) w `packages/db/src/entities/`; każdą dodaj do tablicy `entities`.
-- **Każda zmiana schematu = migracja** (`npm run db:migration:create`), commitowana razem z encją i zaktualizowanym `.snapshot-*.json`. Nie edytuj zastosowanych migracji; nie używaj `schema:update` poza eksperymentami lokalnymi.
-- Seedy (`packages/db/src/seeders/`) muszą być idempotentne.
-- Konfiguracja runtime: `packages/db/src/config.ts` (bez rozszerzeń CLI); konfiguracja CLI: `packages/db/mikro-orm.config.ts`. Połączenie z `DATABASE_URL`.
-- Przy `cacheComponents` każdy dostęp do bazy jest danymi czasu żądania: `getRequestContainer()` wywołuje `connection()`, więc komponent czytający dane musi być w `<Suspense>` (albo trasa musi mieć `loading.tsx`). Cache treści (`'use cache'`) — tylko świadomie i opisane w specyfikacji.
+- `packages/db/src/entities/<concept>/<name>.entity.ts`
+- `packages/core/src/services/<concept>/<name>.service.ts`
+- `packages/core/src/validators/<concept>/` (shared Zod schemas, when needed)
+- `packages/app/src/app/api/<concept>/route.ts` and the matching `page.tsx` under
+  the relevant persona route group
 
-### UI
+Create a concept folder only when its first file is added — never scaffold empty
+ones. This is a directory convention, not a module runtime: there is no per-concept
+setup/ACL/auto-discovery. See `.ai/specs/2026-09-01-engineering-standards.md` for the
+full naming table and the payments-port/event-emitter patterns.
 
-- **Strony publiczne** (`packages/app/app/(site)/`): czysty Tailwind + lokalne komponenty z `packages/app/components/`. Bez komponentów shadcn/ui.
-- **Panel administracyjny** (`packages/app/app/admin/`): komponenty shadcn/ui z `@devmentor/ui/components/*`.
-- Nowe komponenty shadcn dodawaj z katalogu `packages/app`: `npx shadcn@latest add <nazwa>` — CLI zapisze je w `packages/ui/src/components/`.
-- Kolory wyłącznie przez tokeny motywu (`bg-background`, `text-muted-foreground`, `bg-primary`, `border-border`, …) z `packages/ui/src/styles/globals.css`; bez zahardkodowanych hexów. Kolor marki = `--primary`.
-- Interfejs jest po polsku.
+Event IDs follow `concept.entity.action` (e.g. `bookings.booking.created`) and are
+emitted through the typed emitter in `packages/core/src/events`, registered on the
+`Cradle` — this is in-process only; there is no queue/worker in this project.
 
-### Coding standards (obowiązkowe)
+### Reusable API & UI layer
 
-Pełne uzasadnienie: `.ai/specs/2026-10-15-tech-stack-and-engineering-standards.md` (§4–6). Reguły oznaczone _(lint)_ egzekwuje ESLint (`eslint.shared.mjs`) — nie wyłączaj ich komentarzami, popraw kod.
+Every route and every page reuses two shared layers instead of re-implementing
+fetch/validation/auth/error-handling per feature:
 
-- **TypeScript**: `strict` + `noUncheckedIndexedAccess`, `noImplicitOverride`, `noFallthroughCasesInSwitch`, `verbatimModuleSyntax` (`tsconfig.base.json`). Zakaz `any` _(lint)_, non-null assertion `!` _(lint)_ i `@ts-ignore` _(lint)_ — używaj `unknown` + zawężania, jawnej obsługi braku wartości, `@ts-expect-error` z opisem. Importy typów przez `import type` / `type X` _(lint)_. `switch` po uniach musi być wyczerpujący _(lint)_.
-- **Env**: `process.env` czytamy wyłącznie w walidowanych modułach `env.ts` (Zod) — `packages/db/src/env.ts`, `packages/app/lib/env.ts` _(lint)_. Nowa zmienna = pole w schemacie + wpis w `.env.example`. Jeden plik `.env` w roocie repo (wczytują go `next.config.ts` i `mikro-orm.config.ts`).
-- **Logowanie**: bez `console.log` _(lint)_; dozwolone `console.info/warn/error` do czasu wdrożenia loggera (faza E).
-- **Nazewnictwo**: pliki `kebab-case`; komponenty `PascalCase` z nazwanym eksportem (default tylko tam, gdzie wymaga go Next.js); serwisy `XService`, porty `XRepository`, adaptery `MikroXRepository`; encje w liczbie pojedynczej, tabele `snake_case`.
-- **Język**: kod, identyfikatory, komentarze, commity i nazwy testów po angielsku; teksty UI po polsku; dokumentacja projektu po polsku.
-- **Błędy**: oczekiwane błędy biznesowe jako wynik (`{ ok: false, error }`), wyjątki tylko dla błędów programistycznych/infrastruktury.
-- **React/Next**: Server Components domyślnie, `'use client'` możliwie nisko; dane tylko przez serwisy (`resolve`), do klienta wyłącznie serializowalne DTO; komponenty z danymi i hooki URL w `<Suspense>`.
-- **Baza**: indeks na każdym kluczu obcym, który nie jest pierwszą kolumną innego indeksu (`.index()` w encji); zmiany schematu wstecznie zgodne (expand → contract).
-- **Formatowanie**: Prettier (`.prettierrc.json`, sortowanie klas Tailwind) — nie formatuj ręcznie, nie spieraj się z formatterem. Uruchamiaj go **z roota repo** (`npm run format`): Prettier czyta `.prettierignore` tylko z bieżącego katalogu, więc uruchomiony z pakietu sformatuje też wygenerowane migracje.
-- **Commity**: Conventional Commits (`feat(db): …`, `fix(app): …`) — sprawdza commitlint w hooku `commit-msg`. Hooki (lefthook) instaluje `npm install`; pre-commit formatuje i lintuje. Nie uruchamiaj `lefthook run pre-commit --all-files` na drzewie z niezastage'owanymi zmianami.
-- **Skrypty pakietów są samowystarczalne**: `lint`, `typecheck`, `test` każdego pakietu muszą działać na świeżym klonie bez wcześniejszego `build`/`dev`. Jeśli zależą od plików generowanych (np. typy tras Next.js `PageProps` z `next typegen` w `.next/types`), skrypt generuje je sam (`"lint": "next typegen && eslint"`). Nigdy nie polegaj na artefaktach, które przypadkiem istnieją lokalnie.
-- **CI**: obrazy runnerów przypięte do wersji (`runs-on: ubuntu-24.04`), nigdy `*-latest` — zmiana obrazu to świadoma zmiana w PR, przetestowana na branchu. Akcje przypięte do SHA.
-- **Martwy kod**: knip musi być czysty — usuwaj nieużywane eksporty, pliki i zależności; zależność deklaruj w pakiecie, który jej faktycznie używa.
+- `packages/core/src/http/` — `errors.ts` (typed `AppError` hierarchy),
+  `apiHandler.ts` (wraps a route: catches `AppError`s, maps to status + JSON
+  envelope, logs unexpected failures), `makeCrudRoute.ts` (schema + service in,
+  `{ GET, POST, PUT, DELETE }` out, for plain CRUD resources), `auth.ts`
+  (`requireSession`, `requireRole`, ownership assertions).
+- `packages/ui/src/backend/` — `api/apiCall.ts` (the only sanctioned `fetch()` call
+  site), `forms/CrudForm.tsx`, `tables/DataTable.tsx`,
+  `feedback/{LoadingMessage,ErrorMessage,EmptyState}.tsx`.
 
-### Testy (obowiązkowe)
+New reusable components have one designated home each — never scattered ad hoc:
 
-> **Zasada 100%: każda nowa funkcja (i każda zmiana istniejącego kodu) musi mieć 100% pokrycia testami jednostkowymi — linii, gałęzi, funkcji i instrukcji — w pakiecie, którego dotyczy.** Progi `100` są ustawione w `vitest.config.ts` każdego pakietu, a job `unit` w CI pada przy jakimkolwiek spadku. Nie obniżaj progów, nie dodawaj wyłączeń z pomiaru (`exclude`, `/* v8 ignore */`) dla kodu aplikacji i nie zgłaszaj zadania jako skończonego, dopóki `npm run test:coverage` nie przechodzi. Z pomiaru wyłączone są wyłącznie: pliki testowe i infrastruktura testów (`testing/`, `integration/`), wygenerowane migracje oraz configi narzędzi.
+1. Shadcn primitive → `ui/src/components/ui/` (via `npx shadcn@latest add`, never
+   hand-written).
+2. Generic, concept-agnostic panel pattern → `ui/src/backend/<category>/`.
+3. Component tied to one concept's domain shape → `ui/src/components/<concept>/`,
+   named after the same concept folder used in `db`/`core`.
+4. Used by exactly one page → colocate next to that `page.tsx` until a second
+   consumer appears.
 
-| Poziom                 | Gdzie                                               | Narzędzie                                       | Zasada                                                                                                                                                                                                                                                                    |
-| ---------------------- | --------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit                   | `**/*.test.ts(x)` obok kodu we wszystkich pakietach | Vitest (+ Testing Library i jsdom w `ui`/`app`) | 100% pokrycia (patrz wyżej). Bez bazy, sieci i Dockera.                                                                                                                                                                                                                   |
-| Integracja — dane      | `packages/db/src/**/*.int.test.ts`                  | Vitest + Testcontainers                         | Prawdziwy Postgres 17 z prawdziwymi migracjami i seedem (`@devmentor/db/testing` → `startTestDatabase()`). Każda metoda repozytorium ma ≥ 1 test.                                                                                                                         |
-| Integracja — aplikacja | `packages/app/integration/*.int.test.ts`            | Vitest + Testcontainers + **agent-browser**     | Tymczasowa instancja: Postgres z Testcontainers → build produkcyjny → `next start` (`integration/global-setup.ts`); przeglądarką steruje `integration/browser.ts`. Każda nowa strona/ścieżka użytkownika: test treści + `seriousA11yViolations()` = `[]` (WCAG 2.2 A/AA). |
+The API envelope (`{ ok, data }` / `{ ok, error }`) is a *shape convention*, not a
+shared type: `core/src/http` and `ui/src/backend/api` each declare their own matching
+type because `ui` must not import `core`. `/api/users` + `/admin/users/page.tsx` are
+the reference example every new concept copies. See
+`.ai/specs/2026-09-01-engineering-standards.md` for the full rationale.
 
-Wzorce testów jednostkowych:
+### Scripts (run from the repo root)
 
-- **`core`**: serwisy z fake'owymi portami (`packages/core/src/testing/fixtures.ts`).
-- **`db`**: repozytoria i seeder z fake'owym `EntityManager` (`src/testing/fake-entity-manager.ts`); metadane encji przez `new MikroORM(createConfig({ discovery: { skipSyncDiscovery: false } }))` — bez połączenia z bazą.
-- **`app`**: mockuj `@/lib/container` (`resolveFrom` + `services()` z `testing/fixtures.ts`), `next/navigation`, `next/server`, `next/font/google`; `server-only` jest aliasowany na pusty moduł. Asynchroniczne Server Components testuj przez `render(await Component(props))`; komponenty asynchroniczne zagnieżdżone w `<Suspense>` wydzielaj do `components/` i testuj osobno, a w testach strony mockuj je prostym stubem.
+- `npm run dev` — start the Next.js app (`@devmentor/app`).
+- `npm run build` / `npm run start` — production build / serve (force `NODE_ENV=production`).
+- `npm run typecheck` — `tsc --noEmit` across all packages.
+- `npm run lint` — ESLint (includes the dependency-direction rules).
+- `npm run test:unit` — run TypeScript unit tests with Vitest.
+- `npm run test:unit:coverage` — run unit tests and enforce per-file 100% coverage.
+- `npm run test:integration` — create ephemeral PostgreSQL with Testcontainers,
+  build/start the app, and run the agent-browser scenarios.
+- `npm run test:browser:install` — install agent-browser's Chrome runtime locally
+  (use `test:browser:install:ci` on Linux CI to install system dependencies too).
+- `npm run db:up` / `npm run db:down` — local Postgres via `docker-compose.yml`.
+- `npm run db:migration:create -- --name <x>` — generate a migration from entity diff.
+- `npm run db:migrate` / `npm run db:migrate:down` — apply / revert migrations.
+- `npm run db:seed` — run the default seeder.
 
-Zasady ogólne:
+### Configuration
 
-- Naprawiony błąd = test regresyjny. Nazwy testów po angielsku, opisują zachowanie.
-- Testy deterministyczne: bez zależności od kolejności, czasu i stanu z innych testów.
-- **Nie umieszczaj testów ani helperów w `packages/db/src/migrations/` i `src/seeders/`** — MikroORM importuje każdy plik `.ts` z tych katalogów. Testy nie mogą zapisywać plików w repo (np. snapshotów migracji).
-- Selektory po rolach i nazwach dostępnych (`getByRole`, `find role … --name`), nie po klasach CSS.
+- Copy `.env.example` to `.env`. `.env` is git-ignored; defaults match
+  `docker-compose.yml` (`devmentor` / `devmentor` / `devmentor`).
+- All env access funnels through zod schemas — `@devmentor/core` (`config/env.ts`) for
+  the app, `@devmentor/db` (`env.ts`) for the MikroORM CLI. **Nothing else reads
+  `process.env` directly.**
 
-### Weryfikacja i Definition of Done
+### Conventions & gotchas (learned the hard way — see `.ai/lessons.md`)
 
-Przed zgłoszeniem zakończenia uruchom i potwierdź na zielono (to samo robi CI na każdym PR — joby `build`, `lint`, `unit`, `integration`):
+- **Packages ship TypeScript source**, not built JS. They are consumed via `exports`
+  → `./src/*` and compiled by Next's `transpilePackages`. There is no per-package
+  build step.
+- **Use extensionless relative imports** inside packages (`./foo`, not `./foo.js`).
+  Turbopack does not rewrite `.js`→`.ts` the way `tsc` does; extensionless works for
+  `tsc` (bundler), Turbopack, and `tsx` alike.
+- **MikroORM v7 has no decorators** in `@mikro-orm/core`. Define entities with
+  `defineEntity` + the `p` (`defineEntity.properties`) builders. For cross-entity
+  relations use a **per-property thunk** (`user: () => p.oneToOne(User)...`) so the
+  reference resolves lazily at discovery time (avoids circular-import + wrapping bugs).
+- **Entities are registered as `globalThis` singletons** (`entities/define.ts`) so the
+  same schema object is shared across Next's RSC/SSR/route module graphs. Without this,
+  queries pass a different schema instance than was discovered and `populate` breaks.
+- **`MikroORM.init()` does not connect in v7** — `getOrm()` calls `orm.connect()`
+  explicitly and does not cache a failed connection (so the app recovers if the DB
+  comes back). The ORM and awilix container are cached on `globalThis` to survive HMR.
+- **`em.persistAndFlush()` was removed** — use `em.persist(e); await em.flush()`.
+- Touch the DB only in **dynamic** routes (`export const dynamic = "force-dynamic"`)
+  and degrade gracefully; the app must build and boot with no database reachable.
+- **Public pages use Tailwind utilities; `/admin/*` pages use shadcn-ui components**
+  from `@devmentor/ui`. Add shadcn components with `npx shadcn@latest add <c>` run in
+  `packages/ui` (its `components.json` is committed).
+- Request-scoped work goes through `withScope(fn)` from `@devmentor/core`, which opens
+  an awilix scope with a forked `EntityManager` and disposes it afterward.
+- **Never hand-roll fetch / validation / error-handling / CRUD.** Server routes use
+  `makeCrudRoute`/`apiHandler` (no bare `try/catch` + `NextResponse.json`); services
+  throw the typed `AppError`s and return DTOs, never build responses. Client pages
+  fetch through `apiCall`/`apiCallOrThrow` (never raw `fetch`), forms use `CrudForm`,
+  lists use `DataTable`, and loading/error/empty states use the `feedback/` components.
+- **Collection routes are non-dynamic**, so Next passes no `params` — CRUD helpers
+  guard `ctx.params` before reading it.
 
-1. `npm run check` — format, lint, typecheck, knip;
-2. `npm run test:coverage` — testy jednostkowe ze 100% pokrycia we wszystkich pakietach;
-3. `npm run build`;
-4. `npm run test:integration` — przy zmianach w danych, UI lub routingu (wymaga Dockera; Postgres i aplikację uruchamia harness, lokalna baza nie jest potrzebna);
-5. `npm run audit` — przy zmianach zależności.
+## Testing requirements
 
-Zmiana schematu: migracja + `migration:check` bez różnic. Nowa funkcjonalność bez testów jednostkowych (100%) i — gdy dotyczy — integracyjnych nie jest skończona.
+- **Every new feature must have unit tests covering 100% of its new or changed
+  production behavior:** statements, branches, functions, and lines, per file. A
+  feature is not complete and its spec must not move to `implemented/` until
+  `npm run test:unit:coverage` proves all four metrics are 100%.
+- Add each new or changed production file to `coverage.include` in
+  `vitest.config.mts` in the same change. Coverage that only measures files imported
+  by tests is bypassable and does not satisfy this rule. Do not narrow exclusions or
+  remove a file from the coverage scope to make the gate pass.
+- Unit tests live next to their source as `*.test.ts` / `*.test.tsx`. Test every
+  success, error, validation, authorization, and edge-case branch. Every bug fix
+  requires a regression test that fails without the fix.
+- Integration/browser tests **supplement but never replace unit tests** or the 100%
+  unit-coverage requirement. Add integration coverage whenever behavior crosses the
+  app/database/API/browser boundary.
+- Integration tests must own their data and infrastructure. Use Testcontainers with
+  random ports, apply migrations, create/seed prerequisites, and clean up browser
+  sessions, app processes, and containers on success and failure. Never depend on the
+  developer database, fixed ports, or shared/demo state.
+- Use the pinned local `agent-browser` executable for browser scenarios. Observe the
+  live accessibility tree first, assert semantic roles/text rather than guessed CSS,
+  capture screenshots at key assertions, and close each isolated session in
+  `finally`.
+- The integration harness under `tests/integration/` is the sole exception to the
+  direct-environment-access rule: `environment.ts` may inherit the parent process
+  environment only to pass ephemeral test configuration to migration/build/app child
+  processes. Application and package source must still use the zod config modules.
 
-**Zmiany w CI, skryptach, konfiguracji narzędzi lub zależnościach** weryfikuj przez **`npm run ci:local`** (`scripts/ci-local.sh`), a nie przez polecenia w roboczym katalogu. Skrypt odtwarza wszystkie joby CI na czystym worktree z bieżącymi zmianami, z `turbo --force` i `pipefail`, i sprawdza, że testy nie zmieniły śledzonych plików. Lokalne gitignorowane artefakty (`.next/types`, `coverage`, `.turbo`) i cache Turborepo współdzielony między worktree potrafią ukryć błąd, który pojawi się dopiero na CI. Nowe pliki najpierw `git add` (skrypt bierze tylko śledzone). Ręczne polecenia weryfikacyjne w pipeline'ach shella uruchamiaj z `set -o pipefail` — inaczej `| tail`/`| grep` maskuje kod wyjścia.
+GitHub Actions runs Build, Lint, Unit tests, and Integration tests independently on
+every pull request. A workflow result becomes merge-blocking only when the repository
+ruleset requires those four exact check names.
 
-### Zależności
+## Spec-Driven Development (SDD)
 
-- `.npmrc` wymusza `min-release-age=14` (wersje opublikowane co najmniej 14 dni temu); wyjątek: `next`, `@next/*`, `eslint-config-next` (wymóg „najnowszego Next.js”). Nie obchodź tej polityki flagami.
-- Nowe skrypty instalacyjne pakietów domyślnie blokujemy (`allowScripts` w root `package.json`); zezwalaj tylko z uzasadnieniem.
-- Podatność bez dostępnej poprawki można dodać do allowlisty w `audit-ci.jsonc` wyłącznie z komentarzem: dlaczego nie dotyczy projektu i kiedy wrócić do tematu.
-
-## Struktura `.ai/`
+Nontrivial work in this repo is defined by a spec before it's implemented. All SDD
+artifacts live under `.ai/`.
 
 ```
 .ai/
-├── specs/                  # specyfikacje do Specification-Driven Development
-│   ├── implemented/        # specyfikacje, które zostały w pełni zaimplementowane
-│   └── archive/            # specyfikacje nieaktualne, odrzucone lub zastąpione
-├── runs/                   # logi autonomicznych przebiegów AI
-└── lessons.md + lessons/   # wnioski, ustalenia, usprawnienia (pamięć długoterminowa)
+  specs/                  active specs
+    implemented/          specs whose implementation has landed
+    archive/               specs that were superseded or abandoned
+  runs/                   logs of autonomous AI runs
+  lessons.md              index of lessons learned
+  lessons/                detailed lesson write-ups
 ```
 
-### `.ai/specs/` — specyfikacje (SDD)
+### Specs — `.ai/specs/`
 
-- Każda funkcjonalność/zmiana projektowana w podejściu Specification-Driven Development ma swoją specyfikację w `.ai/specs/`.
-- Nazwa pliku: **`YYYY-MM-DD-slug.md`** (data utworzenia specyfikacji + krótki opis slugiem, np. `2026-10-15-user-auth-flow.md`).
-- Specyfikacja powinna zawierać: cel, kontekst, zakres, decyzje projektowe, otwarte pytania, plan implementacji.
-- Gdy specyfikacja jest w pełni zaimplementowana i wdrożona — przenieś plik do `.ai/specs/implemented/` (nazwa pliku bez zmian).
-- Gdy specyfikacja jest nieaktualna, odrzucona albo zastąpiona inną — przenieś plik do `.ai/specs/archive/` (nazwa pliku bez zmian).
-- Specyfikacje aktywne/w toku zostają w `.ai/specs/` (poziom główny).
+- Naming: `YYYY-MM-DD-slug.md`, dated the day the spec was written, `slug` a short
+  kebab-case description (e.g. `2026-09-01-user-auth-refresh-tokens.md`).
+- Lifecycle:
+  1. New/active work: file lives directly in `.ai/specs/`.
+  2. Once the implementation is complete, verified, and merged: `git mv` the file into
+     `.ai/specs/implemented/`.
+  3. If a spec is superseded, abandoned, or no longer accurate: `git mv` it into
+     `.ai/specs/archive/` instead of deleting it.
+- Rules:
+  - Before starting a nontrivial feature or fix, check `.ai/specs/` and
+    `.ai/specs/implemented/` for a spec that already covers it.
+  - If none exists, write one first for anything beyond a small/obvious change.
+  - Never edit a spec after it has moved to `implemented/` or `archive/` — if
+    requirements change, write a new spec instead.
+  - A spec should cover: Problem/Goal, Non-goals, Approach, Acceptance criteria.
 
-### `.ai/runs/` — logi autonomicznych przebiegów
+### Runs — `.ai/runs/`
 
-- Każdy autonomiczny przebieg agenta (np. `/loop`, zaplanowane zadanie, dłuższa sesja bez nadzoru) zapisuje log swojego przebiegu w `.ai/runs/`.
-- Nazwa pliku: **`YYYY-MM-DD-slug.md`** (data przebiegu + krótki opis zadania).
-- Log powinien zawierać: cel przebiegu, kluczowe decyzje, wykonane kroki, napotkane problemy, wynik końcowy.
-- Logi nie są nadpisywane — jeśli przebieg jest kontynuacją wcześniejszego zadania tego samego dnia, dopisuj do istniejącego pliku; inny dzień/inne zadanie = nowy plik.
+- Every autonomous AI run (an agent operating on a task without a human reviewing
+  each step — e.g. a workflow, an unattended long-running session) produces exactly
+  one run log.
+- Naming: `YYYY-MM-DD-slug.md`, dated the day the run happened.
+- A run log should cover: what was requested, what was done, files touched, outcome,
+  and any follow-ups left for a human or a future run.
 
-### `.ai/lessons.md` i `.ai/lessons/` — wnioski i usprawnienia
+### Lessons — `.ai/lessons.md` + `.ai/lessons/`
 
-- `.ai/lessons.md` jest **indeksem** — zawiera tylko jednolinijkowe wpisy-wskaźniki do plików w `.ai/lessons/`, nie treść.
-- `.ai/lessons/` zawiera szczegółowe wpisy: jeden plik per temat/ustalenie, nazwa pliku to opisowy slug (np. `lessons/flaky-auth-tests.md`).
-- Wpis w `lessons/` powinien zawierać: co się stało / co odkryto, przyczynę (jeśli dotyczy naprawy błędu), wniosek, jak to zastosować w przyszłości.
-- Dodaj wpis zawsze, gdy: naprawiasz nietrywialny błąd, odkrywasz coś zaskakującego o kodzie/narzędziach/procesie, lub chcesz zapisać coś w pamięci długoterminowej projektu, co nie wynika bezpośrednio z kodu.
+- `.ai/lessons.md` is a chronological index — one line per lesson, most recent first.
+  Short lessons can be stated inline; anything longer gets its own file in
+  `.ai/lessons/slug.md` and is linked from the index.
+- Add a lesson when:
+  - a nontrivial bug is fixed (what was wrong, why, the fix, how to avoid it again),
+  - a project-specific gotcha or convention is discovered,
+  - the user corrects an agent's approach in a way that should persist beyond the
+    current session.
+- Check `.ai/lessons.md` at the start of related work before repeating a known
+  mistake.
 
-## Obowiązkowe zasady dla agentów
+### Enforcement
 
-1. **Na start pracy**: przeczytaj `.ai/lessons.md` (i powiązane wpisy w `.ai/lessons/`, jeśli temat zadania jest z nimi związany) oraz sprawdź `.ai/specs/`, jeśli zadanie dotyczy funkcjonalności, która może mieć istniejącą specyfikację.
-2. **Przed implementacją nietrywialnej funkcjonalności**: jeśli nie istnieje jeszcze specyfikacja dla danej zmiany, napisz ją w `.ai/specs/` zgodnie z formatem nazwy `YYYY-MM-DD-slug.md`, zanim zaczniesz pisać kod. Drobne poprawki, literówki, czysto techniczne refaktory nie wymagają specyfikacji.
-3. **Po zaimplementowaniu specyfikacji**: przenieś plik specyfikacji do `.ai/specs/implemented/`.
-4. **Przy każdym autonomicznym przebiegu** (bez bieżącego nadzoru człowieka, np. `/loop`, zadanie zaplanowane, agent działający w tle): zapisuj log w `.ai/runs/` w formacie `YYYY-MM-DD-slug.md`.
-5. **Po naprawieniu błędu lub ustaleniu czegoś nieoczywistego**: zapisz wniosek jako nowy plik w `.ai/lessons/` i dodaj do niego jednolinijkowy wpis w `.ai/lessons.md`.
-6. Nie usuwaj i nie nadpisuj istniejących plików w `.ai/` bez wyraźnej potrzeby — to historia projektu. Przenoszenie między podkatalogami (`specs/` → `implemented/`/`archive/`) jest w porządku.
-7. **Planowanie złożonych zadań**: zanim zaczniesz implementację zadania wieloetapowego, zaplanuj je (np. w trybie plan mode), zamiast pisać kod na bieżąco — dopracowany plan pozwala zaimplementować zadanie za jednym zamachem. Jeśli w trakcie coś pójdzie nie tak, wróć do planowania i zaplanuj ponownie, zamiast przepychać się przez problem.
-8. **Weryfikacja zmian**: przed zgłoszeniem zadania jako zakończone uruchom dostępne testy/lint/build i potwierdź, że problem faktycznie został naprawiony — nie tylko że kod się kompiluje.
-9. **Korekty dot. sposobu pracy agenta**: jeśli użytkownik poprawia nie kod, a Twój sposób działania (np. „nie robię tego więcej”, „zawsze pytaj przed X”) — zapisz to bezpośrednio w tym pliku (`AGENTS.md`), a nie w `.ai/lessons/`, które jest zarezerwowane dla wniosków dot. kodu/procesu projektu. Dzięki temu kolejna sesja nie powtórzy tego błędu.
+- Use this `.ai/` structure for specs, run logs, and lessons — don't create ad hoc
+  scratch docs elsewhere in the repo for these purposes.
+- Keep the `YYYY-MM-DD-slug.md` naming convention exactly as specified above.
 
-To repozytorium używa tej struktury niezależnie od narzędzia AI, z którego korzystasz (Claude Code, Codex, inne). Plik [CLAUDE.md](CLAUDE.md) wczytuje ten plik przez `@AGENTS.md`.
+## Working Rules
 
-<!-- BEGIN:turborepo-agent-rules -->
+Distilled from [Boris Cherny's Claude Code
+tips](https://ykdojo.github.io/claude-code-tips/content/boris-claude-code-tips).
+These govern *how* you work; the SDD section above governs *what artifacts* you leave
+behind.
 
-# This is NOT the Turborepo you know
+1. **Plan first, and re-plan instead of patching.** Front-load the thinking: a
+   detailed spec beats an ambiguous prompt every time. When implementation goes
+   sideways, stop and revise the plan/spec rather than reactively troubleshooting on
+   top of a bad foundation. For high-stakes plans, get a second opinion — have a
+   subagent review the plan as a skeptical staff engineer before you write code.
 
-Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+2. **Capture every correction the moment it happens.** When the user corrects your
+   approach, write the lesson to `.ai/lessons.md` (and update this file if it's a
+   standing rule) *before* continuing the task. Rules that only live in the current
+   conversation are lost; the point is that the same mistake never recurs.
 
-Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+3. **Promote anything repeated into a skill or command.** If you find yourself doing
+   the same multi-step task more than a couple of times, propose codifying it as a
+   project skill or slash command in `.claude/` instead of re-deriving the steps each
+   run.
 
-This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
-<!-- END:turborepo-agent-rules -->
+4. **Don't ship the first draft — grill it.** Before declaring work done or moving a
+   spec to `implemented/`, check the diff against the spec's acceptance criteria and
+   actively try to break it. If the result is merely adequate, scrap it and implement
+   the elegant version rather than iterating on a mediocre base. Report failures
+   plainly; never self-report success you haven't verified.
+
+5. **Delegate breadth to subagents; keep the main context for judgment.** Push wide
+   searches, multi-file reads, and independent parallel work into subagents and keep
+   only their conclusions in the main thread. A clean context window is a
+   correctness feature, not just a cost saving.

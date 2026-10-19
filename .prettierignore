@@ -10,3 +10,5 @@ skills-lock.json
 .ai/specs/archive
 .ai/runs
 .turbo
+.ai/trackers
+.ai/browsers

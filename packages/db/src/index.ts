@@ -1,8 +1,14 @@
-export * from "./entities";
-export * from "./config";
-export * from "./env";
-export * from "./orm";
-export * from "./container";
-export * from "./repositories/learning-path-repository";
-export * from "./repositories/progress-repository";
-export * from "./repositories/stats-repository";
+export * from './entities/index';
+export { createOrmConfig } from './config';
+export { getOrm, closeOrm, checkDbConnection, MikroORM } from './orm';
+export type { EntityManager } from './orm';
+export { getDbEnv, type DbEnv } from './env';
+
+// Re-export the MikroORM primitives the rest of the monorepo needs so that only
+// `db` depends on `@mikro-orm/*` directly.
+export {
+  EntityRepository,
+  type FilterQuery,
+  type Loaded,
+  type RequiredEntityData,
+} from '@mikro-orm/core';

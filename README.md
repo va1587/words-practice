@@ -1,129 +1,146 @@
 # DevMentor
 
-Platforma ścieżek nauki dla programistów: uporządkowane ścieżki (moduły → lekcje → zadania praktyczne), śledzenie postępów i panel administracyjny.
+A platform connecting developers with experienced mentors. Built as an
+npm-workspaces monorepo on Next.js 16 + React 19 + TypeScript, with PostgreSQL via
+MikroORM v7, awilix for dependency injection, Tailwind CSS for public pages, and
+shadcn-ui for the admin surface.
 
-## Stos technologiczny
+> Working in this repo as a human or an AI agent? Read **[AGENTS.md](./AGENTS.md)**
+> first — it documents the stack, conventions, and gotchas in depth.
 
-| Obszar                      | Technologia                                                     |
-| --------------------------- | --------------------------------------------------------------- |
-| Aplikacja                   | Next.js 16 (App Router, Cache Components), React 19, TypeScript |
-| Baza danych                 | PostgreSQL 17 + MikroORM 7 (migracje, seedy, pula połączeń)     |
-| Dependency Injection        | Awilix                                                          |
-| Frontend (strony publiczne) | Tailwind CSS 4                                                  |
-| Backend (panel `/admin`)    | shadcn/ui (Base UI) na tych samych tokenach Tailwind            |
-| Monorepo                    | npm workspaces                                                  |
-
-## Architektura
-
-```
-packages/
-├── app/   @devmentor/app   aplikacja Next.js — strony, routing, composition root DI
-├── core/  @devmentor/core  domena: typy, porty (interfejsy repozytoriów), serwisy
-├── db/    @devmentor/db    MikroORM: encje, konfiguracja, migracje, seedy, repozytoria
-└── ui/    @devmentor/ui    shadcn/ui, `cn`, globalny arkusz Tailwind z tokenami motywu
-```
-
-### Zależności między pakietami
-
-```mermaid
-flowchart LR
-  app["@devmentor/app"] --> core["@devmentor/core"]
-  app --> db["@devmentor/db"]
-  app --> ui["@devmentor/ui"]
-  db --> core
-```
-
-- **`core`** jest niezależny od frameworka i ORM-a. Definiuje model domenowy (`LearningPath`, `Lesson`, `UserProgress`, …), **porty** (`LearningPathRepository`, `ProgressRepository`, `StatsRepository`) oraz serwisy (`LearningPathService`, `ProgressService`, `AdminService`), które zależą wyłącznie od portów.
-- **`db`** dostarcza adaptery: repozytoria MikroORM implementujące porty z `core` i mapujące encje na typy domenowe. Tu są też encje (`defineEntity`, bez dekoratorów), migracje i seedy.
-- **`ui`** zawiera komponenty shadcn/ui i wspólne tokeny motywu (konwencja shadcn: `--background`, `--primary`, `--muted-foreground`, …). Ciemny motyw przez `prefers-color-scheme`.
-- **`app`** spina wszystko w jednym miejscu (composition root) i renderuje strony.
-
-Pakiety wewnętrzne eksportują źródła TypeScript (pole `exports`) — nie mają kroku build; kompiluje je Next.js (`transpilePackages`).
-
-### Dependency Injection (Awilix)
-
-`packages/app/lib/container.ts` tworzy kontener i wywołuje funkcje rejestracji z pakietów:
-
-| Rejestracja                                                       | Czas życia                                | Źródło         |
-| ----------------------------------------------------------------- | ----------------------------------------- | -------------- |
-| `config`                                                          | singleton                                 | `app`          |
-| `orm` (instancja MikroORM = pula połączeń)                        | singleton (jedna na proces, przetrwa HMR) | `registerDb`   |
-| `em` (`orm.em.fork()`)                                            | scope żądania                             | `registerDb`   |
-| `learningPathRepository`, `progressRepository`, `statsRepository` | scope żądania                             | `registerDb`   |
-| `learningPathService`, `progressService`, `adminService`          | scope żądania                             | `registerCore` |
-
-Scope żądania tworzy `getRequestContainer()` — raz na render dzięki `React.cache`, więc każde żądanie ma własną mapę tożsamości MikroORM. Komponenty serwerowe pobierają serwisy przez `resolve("learningPathService")`.
-
-### Przepływ danych
-
-```
-Strona (Server Component, w <Suspense>)
-  → resolve("learningPathService")        # Awilix, scope żądania
-    → LearningPathService (core)          # logika domenowa
-      → LearningPathRepository (port)     # interfejs w core
-        → MikroLearningPathRepository (db) → EntityManager (fork) → PostgreSQL
-```
-
-Przy włączonym `cacheComponents` dostęp do bazy jest danymi czasu żądania (`getRequestContainer` wywołuje `connection()`): strony mają prerenderowany statyczny shell, a dane dochodzą strumieniowo. Dzięki temu `next build` nie potrzebuje bazy.
-
-### Frontend vs. backend
-
-| Część                 | Ścieżka                                                                                             | UI                                                 |
-| --------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Strony publiczne      | `packages/app/app/(site)/` — `/`, `/paths`, `/paths/[slug]`, `/paths/[slug]/[lesson]`, `/dashboard` | Tailwind + komponenty z `packages/app/components/` |
-| Panel administracyjny | `packages/app/app/admin/` — `/admin`, `/admin/paths`                                                | shadcn/ui z `@devmentor/ui`                        |
-
-### Model danych
-
-`learning_path` 1─n `path_module` 1─n `lesson`; `app_user` n─n `learning_path` przez `enrollment`; `app_user` n─n `lesson` przez `lesson_completion`.
-
-## Uruchomienie lokalne
-
-Wymagania: Node.js 24 LTS (`.nvmrc`), npm 11, Docker. `npm install` instaluje też hooki git (lefthook).
+## Getting started
 
 ```bash
+# 1. Install (links all workspaces)
 npm install
-cp .env.example .env          # jeden .env w roocie; w dev domyślne wartości pasują do docker compose
-npm run db:up                 # PostgreSQL w Dockerze
-npm run db:migrate            # migracje
-npm run db:seed               # przykładowe ścieżki i konto demo
-npm run dev                   # http://localhost:3000
+
+# 2. Configure — copy the example and adjust if needed
+cp .env.example .env
+
+# 3. Start Postgres (defaults match .env)
+npm run db:up
+
+# 4. Create the schema and seed a sample mentor
+npm run db:migrate
+npm run db:seed
+
+# 5. Run the app
+npm run dev
 ```
 
-Do czasu wdrożenia uwierzytelniania „zalogowanym” użytkownikiem jest konto demo z seeda (`DEMO_USER_EMAIL`).
+Then open:
 
-## Skrypty
+- <http://localhost:3000> — public landing page (Tailwind).
+- <http://localhost:3000/admin> — admin dashboard (shadcn-ui).
+- <http://localhost:3000/admin/users> — users list, read through the DI container.
+- <http://localhost:3000/api/health> — app + database health JSON.
 
-| Skrypt                            | Opis                                                                                                                                        |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev` / `build` / `start` | Aplikacja Next.js (`@devmentor/app`)                                                                                                        |
-| `npm run check`                   | Wszystkie statyczne sprawdzenia: `format:check`, `lint`, `typecheck`, `knip`                                                                |
-| `npm run ci:local`                | Odtwarza wszystkie joby CI na czystym worktree z bieżącymi zmianami (`-- --skip-integration` bez Dockera)                                   |
-| `npm run typecheck`               | `tsc` we wszystkich pakietach                                                                                                               |
-| `npm run lint`                    | ESLint we wszystkich pakietach: coding standards (type-aware) i kierunek zależności (`eslint.shared.mjs`)                                   |
-| `npm run format` / `format:check` | Prettier (z sortowaniem klas Tailwind)                                                                                                      |
-| `npm run knip`                    | Nieużywane pliki, eksporty i zależności                                                                                                     |
-| `npm test`                        | Testy jednostkowe (Vitest) we wszystkich pakietach                                                                                          |
-| `npm run test:coverage`           | Testy jednostkowe z wymaganym pokryciem 100% (linie, gałęzie, funkcje, instrukcje)                                                          |
-| `npm run test:integration`        | Integracja na Postgresie z Testcontainers (wymaga Dockera): repozytoria `db` + tymczasowa instancja aplikacji testowana przez agent-browser |
-| `npm run audit`                   | Audyt zależności produkcyjnych (`audit-ci.jsonc`)                                                                                           |
-| `npm run db:up`                   | Start PostgreSQL (docker compose)                                                                                                           |
-| `npm run db:migrate`              | Zastosuj migracje                                                                                                                           |
-| `npm run db:migration:create`     | Wygeneruj migrację z różnicy encji i snapshotu                                                                                              |
-| `npm run db:seed`                 | Uruchom `DatabaseSeeder` (idempotentny)                                                                                                     |
+The app **builds and boots even with no database running**; DB-backed pages degrade
+to a visible "unavailable" state instead of crashing.
 
-Dodawanie komponentu shadcn/ui: `cd packages/app && npx shadcn@latest add <komponent>` — trafi do `packages/ui/src/components/`.
+## Scripts
 
-## CI i zależności
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Next.js dev server |
+| `npm run build` / `npm run start` | Production build / serve |
+| `npm run typecheck` | `tsc --noEmit` across all packages |
+| `npm run lint` | ESLint, including dependency-direction rules |
+| `npm run test:unit` | Run TypeScript unit tests with Vitest |
+| `npm run test:unit:coverage` | Run unit tests with per-file 100% coverage gates |
+| `npm run test:browser:install` | Install agent-browser's Chrome runtime locally |
+| `npm run test:integration` | Test an ephemeral PostgreSQL + production app with agent-browser |
+| `npm run db:up` / `npm run db:down` | Start / stop local Postgres (Docker) |
+| `npm run db:migration:create -- --name <x>` | Generate a migration from entity diff |
+| `npm run db:migrate` / `npm run db:migrate:down` | Apply / revert migrations |
+| `npm run db:seed` | Run the default seeder |
 
-- **GitHub Actions** (`.github/workflows/ci.yml`) — na każdym pull requeście cztery osobne statusy:
-  - `build` — `next build`;
-  - `lint` — Prettier, ESLint (type-aware + granice pakietów), typecheck, knip, audyt zależności;
-  - `unit` — Vitest we wszystkich pakietach, próg pokrycia **100%**;
-  - `integration` — PostgreSQL z **Testcontainers**: repozytoria `db` oraz tymczasowa instancja aplikacji (build produkcyjny + `next start`) testowana przez **[agent-browser](https://agent-browser.dev)** (treść, nawigacja, audyt dostępności axe).
-- **Turborepo** (`turbo.json`) orkiestruje zadania pakietów i cache'uje wyniki; integracja `app` zależy od `build`.
-- **Polityka wersji**: `.npmrc` instaluje tylko wersje starsze niż 14 dni (poza Next.js); **Renovate** (`renovate.json`) aktualizuje z tym samym opóźnieniem. Akcje GitHub przypięte do SHA.
+## Testing and pull-request checks
 
-## Dla agentów AI
+Every pull request runs four independent GitHub checks: **Build**, **Lint**, **Unit
+tests**, and **Integration tests**. Configure those exact names as required checks in
+the GitHub branch ruleset if merges must be blocked until they pass.
 
-Zasady pracy (architektura, SDD, logi, lekcje) są w [AGENTS.md](AGENTS.md). Specyfikacje: `.ai/specs/`.
+The unit suite uses Vitest and V8 coverage:
+
+```bash
+npm run test:unit
+npm run test:unit:coverage
+```
+
+Coverage is enforced at 100% for statements, branches, functions, and lines on every
+file listed in `vitest.config.mts`. New features must add their production files to
+that explicit list and add adjacent unit tests in the same change.
+
+The integration suite requires Docker and agent-browser's Chrome runtime. Install the
+browser once, then run the suite:
+
+```bash
+npm run test:browser:install
+npm run test:integration
+```
+
+The suite creates a fresh PostgreSQL 17 Testcontainer on a random port, applies
+migrations, seeds prerequisites, builds and starts Next.js on another random port,
+waits for database readiness, then tests the home page and admin panel through the
+pinned `agent-browser` CLI. Screenshots and app logs go to `test-results/integration/`;
+the browser, app process, and container are stopped in teardown. POSIX and native
+PowerShell launchers are also available at `tests/integration/run.sh` and
+`tests/integration/run.ps1`.
+
+## Architecture
+
+### Monorepo packages
+
+The repo is an npm-workspaces monorepo under `packages/*` with a strictly one-way
+dependency graph (enforced by ESLint — a cycle fails `npm run lint`):
+
+```
+app ──> core ──> db
+ └────> ui
+```
+
+| Package | Name | Responsibility |
+| --- | --- | --- |
+| `packages/app` | `@devmentor/app` | Next.js host and **composition root** — the only package allowed to import all others. Contains routes, layouts, and API handlers. |
+| `packages/core` | `@devmentor/core` | Config (zod), logging (pino), the **awilix DI container**, and domain services. Depends on `db`; never touches React/Next/UI. |
+| `packages/db` | `@devmentor/db` | MikroORM configuration, entities, migrations, seeders. The **leaf** — the only package that imports `@mikro-orm/*`. |
+| `packages/ui` | `@devmentor/ui` | shadcn-ui components and Tailwind design tokens. Presentational only. |
+
+Packages are consumed as **TypeScript source** (no per-package build) and transpiled
+by Next.js via `transpilePackages`.
+
+### Dependency injection
+
+`@devmentor/core` builds a single awilix container (`PROXY` injection mode, a typed
+`Cradle` interface). Lifetimes:
+
+- **Singleton** — `env`, `logger`, `orm` (cached on `globalThis` to survive HMR).
+- **Scoped** — a forked `EntityManager` and the domain services that use it.
+
+Request handlers call `withScope(fn)`, which opens a scope with its own forked
+`EntityManager`, runs the callback, and disposes the scope. The admin users page is a
+worked example: `withScope((c) => c.userService.list())` → forked EM → repository →
+entity with a populated 1:1 relation.
+
+### Database
+
+- MikroORM v7 with the PostgreSQL driver, explicit connection pooling, and migrations
+  under `packages/db/migrations`.
+- Entities are defined with `defineEntity` (MikroORM v7 dropped decorators) and
+  registered as `globalThis` singletons so the same schema object is shared across
+  Next's RSC/SSR/route module graphs.
+- The domain model ships a placeholder `User` 1:1 `MentorProfile` to exercise
+  relations, repositories, and migrations end to end.
+
+### Frontend / backend split
+
+- **Public / marketing pages** (`/`) use plain Tailwind CSS v4 utilities.
+- **Admin pages** (`/admin/*`) use shadcn-ui components from `@devmentor/ui`. The
+  design tokens live in `packages/ui/src/tokens.css`; add components with
+  `npx shadcn@latest add <component>` run inside `packages/ui`.
+
+### Spec-driven development
+
+Nontrivial work is specified before it's built. Specs, autonomous-run logs, and
+lessons live under `.ai/` — see [AGENTS.md](./AGENTS.md) for the full workflow.
