@@ -1,12 +1,12 @@
 # DevMentor — product brief
 
-- Date: 2026-10-19
+- Date: 2026-10-19 (refresh 2026-10-19: D05, D06, R06; logowanie dodane do Now)
 - Mode: own; Owner: mkz (właściciel produktu); Pass: Quick pass
 - Evidence basis: 7 rozmów z 7 różnymi osobami (4 deweloperów, z których jeden nie ma tego problemu, i 3 mentorów), eksport 109 wątków pomocy z jednego Discorda (14 dni), ankieta 54 osób z tego samego Discorda, 5 benchmarków sprawdzonych 2026-09-04, lista 50 kandydatów na mentorów. Tablica Miro to stanowiska założycieli, nie dowody. Najważniejsze niesprawdzone przekonanie: że deweloper faktycznie zapłaci obcemu mentorowi za sesję tekstową (A01) — w ankiecie zapłaciły kiedykolwiek 3 osoby z 54.
-- Coverage: 35 claims — 32 sourced (interview 14, data 6, document 11, product 0, benchmark 1), 0 synthetic, 3 assumed; 1 entries on the collection plan
+- Coverage: 39 claims — 36 sourced (interview 14, data 6, document 15, product 0, benchmark 1), 0 synthetic, 3 assumed; 1 entries on the collection plan
 - Synthetic hypotheses outside Coverage: 0
 - Definition of Ready signed by: mkz (2026-10-19) dla zakresu Now; A01–A03 niesprawdzone; ready for: implementation planning zakresu Now, testu A01 i zebrania materiału od mentorów
-- Sources: `.ai/specs/research/` (wywiady 2026-08-20 – 2026-09-03, eksport i ankieta z Discorda 2026-09-04, benchmarki 2026-09-04, lista mentorów 2026-09-04, eksporty tablicy Miro 2026-09-02 – 2026-09-05, decyzje N01, N02, D02), `packages/` (szablon aplikacji)
+- Sources: `.ai/specs/research/` (wywiady 2026-08-20 – 2026-09-03, eksport i ankieta z Discorda 2026-09-04, benchmarki 2026-09-04, lista mentorów 2026-09-04, eksporty tablicy Miro 2026-09-02 – 2026-09-05, decyzje N01, N02, D02–D06, R02–R06), `packages/core/src/http/auth.ts`, `packages/` (szablon aplikacji)
 
 ## Decision summary
 
@@ -14,9 +14,9 @@ Decyzja tej sesji: od czego zacząć DevMentora. Zakres (D03, zatwierdzony przez
 
 Problem ma oparcie w materiale: deweloperzy bez seniora pod ręką tracą pół dnia do tygodnia na konkretnym blokerze, a darmowe społeczności odpowiadają wolno albo wcale (zob. Problems). Grupa docelowa to pracujący deweloperzy i freelancerzy bez seniora; deweloper w dużej firmie z wewnętrznym kanałem tego problemu nie ma (zob. Target group).
 
-Wybrane: publiczny katalog mentorów (D02, mkz), sesje tekstowe bez wideo i bez ocen (N01, N02), długość 25/50 min (D01). Vault odkładamy, bo żaden deweloper zapytany o zapisane odpowiedzi czy subskrypcję ich nie chciał, a poparcie vaulta pochodzi tylko od mentorów.
+Wybrane: publiczny katalog mentorów (D02, mkz), do którego profil trafia po ręcznej akceptacji w panelu `/admin` (R06, D06), sesje tekstowe bez wideo i bez ocen (N01, N02), długość 25/50 min (D01). Pierwszym krokiem Now jest konto i logowanie dla obu ról (D05), bo wymagają ich D04, R06 i większość historii, a aplikacja nie ma dziś logowania. Vault odkładamy, bo żaden deweloper zapytany o zapisane odpowiedzi czy subskrypcję ich nie chciał, a poparcie vaulta pochodzi tylko od mentorów.
 
-Najbardziej może zmienić decyzję: czy deweloperzy rzeczywiście zapłacą (A01), czy mentorzy wejdą do publicznego katalogu (A02 — dwoje z trojga rozmówców-mentorów stawiało warunki, które katalog utrudnia) i czy mentor odpowie w oknie, którego potrzebuje deweloper: od 20 minut do tego samego dnia (A03).
+Najbardziej może zmienić decyzję: czy deweloperzy rzeczywiście zapłacą (A01), czy mentorzy wejdą do publicznego katalogu (A02 — dwoje z trojga rozmówców-mentorów stawiało warunki, które katalog utrudnia) i czy mentor odpowie w oknie, którego potrzebuje deweloper: od 20 minut do tego samego dnia (A03). Wymóg konta przed pytaniem (D04, D05) jest sprzeczny z „nie że zakładam konto, weryfikacja maila” z wywiadu 2026-09-01 i może spowolnić rezerwację (A01).
 
 Następny krok: rozmowy z mentorami z „ciepłej” części listy o dostępności, stawce i katalogu (plan zbierania), ręczny test płatnych sesji (A01) i regulamin przed pierwszą płatnością (Q03). Właściciel: mkz; próg dla A01 mkz ustali w trakcie testu (Q02).
 
@@ -69,7 +69,7 @@ Zamierzony kierunek założycieli, niewykazana korzyść: mentorzy zarabiają dw
 
 ## Scope
 
-- **Now (D03):** deweloper znajduje mentora w katalogu (D02), widzi cenę i dorobek, wysyła pytanie z góry z własnego konta (D04), płaci przed sesją i dostaje 25/50-minutową sesję tekstową (D01, N01, N02, R02–R05).
+- **Now (D03, D05):** najpierw konto i logowanie dla dewelopera i mentora, z rolą administratora dla akceptacji profili (D05, D06); potem deweloper znajduje mentora w katalogu (D02), widzi cenę i dorobek, wysyła pytanie z góry z własnego konta (D04), płaci przed sesją i dostaje 25/50-minutową sesję tekstową (D01, N01, N02, R02–R06).
 - **Later:** vault wiedzy mentora, subskrypcja, MCP, asynchroniczne pytania z 24-godzinnym SLA (D03; pytanie Q01 o cytowanie notatek blokuje vault, nie Now).
 - **Not doing:** see Non-goals
 
@@ -84,7 +84,7 @@ Zamierzony kierunek założycieli, niewykazana korzyść: mentorzy zarabiają dw
 ## Key flows
 
 - Current state: problem → szukanie w Google i dokumentacji → pytanie na Slacku/Discordzie → czekanie albo zła odpowiedź → obejście lub rollback. `[INTERVIEW]` research/2026-09-01-interview-backend-dev-fintech.md
-- Future state (proposal): katalog po technologii → profil z dorobkiem i ceną → pytanie z góry → płatność → mentor przyjmuje → sesja tekstowa → zwrot tego samego dnia, jeśli mentor nie przyjdzie (R02–R05). Kroki poza D01/D02 to założenia.
+- Future state (proposal): mentor zakłada konto i profil → akceptacja w `/admin` (R06, D06) → deweloper: katalog po technologii → profil z dorobkiem i ceną → konto/logowanie (D04) → pytanie z góry → płatność → mentor przyjmuje → sesja tekstowa → zwrot tego samego dnia, jeśli mentor nie przyjdzie (R02–R05). Kroki poza D01, D02, D04, D05, D06 i R06 to założenia.
 
 ## Business rules
 
@@ -95,6 +95,7 @@ Zamierzony kierunek założycieli, niewykazana korzyść: mentorzy zarabiają dw
 | R03 | Pytanie trafia do mentora z góry; mentor widzi je przed przyjęciem | rezerwacja | `[INTERVIEW]` research/2026-09-03-interview-staff-engineer-declined-before.md | active | unknown | mkz | mkz | none |
 | R04 | Płatność przed sesją; gdy mentor nie przyjdzie, zwrot tego samego dnia bez zgłoszenia | płatności | `[INTERVIEW]` research/2026-09-02-interview-freelancer-react.md | active | unknown | mkz | mkz | none |
 | R05 | Mentor nie podaje danych do wypłat przed pierwszą rezerwacją | onboarding mentora | `[INTERVIEW]` research/2026-09-03-interview-senior-python-meetups.md | active | unknown | mkz | mkz | none |
+| R06 | Profil mentora trafia do publicznego katalogu dopiero po ręcznej akceptacji | katalog, profil mentora | `[DOCUMENT]` research/decisions/R06-mentor-approval.md | active | jeśli akceptacja staje się wąskim gardłem albo mentorzy z pierwszej puli i tak odmawiają (A02) | mkz | mkz | none |
 
 ## Non-goals
 
@@ -111,6 +112,9 @@ Zamierzony kierunek założycieli, niewykazana korzyść: mentorzy zarabiają dw
 | D02 | 2026-10-19 | Deweloper znajduje mentora w publicznym katalogu | wybór właściciela spośród: tylko link mentora, katalog, mentor wybiera; materiał sprzeczny, agent nie rekomendował | mkz | active | jeśli mentorzy odmówią wejścia do katalogu (A02) | nowy wiersz mkz | `[DOCUMENT]` research/decisions/D02-public-catalogue.md | none |
 | D03 | 2026-10-19 | Najpierw płatne sesje tekstowe; vault, subskrypcja i MCP później | rekomendacja agenta z materiału, zaakceptowana przez mkz: deweloperzy chcą odpowiedzi, nie subskrypcji; alternatywy: vault najpierw, oba w MVP | mkz | active | po teście A01 | nowy wiersz mkz | `[DOCUMENT]` research/decisions/D03-text-sessions-first.md; research/2026-08-20-interview-working-dev.md, research/2026-09-01-interview-backend-dev-fintech.md, research/2026-09-02-interview-platform-dev-solves-alone.md | none |
 | D04 | 2026-10-19 | Deweloper musi mieć konto przed wysłaniem pytania | wybór właściciela spośród: z kontem, bez konta; agent nie rekomendował; sprzeczne z „nie że zakładam konto, weryfikacja maila” (wywiad 2026-09-01) | mkz | active | jeśli w teście A01 deweloperzy rezygnują przy zakładaniu konta | nowy wiersz mkz | `[DOCUMENT]` research/decisions/D04-account-before-question.md | none |
+| D05 | 2026-10-19 | Zakres Now zaczyna się od konta i logowania dla dewelopera i mentora | rekomendacja agenta zaakceptowana przez mkz: D04, R06 i większość historii wymagają sesji, a aplikacja jej nie ma (`packages/core/src/http/auth.ts`: `readSession` zawsze `null`); alternatywa: logowanie jako zależność techniczna poza briefem | mkz | active | unknown | nowy wiersz mkz | `[DOCUMENT]` research/decisions/D05-login-in-now.md | none |
+| D06 | 2026-10-19 | Akceptacja profilu mentora przyciskiem w `/admin`, chronionym rolą administratora, od razu w zakresie Now (historia akceptacji profilu) | wybór mkz wbrew rekomendacji agenta (ręczny UPDATE na start, przycisk później); koszt: rola admin w specyfikacji logowania i większy E01 | mkz | active | unknown | nowy wiersz mkz | `[DOCUMENT]` research/decisions/D06-admin-approval-button.md | none |
+| D07 | 2026-10-19 | Logowanie przez e-mail i hasło | wybór mkz spośród: GitHub (OAuth), link na e-mail, e-mail i hasło; agent nie rekomendował | mkz | active | jeśli w teście A01 deweloperzy odpadają przy zakładaniu konta | nowy wiersz mkz | `[DOCUMENT]` research/decisions/D07-email-password-login.md | none |
 
 ## Riskiest assumptions
 
@@ -139,7 +143,7 @@ Brak — w tej sesji nie było symulacji.
 
 ## Definition of Ready addendum (own)
 
-Problems i Target group mają oparcie w wywiadach (3 deweloperów z opisanym blokerem, 3 mentorów) i danych z jednego Discorda; to jedna społeczność i deklaracje w ankiecie. D03 i reguły R02–R05 zatwierdził mkz; to akceptacja kierunku, nie dowód popytu. A01–A03 są niesprawdzone; akceptacja ryzyka nie zastąpi testu płatności. Gotowe na: test A01 i rozmowy z mentorami. Zakres Now jest gotowy do planowania implementacji; przyjmowanie płatności czeka na regulamin (Q03), a ocena testu A01 na próg (Q02).
+Problems i Target group mają oparcie w wywiadach (3 deweloperów z opisanym blokerem, 3 mentorów) i danych z jednego Discorda; to jedna społeczność i deklaracje w ankiecie. D03, D05, D06 i reguły R02–R06 zatwierdził mkz; to akceptacja kierunku, nie dowód popytu. Now obejmuje teraz logowanie z rolą administratora i zabezpieczony `/admin`, które wymagają osobnej specyfikacji (D05, D06). A01–A03 są niesprawdzone; akceptacja ryzyka nie zastąpi testu płatności. Gotowe na: test A01 i rozmowy z mentorami. Zakres Now jest gotowy do planowania implementacji; przyjmowanie płatności czeka na regulamin (Q03), a ocena testu A01 na próg (Q02).
 
 ## Collection plan
 
