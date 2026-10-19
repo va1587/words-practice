@@ -35,9 +35,9 @@ Non-goals: changes to existing scripts, compose, migrations or seeder; Windows w
 
 ### Phase 1: Installer
 
-- [ ] 1.1 Add setup script and npm entry
-- [ ] 1.2 Verify idempotency and failure paths
+- [x] 1.1 Add setup script and npm entry — a64db07
+- [x] 1.2 Verify idempotency and failure paths — a64db07 (manual: fresh run, 2nd run, Docker stopped, port 5432 busy, DATABASE_URL drift)
 
 ### Phase 2: Docs
 
-- [ ] 2.1 Document npm run setup in README
+- [x] 2.1 Document npm run setup in README — 85e46ae
