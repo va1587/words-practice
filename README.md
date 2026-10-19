@@ -79,10 +79,19 @@ Przy włączonym `cacheComponents` dostęp do bazy jest danymi czasu żądania (
 
 ## Uruchomienie lokalne
 
-Wymagania: Node.js 24 LTS (`.nvmrc`), npm 11, Docker. `npm install` instaluje też hooki git (lefthook).
+Wymagania: Node.js 24 LTS (`.nvmrc`), npm 11, Docker (uruchomiony). Na Windows — przez WSL lub Git Bash.
 
 ```bash
-npm install
+npm run setup                 # konfiguracja środowiska jednym poleceniem
+npm run dev                   # http://localhost:3000
+```
+
+`npm run setup` (`scripts/setup.sh`) sprawdza wymagania, instaluje zależności (razem z hookami git lefthook), tworzy `.env` z `.env.example`, uruchamia PostgreSQL w Dockerze i czeka na jego gotowość, stosuje migracje i seed. Można go uruchamiać wielokrotnie: istniejący `.env` nigdy nie jest nadpisywany, a migracje i seed pomijają to, co już zostało zrobione.
+
+### Alternatywa: krok po kroku
+
+```bash
+npm install                   # instaluje też hooki git (lefthook)
 cp .env.example .env          # jeden .env w roocie; w dev domyślne wartości pasują do docker compose
 npm run db:up                 # PostgreSQL w Dockerze
 npm run db:migrate            # migracje
@@ -97,6 +106,7 @@ Do czasu wdrożenia uwierzytelniania „zalogowanym” użytkownikiem jest konto
 | Skrypt                            | Opis                                                                                                                                        |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run dev` / `build` / `start` | Aplikacja Next.js (`@devmentor/app`)                                                                                                        |
+| `npm run setup`                   | Idempotentna konfiguracja środowiska lokalnego: wymagania, zależności, `.env`, PostgreSQL, migracje, seed                                   |
 | `npm run check`                   | Wszystkie statyczne sprawdzenia: `format:check`, `lint`, `typecheck`, `knip`                                                                |
 | `npm run ci:local`                | Odtwarza wszystkie joby CI na czystym worktree z bieżącymi zmianami (`-- --skip-integration` bez Dockera)                                   |
 | `npm run typecheck`               | `tsc` we wszystkich pakietach                                                                                                               |
