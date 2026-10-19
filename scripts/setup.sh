@@ -25,7 +25,13 @@ fail() {
 trap 'printf "\n\033[31m✖ Krok „%s” nie powiódł się (kod %s).\033[0m\n" "$current_step" "$?" >&2' ERR
 
 # Value of KEY in a dotenv file (last assignment wins); empty when absent. Never printed.
-env_value() { { grep -E "^$1=" "$2" || true; } | tail -n 1 | cut -d= -f2-; }
+env_value() {
+  local value
+  value="$({ grep -E "^$1=" "$2" || true; } | tail -n 1 | cut -d= -f2-)"
+  value="${value%\"}"
+  value="${value#\"}"
+  printf '%s' "$value"
+}
 
 step "Wymagania"
 required_node="$(tr -d '[:space:]v' <.nvmrc)"
@@ -35,7 +41,7 @@ node_major="$(node -v | sed -E 's/^v([0-9]+).*/\1/')"
 [[ "$node_major" == "$required_node" ]] ||
   fail "Wymagany Node ${required_node}, wykryto $(node -v). Przełącz wersję: nvm use"
 npm_major="$(npm -v | cut -d. -f1)"
-((npm_major >= 11)) || fail "Wymagany npm 11 lub nowszy, wykryto $(npm -v). Zaktualizuj: npm install -g npm@11"
+[[ "$npm_major" =~ ^[0-9]+$ ]] && ((npm_major >= 11)) || fail "Wymagany npm 11 lub nowszy, wykryto $(npm -v). Zaktualizuj: npm install -g npm@11"
 command -v docker >/dev/null || fail "Brak Dockera. Zainstaluj Docker Desktop: https://docs.docker.com/get-docker/"
 docker compose version >/dev/null 2>&1 || fail "Brak wtyczki docker compose (wymagany Docker Compose v2)."
 docker info >/dev/null 2>&1 || fail "Docker nie działa. Uruchom Docker Desktop i spróbuj ponownie."
