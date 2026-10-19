@@ -31,6 +31,8 @@ Non-goals: changes to existing scripts, compose, migrations or seeder; Windows w
 
 ## Progress
 
+PR: #4
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Installer
