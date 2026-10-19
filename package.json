@@ -9,6 +9,7 @@
     "dev": "npm run dev -w @devmentor/app",
     "build": "turbo run build",
     "start": "npm run start -w @devmentor/app",
+    "setup": "bash scripts/setup.sh",
     "check": "npm run format:check && turbo run lint typecheck && npm run knip",
     "ci:local": "bash scripts/ci-local.sh",
     "lint": "turbo run lint",
