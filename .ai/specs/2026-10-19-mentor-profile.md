@@ -184,7 +184,7 @@ Specyfikacja nie zastępuje żadnego wpisu z briefu.
 3. W `packages/core/src/validators/mentors/` dodać `TECHNOLOGIES` i `mentorProfileUpsertSchema`. Napisać testy jednostkowe każdej reguły walidacji, w tym `https:`, widełek, pustej listy i duplikatów.
 4. Napisać `MentorProfileService` z metodami `getForUser(userId)` i `upsertForUser(userId, input)`. Serwis zwraca `MentorProfileDto` i zapisuje przez atomowe `em.upsert` po `user_id`. Testy jednostkowe na fake'owym `em` oraz test integracyjny równoległego zakładania profilu.
 5. Zarejestrować serwis w kontenerze (`.scoped()`) i rozszerzyć typ `Cradle`.
-6. Wyciągnąć z `makeCrudRoute.ts` eksportowany helper `parseBody(req, schema)` do `packages/core/src/http` i przepiąć na niego fabrykę bez zmiany zachowania. Komunikaty błędów chronione przez `BACKWARD_COMPATIBILITY.md` muszą zostać identyczne. Następnie dodać trasę `api/mentors/me/route.ts` (`GET`, `PUT`) z `apiHandler`, `requireSession` i `parseBody`. Testy jednostkowe tras: `401`, `404`, `422`, `200`, brak możliwości podania `userId` w ciele.
+6. Użyć `parseBody(req, schema)` z `packages/core/src/http`, dostarczonego przez Phase 1 specyfikacji logowania (`.ai/specs/2026-10-19-email-password-login.md`). Dodać trasę `api/mentors/me/route.ts` (`GET`, `PUT`) z `apiHandler`, `requireSession` i `parseBody`. Testy jednostkowe tras: `401`, `404`, `422`, `200`, brak możliwości podania `userId` w ciele.
 7. Dopisać kontrakt `/api/mentors/me` do `BACKWARD_COMPATIBILITY.md` §2 i dodać wszystkie nowe pliki do `coverage.include` w `vitest.config.mts`.
 
 ### Phase 3: panel mentora
