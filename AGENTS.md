@@ -97,14 +97,45 @@ type because `ui` must not import `core`. `/api/users` + `/admin/users/page.tsx`
 the reference example every new concept copies. See
 `.ai/specs/2026-09-01-engineering-standards.md` for the full rationale.
 
+**A navigated route redirects; a fetched route returns the envelope.** A route a browser
+navigates to directly — the two OAuth `GET`s, the email-verification `GET` — catches its
+own failures and returns a redirect `Response`, which `apiHandler` passes through
+unchanged. Someone who clicked "Sign in with GitHub" must never be shown a JSON envelope
+rendered as a page. Every other route returns the envelope and is read through `apiCall`.
+Decide which kind a new route is before writing it; the two error paths are not
+interchangeable.
+
+**Every state-changing route is JSON-only.** `apiHandler` requires the CSRF header
+`x-devmentor-request` on every method other than `GET`, `HEAD` and `OPTIONS`, so
+`makeCrudRoute`'s mutating verbs inherit the check and no route can forget it. Mutations
+are therefore called through `apiCall` or `CrudForm`, never a native HTML form — a form
+post cannot set a header, so it is refused with 403 `forbidden` before the route body
+runs. The one opt-out, `apiHandler(logic, { csrf: false })`, is reserved for the payment
+webhook, which authenticates by verifying a signature. See `BACKWARD_COMPATIBILITY.md` §7.
+
 ### Scripts (run from the repo root)
 
+- `npm run setup` — one-command installer: `npm install`, `.env` from `.env.example`,
+  PostgreSQL available, migrations, seed. **Idempotent** — every step reports itself as
+  `ran` or `skipped`, an existing `.env` is never overwritten, and the dev server is
+  deliberately not started (`npm run dev` never exits). **Docker is a fallback, not a
+  requirement**: setup TCP-probes the configured address (`DATABASE_URL`, else
+  `DB_HOST`/`DB_PORT`, environment before `.env`) and reuses any PostgreSQL already
+  listening; Compose is only used when nothing answers. Implementation in
+  `scripts/setup/` (plain Node ESM, `node:*` built-ins only, so it runs on a fresh
+  clone) — pure decisions in `steps.mjs`, all I/O behind the injectable effects in
+  `effects.mjs`, ordering in `run.mjs`.
 - `npm run dev` — start the Next.js app (`@devmentor/app`).
 - `npm run build` / `npm run start` — production build / serve (force `NODE_ENV=production`).
 - `npm run typecheck` — `tsc --noEmit` across all packages.
 - `npm run lint` — ESLint (includes the dependency-direction rules).
 - `npm run test:unit` — run TypeScript unit tests with Vitest.
 - `npm run test:unit:coverage` — run unit tests and enforce per-file 100% coverage.
+- `npm run storybook` — build the prototype and start the local component catalogue.
+- `npm run build-storybook` — build the prototype and static component catalogue.
+- `npm run typecheck:storybook` — check catalogue configuration and examples.
+- `npm run prototype` — rebuild the preview from `prototypes/devmentor-journey/`.
+- `npm run typecheck:prototype` / `npm run test:prototype` — check prototype types and regressions.
 - `npm run test:integration` — create ephemeral PostgreSQL with Testcontainers,
   build/start the app, and run the agent-browser scenarios.
 - `npm run test:browser:install` — install agent-browser's Chrome runtime locally
@@ -119,8 +150,16 @@ the reference example every new concept copies. See
 - Copy `.env.example` to `.env`. `.env` is git-ignored; defaults match
   `docker-compose.yml` (`devmentor` / `devmentor` / `devmentor`).
 - All env access funnels through zod schemas — `@devmentor/core` (`config/env.ts`) for
-  the app, `@devmentor/db` (`env.ts`) for the MikroORM CLI. **Nothing else reads
-  `process.env` directly.**
+  the app, `@devmentor/db` (`env.ts`) for the MikroORM CLI. **Nothing under `packages/`
+  reads `process.env` directly.** There are exactly two documented exceptions, both
+  outside `packages/`:
+  - `tests/integration/environment.ts` — inherits the parent environment to pass
+    ephemeral test configuration to migration/build/app child processes.
+  - `scripts/setup/effects.mjs` — `npm run setup` runs on a fresh clone *before*
+    `npm install`, so it cannot import zod. It reads `process.env`, `process.version`,
+    and `process.platform` behind the injectable `SetupEffects` adapter, and
+    re-implements the `DATABASE_URL`-over-`DB_*` precedence in `steps.mjs`
+    (`resolveDatabaseTarget`). Keep that precedence in step with the two zod schemas.
 
 ### Conventions & gotchas (learned the hard way — see `.ai/lessons.md`)
 
@@ -143,9 +182,13 @@ the reference example every new concept copies. See
 - **`em.persistAndFlush()` was removed** — use `em.persist(e); await em.flush()`.
 - Touch the DB only in **dynamic** routes (`export const dynamic = "force-dynamic"`)
   and degrade gracefully; the app must build and boot with no database reachable.
-- **Public pages use Tailwind utilities; `/admin/*` pages use shadcn-ui components**
-  from `@devmentor/ui`. Add shadcn components with `npx shadcn@latest add <c>` run in
-  `packages/ui` (its `components.json` is committed).
+- **Three UI surfaces.** Public pages — landing, `/mentors`, `/m/<slug>` and `(auth)/*`
+  — **use Tailwind utilities**; the signed-in surfaces — `(mentee)/*`, `(mentor)/*` and
+  `/admin/*` — **use shadcn-ui components** from `@devmentor/ui` inside `AppShell`
+  (`ui/src/backend/shell/AppShell.tsx`), whose `nav` is a `ReactNode` slot because `ui`
+  may not import `next` and cannot render `next/link`. Add shadcn components with
+  `npx shadcn@latest add <c>` run in `packages/ui` (its `components.json` is committed).
+  The full taxonomy is F1 in `.ai/specs/2026-09-04-platform-primitives.md`.
 - Request-scoped work goes through `withScope(fn)` from `@devmentor/core`, which opens
   an awilix scope with a forked `EntityManager` and disposes it afterward.
 - **Never hand-roll fetch / validation / error-handling / CRUD.** Server routes use
@@ -155,6 +198,45 @@ the reference example every new concept copies. See
   lists use `DataTable`, and loading/error/empty states use the `feedback/` components.
 - **Collection routes are non-dynamic**, so Next passes no `params` — CRUD helpers
   guard `ctx.params` before reading it.
+- **Never narrow an `AppError` with `instanceof`; match on its `code`.** Next evaluates
+  `@devmentor/core` once per module graph (SSR/RSC and each Route Handler) while
+  `getContainer()` shares one container through `globalThis`, so the class a service threw is
+  routinely not the class the route imported. `isAppError` is therefore a brand check
+  (`Symbol.for`, cross-realm) rather than an `instanceof` — see `APP_ERROR_BRAND` in
+  `core/src/http/errors.ts`. The same rule covers any other cross-graph identity test.
+- **Logs are redacted at the logger, but do not rely on it.** `createLogger`
+  (`packages/core/src/logger.ts`) censors `password`, `passwordHash`, `token`,
+  `authorization` and `cookie` at the top level and one and two levels below any key, so
+  `err.password` and `req.headers.authorization` are covered. That is the backstop for the
+  log call that forgets; the rule is still to log ids and outcomes, never credentials, and
+  `fetchJson` never hands a request body or request headers to a logger at all.
+
+### Design-system rules confirmed by the user
+
+- Form footer actions align right, with the secondary/Cancel action before the
+  primary submit action in DOM and visual order. Authentication actions span the
+  field width; provider alternatives use neutral styling and back navigation is
+  visually separate. Preserve this order when actions wrap on mobile.
+
+- Read `packages/ui/.storybook/Guidelines.mdx` before composing screens.
+  Use clear visual hierarchy, comfortable reading widths and generous
+  paragraph/component spacing; long prose may use 16px/28px while controls retain
+  the compact DS scale.
+- Present short comparable facts, such as a session length and its allowed price
+  range, as separate neutral, noninteractive chips. Keep units/currency explicit
+  and allow chips to wrap on mobile.
+- Homepage feature chips use generous padding, semibold blue labels and decorative
+  icons. Keep this emphasis distinct from neutral metadata and semantic statuses.
+- Write visible copy in direct, specific language using the humanizer skill.
+  Avoid generic promises and theatrical slogans; preserve product facts and useful
+  validation/recovery instructions. Keep the current UI language unless requested.
+- Never use dots, middle dots or bullet dots as inline metadata separators.
+  Separate facts with spacing, new lines or chips. Normal sentence punctuation
+  remains allowed. The reusable examples live in Storybook's usage guidelines.
+- The DevMentor wordmark uses bundled DM Mono; ordinary UI text stays in Inter.
+  The blue four-point star is the favicon. Technology chips retain text labels
+  alongside decorative icons. Mentor ratings and reviews are included as
+  presentational DS components; persistence and eligibility belong to the backend.
 
 ## Testing requirements
 
@@ -180,14 +262,37 @@ the reference example every new concept copies. See
   live accessibility tree first, assert semantic roles/text rather than guessed CSS,
   capture screenshots at key assertions, and close each isolated session in
   `finally`.
-- The integration harness under `tests/integration/` is the sole exception to the
-  direct-environment-access rule: `environment.ts` may inherit the parent process
-  environment only to pass ephemeral test configuration to migration/build/app child
-  processes. Application and package source must still use the zod config modules.
+- The integration harness under `tests/integration/` is one of the two exceptions to
+  the direct-environment-access rule (the other is `scripts/setup/` — see
+  Configuration above): `environment.ts` may inherit the parent process environment
+  only to pass ephemeral test configuration to migration/build/app child processes.
+  Application and package source must still use the zod config modules.
 
 GitHub Actions runs Build, Lint, Unit tests, and Integration tests independently on
 every pull request. A workflow result becomes merge-blocking only when the repository
 ruleset requires those four exact check names.
+
+### Testing React components and pages
+
+- **Server components are invoked, not rendered.** `page.tsx` and `layout.tsx` are async
+  functions returning an element tree. Test them by calling the exported function and
+  asserting on the tree it returns — no DOM, no renderer, the default `node` environment.
+- **Client components use Testing Library under jsdom.** Render `CrudForm`,
+  `WorkflowAction`, `AppShell` and the other `'use client'` components with
+  `@testing-library/react`. jsdom is opt-in per file through a `// @vitest-environment jsdom`
+  pragma on the first line; `node` stays the project-wide default, so no existing test
+  changes.
+- **A guarded page needs two mocking seams, because `redirect()` throws.** It does not
+  return — it raises a framework control-flow error — so the denied path yields no tree to
+  assert on. A `page.tsx` test mocks `packages/app/src/lib/session.ts`, asserts the rendered
+  tree on the authorized path, and asserts a sentinel throw from the mocked guard on the
+  denied one. `session.test.ts` mocks `next/navigation` instead and asserts `redirect` was
+  called with the expected URL. Neither test asserts against Next internals.
+- **Page-level enforcement is a recurring coverage cost.** Every guarded `page.tsx` calls the
+  guard itself rather than relying on its layout, so every guarded `page.tsx` is its own
+  `coverage.include` entry, and each one needs both the authorized and the redirected branch
+  to clear the per-file 100% bar above. That cost repeats per page; it is not a one-time
+  setup.
 
 ## Spec-Driven Development (SDD)
 
@@ -283,3 +388,14 @@ behind.
    searches, multi-file reads, and independent parallel work into subagents and keep
    only their conclusions in the main thread. A clean context window is a
    correctness feature, not just a cost saving.
+
+6. **Work locally; obtain explicit permission before any remote write.** Prepare
+   and review changes locally. Never push commits, create or update remote PRs or
+   issues, publish/deploy artifacts, or write changes to Figma or another external
+   service without the user's explicit approval for that action. Read-only remote
+   research remains allowed. A request to build or edit something locally is not
+   approval to publish it.
+7. **Keep session materials out of commits.** Run logs, local PR drafts, working
+   references and generated previews stay local. Review the staged file list and
+   commit only the requested project deliverables and their required source,
+   tests and documentation.
