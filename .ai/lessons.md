@@ -12,6 +12,7 @@ Format wpisu:
 
 ## Wpisy
 
+- [CI a zrzuty kodu z lekcji](lessons/ci-script-names-match-package-json.md) — zrzut z lekcji 3 usunął prettier/knip/audit-ci, a CI dalej je wołał; sprawdź po każdej podmianie `package.json`
 - [Nieznane parametry → HTTP 200 przy Cache Components](lessons/cache-components-unknown-params-404.md) — `notFound()` na dynamicznej trasie nie daje statusu 404; sprawdź przy testach 404/SEO
 - [Dostęp do bazy przy Cache Components](lessons/cache-components-db-access.md) — dlaczego `getRequestContainer()` woła `connection()` i dane muszą być w `<Suspense>`; sprawdź przy błędach prerenderu z `Date.now()`
 - [`usePathname()` w layoucie a Suspense](lessons/cache-components-usepathname-suspense.md) — błąd buildu „URL data outside of Suspense” w nawigacji na trasach dynamicznych

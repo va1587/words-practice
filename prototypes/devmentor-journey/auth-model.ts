@@ -4,7 +4,7 @@ export type DemoRole = 'mentee' | 'mentor' | 'operator';
 export type DemoUser = { id: string; displayName: string; email: string; roles: DemoRole[] };
 export type AuthDemoFailure = 'none' | 'rate-limited' | 'service-unavailable' | 'mail-unavailable';
 export type AuthDemoGithubOutcome = 'success' | 'cancelled' | 'state' | 'unavailable' | 'email' | 'link';
-export type AuthDemoState =
+type AuthDemoState =
   | 'invalid-credentials' | 'unverified-email' | 'account-exists' | 'github-account'
   | 'verification-expired' | 'verification-invalid' | 'github-cancelled' | 'github-state'
   | 'github-unavailable' | 'github-email' | 'github-link'

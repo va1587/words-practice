@@ -133,7 +133,9 @@ export async function signInCookieHeader(baseUrl: string, login: string): Promis
     throw new Error(`Starting a mock sign-in answered ${start.status} with no redirect.`);
   }
 
-  const callback = await fetch(authorizeUrl, {
+  // The mock adapter answers with a relative `Location` on purpose (see `authorizeUrl` in
+  // mock-github-identity.ts); resolve it against the app's origin the way a browser would.
+  const callback = await fetch(new URL(authorizeUrl, baseUrl), {
     redirect: 'manual',
     headers: { cookie: cookieHeader(jar) },
   });

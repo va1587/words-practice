@@ -1,6 +1,6 @@
 {
   "printWidth": 100,
   "plugins": ["prettier-plugin-tailwindcss"],
-  "tailwindStylesheet": "./packages/ui/src/styles/globals.css",
+  "tailwindStylesheet": "./packages/app/src/app/globals.css",
   "tailwindFunctions": ["cn", "cva"]
 }
