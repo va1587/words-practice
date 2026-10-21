@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react';
-import Link from 'next/link';
-import type { Session } from '@devmentor/core';
-import { SignOutAction } from '@devmentor/ui';
-import { AppShell } from '@devmentor/ui/backend';
-import { navLinksFor } from '../lib/nav';
-import { displayNameFor } from '../lib/workspace-user';
+import type { ReactNode } from "react";
+import Link from "next/link";
+import type { Session } from "@devmentor/core";
+import { SignOutAction } from "@devmentor/ui";
+import { AppShell } from "@devmentor/ui/backend";
+import { navLinksFor } from "../lib/nav";
+import { displayNameFor } from "../lib/workspace-user";
 
 /**
  * The chrome every signed-in surface renders — `AppShell` (primitives F2) filled in with

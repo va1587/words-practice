@@ -24,7 +24,7 @@
  * log is either a mistake or an encoding accident, and neither is worth logging.
  */
 export function withoutQuery(url: string): string {
-  return url.replace(/[?#][\s\S]*$/, '');
+  return url.replace(/[?#][\s\S]*$/, "");
 }
 
 /**

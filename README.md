@@ -66,13 +66,13 @@ DATABASE_URL=postgres://user:password@db.example.com:5432/devmentor npm run setu
   DevMentor database; Docker not needed
 ```
 
-The check is a TCP probe, so it can tell that *something* is listening but not that it
+The check is a TCP probe, so it can tell that _something_ is listening but not that it
 speaks PostgreSQL. If the listener turns out not to be your DevMentor database, the
 `Apply migrations` step below it reports the real connection error.
 
 Resolution order matches the Zod config modules: `DATABASE_URL` wins over
 `DB_HOST`/`DB_PORT`, and the real environment wins over `.env`. With no database
-reachable *and* no Docker, setup stops and names both remedies rather than failing
+reachable _and_ no Docker, setup stops and names both remedies rather than failing
 with a stack trace.
 
 ### Manual setup (alternative)
@@ -119,36 +119,36 @@ MikroORM CLI. Nothing under `packages/` reads `process.env` directly.
 
 ### Application
 
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `NODE_ENV` | `development` | `development`, `test`, or `production`. |
-| `APP_NAME` | `DevMentor` | Name attached to every log line. |
-| `LOG_LEVEL` | `info` | pino level, from `fatal` to `silent`. |
-| `APP_URL` | `http://localhost:3000` | Absolute origin of this deployment. Builds the OAuth redirect URI and the links in outbound mail, so it must be the address a browser actually reaches. Must be `http://` or `https://`. |
-| `TRUSTED_PROXY_HOPS` | `0` | How many reverse proxies sit in front of the app. The rate limiter takes the client IP this many hops from the right of `x-forwarded-for`; `0` trusts no forwarded header, so per-IP limiting is off and only the per-email limits apply (a warning says so once per process). Counting from the right is deliberate: a proxy appends to the header, so a value a client forged always sits to the left of the one infrastructure wrote. |
+| Variable             | Default                 | What it does                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`           | `development`           | `development`, `test`, or `production`.                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `APP_NAME`           | `DevMentor`             | Name attached to every log line.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `LOG_LEVEL`          | `info`                  | pino level, from `fatal` to `silent`.                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `APP_URL`            | `http://localhost:3000` | Absolute origin of this deployment. Builds the OAuth redirect URI and the links in outbound mail, so it must be the address a browser actually reaches. Must be `http://` or `https://`.                                                                                                                                                                                                                                                 |
+| `TRUSTED_PROXY_HOPS` | `0`                     | How many reverse proxies sit in front of the app. The rate limiter takes the client IP this many hops from the right of `x-forwarded-for`; `0` trusts no forwarded header, so per-IP limiting is off and only the per-email limits apply (a warning says so once per process). Counting from the right is deliberate: a proxy appends to the header, so a value a client forged always sits to the left of the one infrastructure wrote. |
 
 ### Database
 
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `DATABASE_URL` | *(unset)* | Full connection URL. Takes precedence over every `DB_*` variable it replaces. |
-| `DB_HOST` / `DB_PORT` | `127.0.0.1` / `5432` | Discrete connection, used when `DATABASE_URL` is unset. |
-| `DB_NAME` / `DB_USER` / `DB_PASSWORD` | `devmentor` | Discrete connection, as above. Defaults match `docker-compose.yml`. |
-| `DB_POOL_MIN` / `DB_POOL_MAX` | `2` / `10` | Connection pool bounds. Not implied by `DATABASE_URL`. |
-| `DB_POOL_IDLE_MS` | `30000` | How long an idle pooled connection is kept. |
-| `DB_DEBUG` | `false` | `true` logs every SQL statement. |
+| Variable                              | Default              | What it does                                                                  |
+| ------------------------------------- | -------------------- | ----------------------------------------------------------------------------- |
+| `DATABASE_URL`                        | _(unset)_            | Full connection URL. Takes precedence over every `DB_*` variable it replaces. |
+| `DB_HOST` / `DB_PORT`                 | `127.0.0.1` / `5432` | Discrete connection, used when `DATABASE_URL` is unset.                       |
+| `DB_NAME` / `DB_USER` / `DB_PASSWORD` | `devmentor`          | Discrete connection, as above. Defaults match `docker-compose.yml`.           |
+| `DB_POOL_MIN` / `DB_POOL_MAX`         | `2` / `10`           | Connection pool bounds. Not implied by `DATABASE_URL`.                        |
+| `DB_POOL_IDLE_MS`                     | `30000`              | How long an idle pooled connection is kept.                                   |
+| `DB_DEBUG`                            | `false`              | `true` logs every SQL statement.                                              |
 
 ### Authentication
 
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `SESSION_SECRET` | *(unset)* | Signs every session cookie and every short-lived purpose token. At least 32 characters — a shorter value is rejected at boot. Generate one with `openssl rand -base64 32`. |
-| `SESSION_SECRET_PREVIOUS` | *(unset)* | The outgoing secret during a rotation. Accepted on verify, never used to sign, so live sessions survive their remaining lifetime. Same 32-character minimum. |
-| `GITHUB_CLIENT_ID` | *(unset)* | GitHub OAuth app client ID — see below. |
-| `GITHUB_CLIENT_SECRET` | *(unset)* | GitHub OAuth app client secret. |
-| `PASSWORD_HASH_CONCURRENCY` | `2` | How many `scrypt` hashes may run at once in this process. The bound is memory, not CPU: at the parameters this project fixes (N=2¹⁷, r=8, p=1) one hash holds 128 MiB for its whole duration, so `2` caps the hashing path at ~256 MiB. It cannot be unbounded, because the rate limiter in front of it is keyed per IP *and* per email rather than globally. Raising it past `UV_THREADPOOL_SIZE` (4 by default) buys queueing inside libuv rather than more parallelism. |
-| `PASSWORD_HASH_WAIT_MS` | `2000` | How long a request waits for a free hashing slot before the gate answers `503 service_unavailable`. That 503 is deliberately raised *before* the rate limiter is consumed, so a burst cannot lock out users who were merely unlucky. `0` means never queue. |
-| `OPERATOR_EMAILS` | *(empty)* | Comma-separated founder addresses. Operator authority is derived from this list on **every** request and matched, trimmed and case-insensitively, against the account's verified email — so removing an address takes effect on that person's very next request rather than at their next sign-in. |
+| Variable                    | Default   | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SESSION_SECRET`            | _(unset)_ | Signs every session cookie and every short-lived purpose token. At least 32 characters — a shorter value is rejected at boot. Generate one with `openssl rand -base64 32`.                                                                                                                                                                                                                                                                                                 |
+| `SESSION_SECRET_PREVIOUS`   | _(unset)_ | The outgoing secret during a rotation. Accepted on verify, never used to sign, so live sessions survive their remaining lifetime. Same 32-character minimum.                                                                                                                                                                                                                                                                                                               |
+| `GITHUB_CLIENT_ID`          | _(unset)_ | GitHub OAuth app client ID — see below.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `GITHUB_CLIENT_SECRET`      | _(unset)_ | GitHub OAuth app client secret.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `PASSWORD_HASH_CONCURRENCY` | `2`       | How many `scrypt` hashes may run at once in this process. The bound is memory, not CPU: at the parameters this project fixes (N=2¹⁷, r=8, p=1) one hash holds 128 MiB for its whole duration, so `2` caps the hashing path at ~256 MiB. It cannot be unbounded, because the rate limiter in front of it is keyed per IP _and_ per email rather than globally. Raising it past `UV_THREADPOOL_SIZE` (4 by default) buys queueing inside libuv rather than more parallelism. |
+| `PASSWORD_HASH_WAIT_MS`     | `2000`    | How long a request waits for a free hashing slot before the gate answers `503 service_unavailable`. That 503 is deliberately raised _before_ the rate limiter is consumed, so a burst cannot lock out users who were merely unlucky. `0` means never queue.                                                                                                                                                                                                                |
+| `OPERATOR_EMAILS`           | _(empty)_ | Comma-separated founder addresses. Operator authority is derived from this list on **every** request and matched, trimmed and case-insensitively, against the account's verified email — so removing an address takes effect on that person's very next request rather than at their next sign-in.                                                                                                                                                                         |
 
 ### Signing in
 
@@ -185,20 +185,20 @@ applies.
 falls back to the log mailer described above; a production deployment without a key fails
 at container creation rather than serving a registration form that always 503s.
 
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `MAILER_ADAPTER` | *(unset)* | `resend` for real delivery. Left unset in development the log mailer will be selected on its own; `log` set explicitly is refused outside an integration run (below). |
-| `MAIL_API_KEY` | *(unset)* | Resend API key. |
-| `MAIL_FROM` | *(unset)* | Envelope sender, e.g. `DevMentor <hello@devmentor.example.com>`. |
+| Variable         | Default   | What it does                                                                                                                                                          |
+| ---------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MAILER_ADAPTER` | _(unset)_ | `resend` for real delivery. Left unset in development the log mailer will be selected on its own; `log` set explicitly is refused outside an integration run (below). |
+| `MAIL_API_KEY`   | _(unset)_ | Resend API key.                                                                                                                                                       |
+| `MAIL_FROM`      | _(unset)_ | Envelope sender, e.g. `DevMentor <hello@devmentor.example.com>`.                                                                                                      |
 
 ### Integration-test doubles
 
 Set by `tests/integration/environment.ts`, never on a real deployment.
 
-| Variable | Default | What it does |
-| --- | --- | --- |
-| `AUTH_IDENTITY_ADAPTER` | *(unset)* | `github` for real sign-in, `mock` for the harness double. |
-| `INTEGRATION_TEST_RUN` | *(unset)* | The literal `1` marks the process as an integration-test run, which is what permits a `mock` or `log` adapter. |
+| Variable                | Default   | What it does                                                                                                   |
+| ----------------------- | --------- | -------------------------------------------------------------------------------------------------------------- |
+| `AUTH_IDENTITY_ADAPTER` | _(unset)_ | `github` for real sign-in, `mock` for the harness double.                                                      |
+| `INTEGRATION_TEST_RUN`  | _(unset)_ | The literal `1` marks the process as an integration-test run, which is what permits a `mock` or `log` adapter. |
 
 ### Missing, dangerous, and required-in-production
 
@@ -244,21 +244,21 @@ signals (`tests/integration/environment.ts`); you do not need any of them in a l
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `npm run setup` | One-command install, configure, database up, migrate, and seed (idempotent; reuses an existing PostgreSQL, Docker only as fallback) |
-| `npm run dev` | Start the Next.js dev server |
-| `npm run build` / `npm run start` | Production build / serve |
-| `npm run typecheck` | `tsc --noEmit` across all packages |
-| `npm run lint` | ESLint, including dependency-direction rules |
-| `npm run test:unit` | Run TypeScript unit tests with Vitest |
-| `npm run test:unit:coverage` | Run unit tests with per-file 100% coverage gates |
-| `npm run test:browser:install` | Install agent-browser's Chrome runtime locally |
-| `npm run test:integration` | Test an ephemeral PostgreSQL + production app with agent-browser |
-| `npm run db:up` / `npm run db:down` | Start / stop local Postgres (Docker) |
-| `npm run db:migration:create -- --name <x>` | Generate a migration from entity diff |
-| `npm run db:migrate` / `npm run db:migrate:down` | Apply / revert migrations |
-| `npm run db:seed` | Run the default seeder |
+| Command                                          | Description                                                                                                                         |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run setup`                                  | One-command install, configure, database up, migrate, and seed (idempotent; reuses an existing PostgreSQL, Docker only as fallback) |
+| `npm run dev`                                    | Start the Next.js dev server                                                                                                        |
+| `npm run build` / `npm run start`                | Production build / serve                                                                                                            |
+| `npm run typecheck`                              | `tsc --noEmit` across all packages                                                                                                  |
+| `npm run lint`                                   | ESLint, including dependency-direction rules                                                                                        |
+| `npm run test:unit`                              | Run TypeScript unit tests with Vitest                                                                                               |
+| `npm run test:unit:coverage`                     | Run unit tests with per-file 100% coverage gates                                                                                    |
+| `npm run test:browser:install`                   | Install agent-browser's Chrome runtime locally                                                                                      |
+| `npm run test:integration`                       | Test an ephemeral PostgreSQL + production app with agent-browser                                                                    |
+| `npm run db:up` / `npm run db:down`              | Start / stop local Postgres (Docker)                                                                                                |
+| `npm run db:migration:create -- --name <x>`      | Generate a migration from entity diff                                                                                               |
+| `npm run db:migrate` / `npm run db:migrate:down` | Apply / revert migrations                                                                                                           |
+| `npm run db:seed`                                | Run the default seeder                                                                                                              |
 
 ## Testing and pull-request checks
 
@@ -305,12 +305,12 @@ app ──> core ──> db
  └────> ui
 ```
 
-| Package | Name | Responsibility |
-| --- | --- | --- |
-| `packages/app` | `@devmentor/app` | Next.js host and **composition root** — the only package allowed to import all others. Contains routes, layouts, and API handlers. |
-| `packages/core` | `@devmentor/core` | Config (zod), logging (pino), the **awilix DI container**, and domain services. Depends on `db`; never touches React/Next/UI. |
-| `packages/db` | `@devmentor/db` | MikroORM configuration, entities, migrations, seeders. The **leaf** — the only package that imports `@mikro-orm/*`. |
-| `packages/ui` | `@devmentor/ui` | shadcn-ui components and Tailwind design tokens. Presentational only. |
+| Package         | Name              | Responsibility                                                                                                                     |
+| --------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/app`  | `@devmentor/app`  | Next.js host and **composition root** — the only package allowed to import all others. Contains routes, layouts, and API handlers. |
+| `packages/core` | `@devmentor/core` | Config (zod), logging (pino), the **awilix DI container**, and domain services. Depends on `db`; never touches React/Next/UI.      |
+| `packages/db`   | `@devmentor/db`   | MikroORM configuration, entities, migrations, seeders. The **leaf** — the only package that imports `@mikro-orm/*`.                |
+| `packages/ui`   | `@devmentor/ui`   | shadcn-ui components and Tailwind design tokens. Presentational only.                                                              |
 
 Packages are consumed as **TypeScript source** (no per-package build) and transpiled
 by Next.js via `transpilePackages`.

@@ -1,45 +1,45 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-import type { EntityManager } from '@mikro-orm/postgresql';
-import { MikroORM } from '@mikro-orm/postgresql';
-import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import type { EntityManager } from "@mikro-orm/postgresql";
+import { MikroORM } from "@mikro-orm/postgresql";
+import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   RateLimiter,
   TooManyRequestsError,
   rateLimitKey,
   type RateLimitPolicy,
-} from '@devmentor/core';
+} from "@devmentor/core";
 
 const execFileAsync = promisify(execFile);
 const root = process.cwd();
-const npmExecutable = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
 
 /** The migrations under test, and the one that must survive their rollback. */
-const BASE_MIGRATION = 'Migration20260901142829';
-const AUTH_IDENTITY_MIGRATION = 'Migration20260909222320_auth_identity';
-const AUTH_PASSWORD_MIGRATION = 'Migration20260910092433_auth_password';
-const AUTH_RATE_LIMITS_MIGRATION = 'Migration20260910095701_auth_rate_limits';
+const BASE_MIGRATION = "Migration20260901142829";
+const AUTH_IDENTITY_MIGRATION = "Migration20260909222320_auth_identity";
+const AUTH_PASSWORD_MIGRATION = "Migration20260910092433_auth_password";
+const AUTH_RATE_LIMITS_MIGRATION = "Migration20260910095701_auth_rate_limits";
 
 /** A row created before `auth-identity` — the population the backfill exists for. */
-const LEGACY_EMAIL = 'legacy@devmentor.test';
+const LEGACY_EMAIL = "legacy@devmentor.test";
 
 const NEW_COLUMNS = [
-  'avatar_url',
-  'email_verified_at',
-  'github_id',
-  'github_login',
-  'roles',
-  'session_version',
+  "avatar_url",
+  "email_verified_at",
+  "github_id",
+  "github_login",
+  "roles",
+  "session_version",
 ];
 
-const NEW_CONSTRAINTS = ['users_github_id_unique', 'users_roles_check', 'users_roles_non_empty'];
+const NEW_CONSTRAINTS = ["users_github_id_unique", "users_roles_check", "users_roles_non_empty"];
 
 /** The `users` column `auth-password` adds, on its own so the two migrations stay separable. */
-const PASSWORD_COLUMN = 'password_hash';
+const PASSWORD_COLUMN = "password_hash";
 
 /** The whole of `auth_rate_limits` — three columns, and deliberately no base columns. */
-const RATE_LIMIT_COLUMNS = ['count', 'key', 'window_start'];
+const RATE_LIMIT_COLUMNS = ["count", "key", "window_start"];
 
 /**
  * `auth-identity` and `auth-password`, each up / down / up against a database of its own.
@@ -62,7 +62,7 @@ const RATE_LIMIT_COLUMNS = ['count', 'key', 'window_start'];
  * app) cannot survive. `DB_MIGRATIONS_SNAPSHOT=false` keeps `migration:up`/`:down` from
  * rewriting the repository's committed schema snapshot from this throwaway database.
  */
-describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
+describe("TC-DB-001 the auth-identity and auth-password migrations", () => {
   let postgres: StartedPostgreSqlContainer | undefined;
   let orm: MikroORM | undefined;
   let childEnvironment: NodeJS.ProcessEnv;
@@ -70,17 +70,18 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
   async function migrate(...extraArgs: string[]): Promise<void> {
     await execFileAsync(
       npmExecutable,
-      ['run', 'migration:up', '--workspace', '@devmentor/db', '--', ...extraArgs],
+      ["run", "migration:up", "--workspace", "@devmentor/db", "--", ...extraArgs],
       { cwd: root, env: childEnvironment, maxBuffer: 20 * 1024 * 1024, timeout: 120_000 },
     );
   }
 
   async function rollbackOne(): Promise<void> {
-    await execFileAsync(
-      npmExecutable,
-      ['run', 'migration:down', '--workspace', '@devmentor/db'],
-      { cwd: root, env: childEnvironment, maxBuffer: 20 * 1024 * 1024, timeout: 120_000 },
-    );
+    await execFileAsync(npmExecutable, ["run", "migration:down", "--workspace", "@devmentor/db"], {
+      cwd: root,
+      env: childEnvironment,
+      maxBuffer: 20 * 1024 * 1024,
+      timeout: 120_000,
+    });
   }
 
   async function query<T extends object>(sql: string): Promise<T[]> {
@@ -101,7 +102,7 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     return query(`
       select column_name, udt_name
       from information_schema.columns
-      where table_name = 'users' and column_name in (${NEW_COLUMNS.map((c) => `'${c}'`).join(', ')})
+      where table_name = 'users' and column_name in (${NEW_COLUMNS.map((c) => `'${c}'`).join(", ")})
       order by column_name
     `);
   }
@@ -130,7 +131,7 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       from pg_constraint con
       join pg_class rel on rel.oid = con.conrelid
       where rel.relname = 'users'
-        and con.conname in (${NEW_CONSTRAINTS.map((c) => `'${c}'`).join(', ')})
+        and con.conname in (${NEW_CONSTRAINTS.map((c) => `'${c}'`).join(", ")})
       order by con.conname
     `);
   }
@@ -167,7 +168,7 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
         insert into users (id, created_at, updated_at, email, display_name, roles)
         values (gen_random_uuid(), now(), now(), 'probe-${Date.now()}@devmentor.test', 'Probe', ${roles})
       `);
-      return 'accepted';
+      return "accepted";
     } catch (error) {
       const violated = (error as { code?: string; constraint?: string }).constraint;
       return violated ?? String(error);
@@ -175,18 +176,18 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
   }
 
   beforeAll(async () => {
-    postgres = await new PostgreSqlContainer('postgres:17-alpine')
-      .withDatabase('devmentor_migration_test')
-      .withUsername('devmentor')
-      .withPassword('devmentor')
+    postgres = await new PostgreSqlContainer("postgres:17-alpine")
+      .withDatabase("devmentor_migration_test")
+      .withUsername("devmentor")
+      .withPassword("devmentor")
       .start();
 
     const clientUrl = postgres.getConnectionUri();
     childEnvironment = {
       ...process.env,
       DATABASE_URL: clientUrl,
-      DB_POOL_MIN: '0',
-      DB_POOL_MAX: '5',
+      DB_POOL_MIN: "0",
+      DB_POOL_MAX: "5",
       // Never let a throwaway database rewrite `packages/db/migrations/devmentor.json`:
       // `migration:up`/`:down` re-store the snapshot from introspection when it differs,
       // and this suite deliberately rolls the schema backwards, so it differs by design.
@@ -195,7 +196,7 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       // reach the Migrator: the constructor merges as `Utils.merge(env, options)` unless
       // `preferEnvVars` is set, so `packages/db/src/config.ts`'s explicit `snapshot` wins.
       // `DB_MIGRATIONS_SNAPSHOT` is that config value's own input, so it actually applies.
-      DB_MIGRATIONS_SNAPSHOT: 'false',
+      DB_MIGRATIONS_SNAPSHOT: "false",
     };
 
     orm = await MikroORM.init({
@@ -210,7 +211,7 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     await orm.connect();
 
     // Stop one migration short, then create the row the backfill has to find.
-    await migrate('--to', BASE_MIGRATION);
+    await migrate("--to", BASE_MIGRATION);
     await query(`
       insert into users (id, created_at, updated_at, email, display_name)
       values (gen_random_uuid(), now(), now(), '${LEGACY_EMAIL}', 'Legacy Row')
@@ -222,29 +223,29 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     await postgres?.stop();
   });
 
-  it('applies: adds the columns and constraints and verifies every existing row', async () => {
+  it("applies: adds the columns and constraints and verifies every existing row", async () => {
     // Stop at `auth-identity` so the two migrations are asserted apart; the next block
     // brings the database the rest of the way.
-    await migrate('--to', AUTH_IDENTITY_MIGRATION);
+    await migrate("--to", AUTH_IDENTITY_MIGRATION);
 
     expect(await appliedMigrations()).toEqual([BASE_MIGRATION, AUTH_IDENTITY_MIGRATION]);
     expect(await newColumns()).toEqual([
-      { column_name: 'avatar_url', udt_name: 'text' },
-      { column_name: 'email_verified_at', udt_name: 'timestamptz' },
-      { column_name: 'github_id', udt_name: 'varchar' },
-      { column_name: 'github_login', udt_name: 'varchar' },
+      { column_name: "avatar_url", udt_name: "text" },
+      { column_name: "email_verified_at", udt_name: "timestamptz" },
+      { column_name: "github_id", udt_name: "varchar" },
+      { column_name: "github_login", udt_name: "varchar" },
       // `_text` is a native `text[]`. `varchar(255)[]` or `jsonb` here would break `@>`
       // membership querying, which every authorization decision rests on.
-      { column_name: 'roles', udt_name: '_text' },
-      { column_name: 'session_version', udt_name: 'int4' },
+      { column_name: "roles", udt_name: "_text" },
+      { column_name: "session_version", udt_name: "int4" },
     ]);
     expect(await newConstraints()).toEqual([
-      { conname: 'users_github_id_unique', def: 'UNIQUE (github_id)' },
+      { conname: "users_github_id_unique", def: "UNIQUE (github_id)" },
       {
-        conname: 'users_roles_check',
+        conname: "users_roles_check",
         def: "CHECK ((roles <@ ARRAY['mentee'::text, 'mentor'::text, 'operator'::text]))",
       },
-      { conname: 'users_roles_non_empty', def: 'CHECK ((cardinality(roles) >= 1))' },
+      { conname: "users_roles_non_empty", def: "CHECK ((cardinality(roles) >= 1))" },
     ]);
 
     const legacy = await queryOne<{ roles: string[]; verified: boolean; session_version: number }>(
@@ -254,24 +255,24 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     // The backfill is the point: a row left unverified could never link a GitHub
     // identity, and deleting it instead would take Ada Lovelace's row with it.
     expect(legacy.verified).toBe(true);
-    expect(legacy.roles).toEqual(['mentee']);
+    expect(legacy.roles).toEqual(["mentee"]);
     expect(legacy.session_version).toBe(0);
   });
 
-  it('enforces the roles constraints, including the empty array', async () => {
+  it("enforces the roles constraints, including the empty array", async () => {
     // `array_length('{}', 1)` is NULL and a CHECK passes on NULL, so the empty case is
     // the one a plausible `array_length` implementation would let through.
-    expect(await insertRoles(`'{}'`)).toBe('users_roles_non_empty');
-    expect(await insertRoles(`'{admin}'`)).toBe('users_roles_check');
-    expect(await insertRoles(`array['mentee', null]`)).toBe('users_roles_check');
-    expect(await insertRoles(`'{operator,mentor}'`)).toBe('accepted');
+    expect(await insertRoles(`'{}'`)).toBe("users_roles_non_empty");
+    expect(await insertRoles(`'{admin}'`)).toBe("users_roles_check");
+    expect(await insertRoles(`array['mentee', null]`)).toBe("users_roles_check");
+    expect(await insertRoles(`'{operator,mentor}'`)).toBe("accepted");
   });
 
-  it('applies auth-password: one nullable text column and nothing else', async () => {
+  it("applies auth-password: one nullable text column and nothing else", async () => {
     // `--to` again rather than a bare `migrate()`: `auth-rate-limits` sits behind this one
     // and has to be asserted on its own, the same way `auth-password` is asserted apart
     // from `auth-identity`.
-    await migrate('--to', AUTH_PASSWORD_MIGRATION);
+    await migrate("--to", AUTH_PASSWORD_MIGRATION);
 
     expect(await appliedMigrations()).toEqual([
       BASE_MIGRATION,
@@ -280,13 +281,13 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     ]);
     expect(await passwordColumn()).toEqual([
       {
-        column_name: 'password_hash',
+        column_name: "password_hash",
         // `text`. A `varchar` here would report `varchar` and pin the column to bcrypt's
         // 60-character output width, closing the argon2id upgrade path the spec keeps open.
-        udt_name: 'text',
+        udt_name: "text",
         // A GitHub-only account has no password, so `not null` could not be satisfied by
         // the rows `auth-identity` just verified — and a default would be a fake credential.
-        is_nullable: 'YES',
+        is_nullable: "YES",
         column_default: null,
       },
     ]);
@@ -299,10 +300,10 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     const legacy = await queryOne<{ display_name: string; password_hash: string | null }>(
       `select display_name, password_hash from users where email = '${LEGACY_EMAIL}'`,
     );
-    expect(legacy).toEqual({ display_name: 'Legacy Row', password_hash: null });
+    expect(legacy).toEqual({ display_name: "Legacy Row", password_hash: null });
   });
 
-  it('rolls back auth-password: the column goes, the identity columns stay', async () => {
+  it("rolls back auth-password: the column goes, the identity columns stay", async () => {
     await rollbackOne();
 
     expect(await appliedMigrations()).toEqual([BASE_MIGRATION, AUTH_IDENTITY_MIGRATION]);
@@ -317,11 +318,11 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       `select display_name, email_verified_at is not null as verified
        from users where email = '${LEGACY_EMAIL}'`,
     );
-    expect(legacy).toEqual({ display_name: 'Legacy Row', verified: true });
+    expect(legacy).toEqual({ display_name: "Legacy Row", verified: true });
   });
 
-  it('re-applies auth-password: the second up produces the same column', async () => {
-    await migrate('--to', AUTH_PASSWORD_MIGRATION);
+  it("re-applies auth-password: the second up produces the same column", async () => {
+    await migrate("--to", AUTH_PASSWORD_MIGRATION);
 
     expect(await appliedMigrations()).toEqual([
       BASE_MIGRATION,
@@ -330,15 +331,15 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     ]);
     expect(await passwordColumn()).toEqual([
       {
-        column_name: 'password_hash',
-        udt_name: 'text',
-        is_nullable: 'YES',
+        column_name: "password_hash",
+        udt_name: "text",
+        is_nullable: "YES",
         column_default: null,
       },
     ]);
   });
 
-  it('applies auth-rate-limits: a three-column counter table with no base columns', async () => {
+  it("applies auth-rate-limits: a three-column counter table with no base columns", async () => {
     await migrate();
 
     expect(await appliedMigrations()).toEqual([
@@ -348,9 +349,9 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       AUTH_RATE_LIMITS_MIGRATION,
     ]);
     expect(await rateLimitColumns()).toEqual([
-      { column_name: 'count', udt_name: 'int4', is_nullable: 'NO' },
-      { column_name: 'key', udt_name: 'text', is_nullable: 'NO' },
-      { column_name: 'window_start', udt_name: 'timestamptz', is_nullable: 'NO' },
+      { column_name: "count", udt_name: "int4", is_nullable: "NO" },
+      { column_name: "key", udt_name: "text", is_nullable: "NO" },
+      { column_name: "window_start", udt_name: "timestamptz", is_nullable: "NO" },
     ]);
     // The documented exception, asserted rather than described: no `id`, no `created_at`,
     // no `updated_at`. Every other table in this schema has all three.
@@ -361,20 +362,18 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     // and `window_start` carries the index the pruning delete runs on.
     expect(await rateLimitIndexes()).toEqual([
       {
-        indexname: 'auth_rate_limits_pkey',
+        indexname: "auth_rate_limits_pkey",
         indexdef:
-          'CREATE UNIQUE INDEX auth_rate_limits_pkey ON public.auth_rate_limits USING btree (key)',
+          "CREATE UNIQUE INDEX auth_rate_limits_pkey ON public.auth_rate_limits USING btree (key)",
       },
       {
-        indexname: 'auth_rate_limits_window_start_index',
+        indexname: "auth_rate_limits_window_start_index",
         indexdef:
-          'CREATE INDEX auth_rate_limits_window_start_index ON public.auth_rate_limits USING btree (window_start)',
+          "CREATE INDEX auth_rate_limits_window_start_index ON public.auth_rate_limits USING btree (window_start)",
       },
     ]);
     // Additive: `users` is exactly where `auth-password` left it.
-    expect((await passwordColumn()).map((column) => column.column_name)).toEqual([
-      PASSWORD_COLUMN,
-    ]);
+    expect((await passwordColumn()).map((column) => column.column_name)).toEqual([PASSWORD_COLUMN]);
   });
 
   /**
@@ -387,10 +386,10 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
    * against a hand-written model of PostgreSQL, which would prove that the model matches
    * itself.
    */
-  describe('the rate limiter against the real table', () => {
+  describe("the rate limiter against the real table", () => {
     /** A tight policy, so a case spends three attempts rather than ten. */
     const POLICY: RateLimitPolicy = { limit: 3, windowMs: 15 * 60_000 };
-    const START = new Date('2026-09-10T12:00:00.000Z');
+    const START = new Date("2026-09-10T12:00:00.000Z");
 
     let now: Date;
     const limiter = () =>
@@ -408,9 +407,9 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       await query(`delete from auth_rate_limits`);
     }
 
-    it('passes the whole allowance and refuses the next attempt with a 429', async () => {
+    it("passes the whole allowance and refuses the next attempt with a 429", async () => {
       await reset();
-      const key = rateLimitKey('sign-in', 'email', 'ada@devmentor.dev') as string;
+      const key = rateLimitKey("sign-in", "email", "ada@devmentor.dev") as string;
 
       for (let attempt = 0; attempt < POLICY.limit; attempt += 1) {
         await expect(limiter().consume(key, POLICY)).resolves.toBeUndefined();
@@ -427,9 +426,9 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       expect(await countFor(key)).toBe(4);
     });
 
-    it('rolls the window over inside the one statement', async () => {
+    it("rolls the window over inside the one statement", async () => {
       await reset();
-      const key = rateLimitKey('sign-in', 'email', 'rollover@devmentor.dev') as string;
+      const key = rateLimitKey("sign-in", "email", "rollover@devmentor.dev") as string;
 
       for (let attempt = 0; attempt < POLICY.limit; attempt += 1) {
         await limiter().consume(key, POLICY);
@@ -446,11 +445,11 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       expect(await countFor(key)).toBe(1);
     });
 
-    it('deletes rows older than the longest window, and only those', async () => {
+    it("deletes rows older than the longest window, and only those", async () => {
       await reset();
-      const stale = 'sign-in:email:stale';
-      const live = 'sign-in:email:live';
-      const charged = rateLimitKey('register', 'ip', '198.51.100.1') as string;
+      const stale = "sign-in:email:stale";
+      const live = "sign-in:email:live";
+      const charged = rateLimitKey("register", "ip", "198.51.100.1") as string;
 
       // Two hours old: past the longest policy window (one hour), so it can never
       // influence a decision again.
@@ -473,9 +472,9 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       expect(await countFor(charged)).toBe(1);
     });
 
-    it('resets its own expired row rather than deleting it out from under the upsert', async () => {
+    it("resets its own expired row rather than deleting it out from under the upsert", async () => {
       await reset();
-      const key = rateLimitKey('sign-in', 'ip', '203.0.113.7') as string;
+      const key = rateLimitKey("sign-in", "ip", "203.0.113.7") as string;
 
       // A row for this very key, old enough that the prune would remove it. Deleting it
       // and then landing on it with `ON CONFLICT DO UPDATE` in the same command is what
@@ -489,25 +488,23 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       expect(await countFor(key)).toBe(1);
     });
 
-    it('keeps every concurrent attempt: no two callers share one increment', async () => {
+    it("keeps every concurrent attempt: no two callers share one increment", async () => {
       await reset();
-      const key = rateLimitKey('sign-in', 'ip', '198.51.100.99') as string;
+      const key = rateLimitKey("sign-in", "ip", "198.51.100.99") as string;
       const generous: RateLimitPolicy = { limit: 1000, windowMs: 15 * 60_000 };
 
       // Twelve attempts issued at once over separate pooled connections. A read-then-write
       // limiter loses updates here and finishes below twelve; the single
       // `INSERT … ON CONFLICT DO UPDATE` serialises them on the primary key.
-      await Promise.all(
-        Array.from({ length: 12 }, () => limiter().consume(key, generous)),
-      );
+      await Promise.all(Array.from({ length: 12 }, () => limiter().consume(key, generous)));
 
       expect(await countFor(key)).toBe(12);
     });
 
-    it('keeps the per-IP and per-email buckets apart', async () => {
+    it("keeps the per-IP and per-email buckets apart", async () => {
       await reset();
-      const email = rateLimitKey('sign-in', 'email', 'ada@devmentor.dev') as string;
-      const ip = rateLimitKey('sign-in', 'ip', '198.51.100.1') as string;
+      const email = rateLimitKey("sign-in", "email", "ada@devmentor.dev") as string;
+      const ip = rateLimitKey("sign-in", "ip", "198.51.100.1") as string;
 
       await limiter().consume(email, POLICY);
       await limiter().consume(ip, POLICY);
@@ -519,19 +516,19 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       const keys = await query<{ key: string }>(`select key from auth_rate_limits order by key`);
       expect(keys).toHaveLength(2);
       for (const row of keys) {
-        expect(row.key).not.toContain('ada@devmentor.dev');
-        expect(row.key).not.toContain('198.51.100.1');
+        expect(row.key).not.toContain("ada@devmentor.dev");
+        expect(row.key).not.toContain("198.51.100.1");
         expect(row.key).toMatch(/^sign-in:(email|ip):[0-9a-f]{64}$/);
       }
     });
 
-    it('leaves the table empty for the rollback that follows', async () => {
+    it("leaves the table empty for the rollback that follows", async () => {
       await reset();
       expect(await query(`select key from auth_rate_limits`)).toEqual([]);
     });
   });
 
-  it('rolls back auth-rate-limits: the table goes, users is untouched', async () => {
+  it("rolls back auth-rate-limits: the table goes, users is untouched", async () => {
     await rollbackOne();
 
     expect(await appliedMigrations()).toEqual([
@@ -544,13 +541,11 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     // Dropping the counters is the whole cost of this rollback: they are a
     // fifteen-minute-to-one-hour record the limiter deletes on its own anyway. Nothing
     // about `users` moves — the table has no foreign key, by design.
-    expect((await passwordColumn()).map((column) => column.column_name)).toEqual([
-      PASSWORD_COLUMN,
-    ]);
+    expect((await passwordColumn()).map((column) => column.column_name)).toEqual([PASSWORD_COLUMN]);
     expect((await newColumns()).map((column) => column.column_name)).toEqual(NEW_COLUMNS);
   });
 
-  it('re-applies auth-rate-limits: the second up produces the same table', async () => {
+  it("re-applies auth-rate-limits: the second up produces the same table", async () => {
     await migrate();
 
     expect(await appliedMigrations()).toEqual([
@@ -563,12 +558,12 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       RATE_LIMIT_COLUMNS,
     );
     expect((await rateLimitIndexes()).map((index) => index.indexname)).toEqual([
-      'auth_rate_limits_pkey',
-      'auth_rate_limits_window_start_index',
+      "auth_rate_limits_pkey",
+      "auth_rate_limits_window_start_index",
     ]);
   });
 
-  it('rolls back: removes exactly what it added and keeps the pre-existing rows', async () => {
+  it("rolls back: removes exactly what it added and keeps the pre-existing rows", async () => {
     // `auth-rate-limits` and `auth-password` sit on top, so reaching `auth-identity`'s
     // `down` means reverting them first — the same order a real rollback of the slice
     // would take.
@@ -586,16 +581,16 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
     const legacy = await queryOne<{ display_name: string }>(
       `select display_name from users where email = '${LEGACY_EMAIL}'`,
     );
-    expect(legacy.display_name).toBe('Legacy Row');
+    expect(legacy.display_name).toBe("Legacy Row");
     // The base migration's own schema is untouched by the rollback.
     const emailUnique = await queryOne<{ conname: string }>(
       `select con.conname from pg_constraint con join pg_class rel on rel.oid = con.conrelid
        where rel.relname = 'users' and con.conname = 'users_email_unique'`,
     );
-    expect(emailUnique.conname).toBe('users_email_unique');
+    expect(emailUnique.conname).toBe("users_email_unique");
   });
 
-  it('re-applies: the second up produces the same schema and backfills again', async () => {
+  it("re-applies: the second up produces the same schema and backfills again", async () => {
     await migrate();
 
     expect(await appliedMigrations()).toEqual([
@@ -604,9 +599,7 @@ describe('TC-DB-001 the auth-identity and auth-password migrations', () => {
       AUTH_PASSWORD_MIGRATION,
       AUTH_RATE_LIMITS_MIGRATION,
     ]);
-    expect((await passwordColumn()).map((column) => column.column_name)).toEqual([
-      PASSWORD_COLUMN,
-    ]);
+    expect((await passwordColumn()).map((column) => column.column_name)).toEqual([PASSWORD_COLUMN]);
     expect((await rateLimitColumns()).map((column) => column.column_name)).toEqual(
       RATE_LIMIT_COLUMNS,
     );

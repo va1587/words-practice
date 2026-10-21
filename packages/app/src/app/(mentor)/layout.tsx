@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import { WorkspaceShell } from '../../components/workspace-shell';
-import { requirePageRole } from '../../lib/session';
+import type { ReactNode } from "react";
+import { WorkspaceShell } from "../../components/workspace-shell";
+import { requirePageRole } from "../../lib/session";
 
 /**
  * The mentor surface — the same shape as the mentee layout, and separate on purpose: the
@@ -13,7 +13,7 @@ import { requirePageRole } from '../../lib/session';
  * operator (who also holds `mentor`) reaches `/admin` from here without signing out.
  */
 export default async function MentorLayout({ children }: { children: ReactNode }) {
-  const session = await requirePageRole('mentor', '/mentor');
+  const session = await requirePageRole("mentor", "/mentor");
 
   return <WorkspaceShell session={session}>{children}</WorkspaceShell>;
 }

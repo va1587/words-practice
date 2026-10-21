@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes } from "node:crypto";
 
 /**
  * A fresh signing secret per harness run. Generated rather than hard-coded so nothing
@@ -6,7 +6,7 @@ import { randomBytes } from 'node:crypto';
  * run is worthless in the next. Module scope, not per call, because migrate/seed/build
  * and the app process must all agree on it within a single run.
  */
-const SESSION_SECRET = randomBytes(32).toString('hex');
+const SESSION_SECRET = randomBytes(32).toString("hex");
 
 /**
  * The seeded operator persona, and the whole of the operator allowlist for a harness run.
@@ -15,7 +15,7 @@ const SESSION_SECRET = randomBytes(32).toString('hex');
  * than load-bearing. Real founder addresses live only in deployment configuration —
  * neither this file nor CI is a second editor of the operator allowlist.
  */
-const MOCK_OPERATOR_EMAIL = 'mock-operator@devmentor.test';
+const MOCK_OPERATOR_EMAIL = "mock-operator@devmentor.test";
 
 /**
  * Test infrastructure is the sole exception to the application's config rule: it
@@ -28,11 +28,11 @@ export function integrationChildEnvironment(
 ): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    NODE_ENV: 'production',
-    NEXT_TELEMETRY_DISABLED: '1',
+    NODE_ENV: "production",
+    NEXT_TELEMETRY_DISABLED: "1",
     DATABASE_URL: databaseUrl,
-    DB_POOL_MIN: '0',
-    DB_POOL_MAX: '5',
+    DB_POOL_MIN: "0",
+    DB_POOL_MAX: "5",
     // A throwaway database must never author a repository file. `migration:up` rewrites
     // the migration snapshot from introspection whenever the migrated schema differs from
     // the committed one, so a local run of this suite could leave `migrations/devmentor.json`
@@ -45,7 +45,7 @@ export function integrationChildEnvironment(
     // unless `preferEnvVars` is set. The override this file used to carry —
     // `MIKRO_ORM_MIGRATIONS_SNAPSHOT_NAME: '.snapshot-devmentor'` — was inert for exactly
     // that reason, and named a snapshot file that no longer exists.
-    DB_MIGRATIONS_SNAPSHOT: 'false',
+    DB_MIGRATIONS_SNAPSHOT: "false",
     // The app runs here as production, so the container's boot gate applies: without a
     // session secret the process would refuse to start.
     SESSION_SECRET,
@@ -53,13 +53,13 @@ export function integrationChildEnvironment(
     // — so adapter selection crosses the boundary as configuration. Both signals are
     // required: `AUTH_IDENTITY_ADAPTER=mock` on its own makes the app fail at boot
     // rather than quietly fall back to real GitHub sign-in.
-    AUTH_IDENTITY_ADAPTER: 'mock',
+    AUTH_IDENTITY_ADAPTER: "mock",
     // Same rule, same pair, for the second seam: emails are written to the app log instead
     // of being delivered, which is both how `waitForMail` reads the verification link and
     // how a run with `NODE_ENV=production` and no mail account gets past the container's
     // `MAIL_API_KEY` gate. `MAILER_ADAPTER=log` on its own would make the app fail at boot.
-    MAILER_ADAPTER: 'log',
-    INTEGRATION_TEST_RUN: '1',
+    MAILER_ADAPTER: "log",
+    INTEGRATION_TEST_RUN: "1",
     // Forced, never inherited. An isolated run owns its own data, and the allowlist is
     // data: a developer debugging the real allowlist has their own OPERATOR_EMAILS
     // exported, which would replace the seeded persona and make every operator scenario

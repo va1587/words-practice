@@ -126,7 +126,7 @@ error does not carry them — they are never emitted as `null`.
   envelope: this URL is opened from a mail client. Opening a link for an already-confirmed
   address is idempotent and still issues a session (a mail scanner must not consume it).
 - The two `POST`s require the CSRF header like every other state-changing route; `GET
-  /api/auth/verify-email` does not, because a mail client cannot set one and the signed token
+/api/auth/verify-email` does not, because a mail client cannot set one and the signed token
   is the authority. None of the three rate-limits at the route: `UserService` consumes the
   counters inside the hashing gate, in an order (gate → counter → hash) that edge case 18
   depends on.
@@ -200,7 +200,7 @@ API between packages. `npm run typecheck` is the consumer check.
   docblock named a `CrudForm` call site that never existed), so §2's required path is
   satisfied by deleting them in the same PR as the route verb. `UserService.create` now
   declares its own `UserCreateInput` (`{ email, displayName }`) next to the service and
-  writes those two fields by name into `em.create`; it is deliberately *not* exported from
+  writes those two fields by name into `em.create`; it is deliberately _not_ exported from
   the barrel, because the guarantee is the field-by-field construction — a spread would
   make `create` a mass-assignment surface for `roles`, `emailVerifiedAt`, `sessionVersion`
   and `githubId` whose safety depended on whatever schema the caller happened to validate
@@ -213,7 +213,7 @@ API between packages. `npm run typecheck` is the consumer check.
   sign-up/sign-in `CrudForm` validates with the same object. What is protected is the field
   set (`email`, `password`, `displayName`, optional `returnTo` for register; `email`,
   `password`, optional `returnTo` for login) and the limits: 254 characters of email, 12
-  characters minimum on a *new* password, **72 bytes** maximum on either, 120 characters of
+  characters minimum on a _new_ password, **72 bytes** maximum on either, 120 characters of
   trimmed display name. Tightening any of them refuses input that used to be accepted and
   takes the breaking-change path. `loginSchema` deliberately has **no** password minimum;
   adding one would reject correct passwords set under an older policy and give sign-in a
@@ -228,7 +228,7 @@ API between packages. `npm run typecheck` is the consumer check.
   are contract rather than implementation. First, `RegistrationOutcome` is `{ email }` and
   carries **no** `UserDto` and **no** `sessionVersion`: registration never issues a session,
   and widening it to something a route could sign a cookie from would hand out sessions for
-  unproven addresses. Second, `INVALID_CREDENTIALS_MESSAGE` is the *single* message every
+  unproven addresses. Second, `INVALID_CREDENTIALS_MESSAGE` is the _single_ message every
   failed sign-in carries — unknown address, GitHub-only account and wrong password alike —
   so splitting it into two strings that differ is a breaking change to a security property,
   not a copy edit, whatever the words are. It is exported for the same reason as
@@ -242,6 +242,7 @@ API between packages. `npm run typecheck` is the consumer check.
   entry point for unauthenticated and system work; `withRequestScope(req, fn)` and
   `withCookieScope(cookieValue, fn)` are additive and register the request-scoped
   `session`, which resolves lazily, once per scope, to `Session | null`.
+
 - `@devmentor/db` (`.`, `./entities`, `./config`): `User`, `MentorProfile`, `IUser`,
   `IMentorProfile`, `baseProperties`, `entities`, `ROLES` and `Role` (the single source of
   truth behind the `users.roles` column, §7), `createOrmConfig`, `getOrm`, `closeOrm`,
@@ -327,13 +328,13 @@ the change spans several concepts; note it in the PR body.
   throwaway-database harness (`tests/integration/environment.ts`,
   `migrations.integration.test.ts`) sets `DB_MIGRATIONS_SNAPSHOT=false` so it cannot rewrite
   the committed snapshot. That variable, not MikroORM's `MIKRO_ORM_MIGRATIONS_SNAPSHOT`, is
-  the effective one: MikroORM merges environment *under* file config unless `preferEnvVars`
+  the effective one: MikroORM merges environment _under_ file config unless `preferEnvVars`
   is set, so `config.ts` reads `DB_MIGRATIONS_SNAPSHOT` itself. The base migration
   `Migration20260901142829.ts` has `up` only; everything since ships both directions.
 - `tests/integration/migrations.integration.test.ts` pins the schema by name, so it is part of
   this surface: all four migration class names, the column names with their PostgreSQL udt
   names (`roles _text`, `session_version int4`, `github_id varchar`, `email_verified_at
-  timestamptz`, `avatar_url text`, `password_hash text` nullable with no default), the
+timestamptz`, `avatar_url text`, `password_hash text` nullable with no default), the
   constraint names and definitions verbatim (`users_github_id_unique`, `users_roles_check`,
   `users_roles_non_empty`, and `users_email_unique` surviving a rollback), the backfill
   result, and up/down/up idempotence for each of the three auth migrations — including that
@@ -397,7 +398,7 @@ at all — so what must agree is the six shared connection variables and the `DA
 precedence, which `scripts/setup/steps.mjs` re-implements a third time.
 
 Three failure modes, deliberately different (`README.md` spells them out for operators):
-*missing* integration credentials fail closed at the route that needs them, *dangerous*
+_missing_ integration credentials fail closed at the route that needs them, _dangerous_
 configuration (`AUTH_IDENTITY_ADAPTER=mock`, `MAILER_ADAPTER=log`, either without the literal
 `INTEGRATION_TEST_RUN=1`) refuses to start in the schema's `superRefine`, and a production
 process without `SESSION_SECRET` throws at container creation — in

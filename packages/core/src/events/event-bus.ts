@@ -1,5 +1,5 @@
-import type { Logger } from '../logger';
-import type { EventId, EventMap } from './event-map';
+import type { Logger } from "../logger";
+import type { EventId, EventMap } from "./event-map";
 
 export type EventHandler<K extends EventId> = (payload: EventMap[K]) => void | Promise<void>;
 
@@ -38,7 +38,7 @@ export class EventBus {
       try {
         await handler(payload);
       } catch (error) {
-        this.logger.error({ err: error, event }, 'event handler failed');
+        this.logger.error({ err: error, event }, "event handler failed");
       }
     }
   }

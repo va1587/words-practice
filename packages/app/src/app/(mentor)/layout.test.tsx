@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WorkspaceShell } from '../../components/workspace-shell';
-import { elements, text } from '../../test/element-tree';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { WorkspaceShell } from "../../components/workspace-shell";
+import { elements, text } from "../../test/element-tree";
 
 /**
  * The mentor layout, invoked directly — the same three questions as the mentee layout, with
@@ -15,36 +15,36 @@ import { elements, text } from '../../test/element-tree';
 class RedirectSentinel extends Error {}
 
 const session = vi.hoisted(() => ({ requirePageRole: vi.fn() }));
-vi.mock('../../lib/session', () => ({ requirePageRole: session.requirePageRole }));
+vi.mock("../../lib/session", () => ({ requirePageRole: session.requirePageRole }));
 
-const { default: MentorLayout } = await import('./layout');
+const { default: MentorLayout } = await import("./layout");
 
-const combinedSession = { userId: 'u-4', roles: ['operator', 'mentor'] };
+const combinedSession = { userId: "u-4", roles: ["operator", "mentor"] };
 
 beforeEach(() => {
   vi.clearAllMocks();
   session.requirePageRole.mockResolvedValue(combinedSession);
 });
 
-describe('mentor layout', () => {
-  it('requires the mentor role for its own segment', async () => {
-    await MentorLayout({ children: 'page' });
+describe("mentor layout", () => {
+  it("requires the mentor role for its own segment", async () => {
+    await MentorLayout({ children: "page" });
 
-    expect(session.requirePageRole).toHaveBeenCalledWith('mentor', '/mentor');
+    expect(session.requirePageRole).toHaveBeenCalledWith("mentor", "/mentor");
   });
 
-  it('renders the page inside the workspace shell for the guarded session', async () => {
-    const tree = await MentorLayout({ children: 'page' });
+  it("renders the page inside the workspace shell for the guarded session", async () => {
+    const tree = await MentorLayout({ children: "page" });
     const shell = elements(tree).find((element) => element.type === WorkspaceShell);
 
     // Every held role, not just the guarded one.
     expect(shell?.props).toMatchObject({ session: combinedSession });
-    expect(text(tree)).toContain('page');
+    expect(text(tree)).toContain("page");
   });
 
-  it('renders nothing when the guard refuses', async () => {
-    session.requirePageRole.mockRejectedValue(new RedirectSentinel('NEXT_REDIRECT'));
+  it("renders nothing when the guard refuses", async () => {
+    session.requirePageRole.mockRejectedValue(new RedirectSentinel("NEXT_REDIRECT"));
 
-    await expect(MentorLayout({ children: 'page' })).rejects.toBeInstanceOf(RedirectSentinel);
+    await expect(MentorLayout({ children: "page" })).rejects.toBeInstanceOf(RedirectSentinel);
   });
 });

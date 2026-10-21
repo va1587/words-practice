@@ -1,14 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
-import type { Cradle } from '../container/cradle';
-import type { ApiRouteContext } from './apiHandler';
-import { UnauthorizedError } from './errors';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { z } from "zod";
+import type { Cradle } from "../container/cradle";
+import type { ApiRouteContext } from "./apiHandler";
+import { UnauthorizedError } from "./errors";
 import {
   makeCrudRoute,
   parseJsonBody,
   type CrudService,
   type MakeCrudRouteOptions,
-} from './makeCrudRoute';
+} from "./makeCrudRoute";
 
 const testState = vi.hoisted(() => ({
   cradle: {} as unknown,
@@ -18,7 +18,7 @@ const testState = vi.hoisted(() => ({
 // `makeCrudRoute` opens a *request* scope, so the session cookie on the request reaches the
 // scope's lazy `session` key and an `authorize` hook and the service it guards share one
 // lookup. The stub stands in for the whole scope, as the `withScope` stub did before it.
-vi.mock('../container/container', () => ({
+vi.mock("../container/container", () => ({
   withRequestScope: testState.withRequestScope,
 }));
 
@@ -40,11 +40,11 @@ function context(params?: Record<string, string | string[]>): ApiRouteContext {
  * here it would only mask the CRUD behaviour under test.
  */
 function request(method: string, body?: string): Request {
-  return new Request('http://devmentor.test/api/resources', {
+  return new Request("http://devmentor.test/api/resources", {
     method,
     headers: {
-      'x-devmentor-request': '1',
-      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      "x-devmentor-request": "1",
+      ...(body === undefined ? {} : { "content-type": "application/json" }),
     },
     ...(body === undefined ? {} : { body }),
   });
@@ -56,9 +56,9 @@ async function body(response: Response) {
 
 function service(overrides: Partial<CrudService<Entity, Input, Input>> = {}) {
   return {
-    list: vi.fn(async () => [{ id: '1', name: 'Ada' }]),
-    get: vi.fn(async (id: string) => ({ id, name: 'Ada' })),
-    create: vi.fn(async (data: Input) => ({ id: 'created', ...data })),
+    list: vi.fn(async () => [{ id: "1", name: "Ada" }]),
+    get: vi.fn(async (id: string) => ({ id, name: "Ada" })),
+    create: vi.fn(async (data: Input) => ({ id: "created", ...data })),
     update: vi.fn(async (id: string, data: Input) => ({ id, ...data })),
     delete: vi.fn(async () => undefined),
     ...overrides,
@@ -85,25 +85,25 @@ beforeEach(() => {
   );
 });
 
-describe('makeCrudRoute GET', () => {
-  it('lists a collection with no route context and runs authorization', async () => {
+describe("makeCrudRoute GET", () => {
+  it("lists a collection with no route context and runs authorization", async () => {
     const currentService = service();
     const authorize = vi.fn();
     const handlers = route(currentService, { authorize });
-    const req = request('GET');
+    const req = request("GET");
 
     const response = await handlers.GET(req, context());
 
     expect(response.status).toBe(200);
     expect(await body(response)).toEqual({
       ok: true,
-      data: [{ id: '1', name: 'Ada' }],
+      data: [{ id: "1", name: "Ada" }],
     });
     expect(authorize).toHaveBeenCalledWith(req, testState.cradle);
     expect(currentService.list).toHaveBeenCalledOnce();
   });
 
-  it('denies before the service is resolved when authorization throws', async () => {
+  it("denies before the service is resolved when authorization throws", async () => {
     // The ordering guarantee every guarded route depends on: `/api/users` refuses an
     // anonymous caller here *and* inside `UserService.list`, and the route half is only
     // defence in depth if it runs first. `resolve` is spied on too, because a service that
@@ -117,105 +117,102 @@ describe('makeCrudRoute GET', () => {
       },
     });
 
-    const response = await handlers.GET(request('GET'), context());
+    const response = await handlers.GET(request("GET"), context());
 
     expect(response.status).toBe(401);
     expect(await body(response)).toEqual({
       ok: false,
-      error: { code: 'unauthorized', message: 'Authentication required' },
+      error: { code: "unauthorized", message: "Authentication required" },
     });
     expect(resolve).not.toHaveBeenCalled();
     expect(currentService.list).not.toHaveBeenCalled();
   });
 
-  it('lists when an empty params object is provided', async () => {
+  it("lists when an empty params object is provided", async () => {
     const currentService = service();
-    const response = await route(currentService).GET(request('GET'), context({}));
+    const response = await route(currentService).GET(request("GET"), context({}));
 
     expect(response.status).toBe(200);
     expect(currentService.list).toHaveBeenCalledOnce();
   });
 
-  it('gets one entity using the default id parameter', async () => {
+  it("gets one entity using the default id parameter", async () => {
     const currentService = service();
-    const response = await route(currentService).GET(
-      request('GET'),
-      context({ id: 'resource-1' }),
-    );
+    const response = await route(currentService).GET(request("GET"), context({ id: "resource-1" }));
 
     expect(await body(response)).toEqual({
       ok: true,
-      data: { id: 'resource-1', name: 'Ada' },
+      data: { id: "resource-1", name: "Ada" },
     });
-    expect(currentService.get).toHaveBeenCalledWith('resource-1');
+    expect(currentService.get).toHaveBeenCalledWith("resource-1");
   });
 
-  it('uses the first array value from a custom id parameter', async () => {
+  it("uses the first array value from a custom id parameter", async () => {
     const currentService = service();
-    const response = await route(currentService, { idParam: 'slug' }).GET(
-      request('GET'),
-      context({ slug: ['first', 'ignored'] }),
+    const response = await route(currentService, { idParam: "slug" }).GET(
+      request("GET"),
+      context({ slug: ["first", "ignored"] }),
     );
 
     expect(response.status).toBe(200);
-    expect(currentService.get).toHaveBeenCalledWith('first');
+    expect(currentService.get).toHaveBeenCalledWith("first");
   });
 
-  it('returns a bad request when item lookup is unsupported', async () => {
+  it("returns a bad request when item lookup is unsupported", async () => {
     const currentService = service({ get: undefined });
-    const response = await route(currentService).GET(
-      request('GET'),
-      context({ id: 'resource-1' }),
-    );
+    const response = await route(currentService).GET(request("GET"), context({ id: "resource-1" }));
 
     expect(response.status).toBe(400);
     expect(await body(response)).toEqual({
       ok: false,
       error: {
-        code: 'bad_request',
-        message: 'This operation is not supported',
+        code: "bad_request",
+        message: "This operation is not supported",
       },
     });
   });
 });
 
-describe('makeCrudRoute POST', () => {
-  it('parses and creates an entity', async () => {
+describe("makeCrudRoute POST", () => {
+  it("parses and creates an entity", async () => {
     const currentService = service();
     const response = await route(currentService).POST(
-      request('POST', JSON.stringify({ name: 'Grace' })),
+      request("POST", JSON.stringify({ name: "Grace" })),
       context(),
     );
 
     expect(response.status).toBe(200);
     expect(await body(response)).toEqual({
       ok: true,
-      data: { id: 'created', name: 'Grace' },
+      data: { id: "created", name: "Grace" },
     });
-    expect(currentService.create).toHaveBeenCalledWith({ name: 'Grace' });
+    expect(currentService.create).toHaveBeenCalledWith({ name: "Grace" });
   });
 
-  it('rejects malformed JSON', async () => {
-    const response = await route(service()).POST(request('POST', '{'), context());
+  it("rejects malformed JSON", async () => {
+    const response = await route(service()).POST(request("POST", "{"), context());
 
     expect(response.status).toBe(400);
     expect(await body(response)).toEqual({
       ok: false,
       error: {
-        code: 'bad_request',
-        message: 'Request body must be valid JSON',
+        code: "bad_request",
+        message: "Request body must be valid JSON",
       },
     });
   });
 
-  it('flattens field, repeated, and root validation issues', async () => {
+  it("flattens field, repeated, and root validation issues", async () => {
     const schema = z
       .object({
-        name: z.string().min(2, 'too short').regex(/^[A-Z]/, 'must start uppercase'),
+        name: z
+          .string()
+          .min(2, "too short")
+          .regex(/^[A-Z]/, "must start uppercase"),
       })
-      .refine(() => false, 'root problem');
+      .refine(() => false, "root problem");
     const response = await route(service(), { createSchema: schema }).POST(
-      request('POST', JSON.stringify({ name: '' })),
+      request("POST", JSON.stringify({ name: "" })),
       context(),
     );
 
@@ -223,110 +220,110 @@ describe('makeCrudRoute POST', () => {
     expect(await body(response)).toEqual({
       ok: false,
       error: {
-        code: 'validation_failed',
-        message: 'Validation failed',
+        code: "validation_failed",
+        message: "Validation failed",
         fieldErrors: {
-          name: ['too short', 'must start uppercase'],
-          _root: ['root problem'],
+          name: ["too short", "must start uppercase"],
+          _root: ["root problem"],
         },
       },
     });
   });
 
-  it('rejects creation when the service method is absent', async () => {
+  it("rejects creation when the service method is absent", async () => {
     const response = await route(service({ create: undefined })).POST(
-      request('POST', JSON.stringify({ name: 'Grace' })),
+      request("POST", JSON.stringify({ name: "Grace" })),
       context(),
     );
 
     expect(response.status).toBe(400);
   });
 
-  it('rejects creation when the schema is absent', async () => {
+  it("rejects creation when the schema is absent", async () => {
     const response = await route(service(), { createSchema: undefined }).POST(
-      request('POST', JSON.stringify({ name: 'Grace' })),
+      request("POST", JSON.stringify({ name: "Grace" })),
       context(),
     );
 
     expect(response.status).toBe(400);
     expect(await body(response)).toMatchObject({
-      error: { message: 'This operation is not supported' },
+      error: { message: "This operation is not supported" },
     });
   });
 });
 
-describe('makeCrudRoute PUT', () => {
-  it('parses and updates an entity', async () => {
+describe("makeCrudRoute PUT", () => {
+  it("parses and updates an entity", async () => {
     const currentService = service();
     const response = await route(currentService).PUT(
-      request('PUT', JSON.stringify({ name: 'Katherine' })),
-      context({ id: 'resource-2' }),
+      request("PUT", JSON.stringify({ name: "Katherine" })),
+      context({ id: "resource-2" }),
     );
 
     expect(response.status).toBe(200);
-    expect(currentService.update).toHaveBeenCalledWith('resource-2', {
-      name: 'Katherine',
+    expect(currentService.update).toHaveBeenCalledWith("resource-2", {
+      name: "Katherine",
     });
   });
 
-  it('requires an id', async () => {
+  it("requires an id", async () => {
     const response = await route(service()).PUT(
-      request('PUT', JSON.stringify({ name: 'Katherine' })),
+      request("PUT", JSON.stringify({ name: "Katherine" })),
       context(),
     );
 
     expect(response.status).toBe(400);
-    expect(await body(response)).toMatchObject({ error: { message: 'Missing resource id' } });
+    expect(await body(response)).toMatchObject({ error: { message: "Missing resource id" } });
   });
 
-  it('rejects updates when the service method is absent', async () => {
+  it("rejects updates when the service method is absent", async () => {
     const response = await route(service({ update: undefined })).PUT(
-      request('PUT', JSON.stringify({ name: 'Katherine' })),
-      context({ id: 'resource-2' }),
+      request("PUT", JSON.stringify({ name: "Katherine" })),
+      context({ id: "resource-2" }),
     );
 
     expect(response.status).toBe(400);
   });
 
-  it('rejects updates when the schema is absent', async () => {
+  it("rejects updates when the schema is absent", async () => {
     const response = await route(service(), { updateSchema: undefined }).PUT(
-      request('PUT', JSON.stringify({ name: 'Katherine' })),
-      context({ id: 'resource-2' }),
+      request("PUT", JSON.stringify({ name: "Katherine" })),
+      context({ id: "resource-2" }),
     );
 
     expect(response.status).toBe(400);
   });
 });
 
-describe('makeCrudRoute DELETE', () => {
-  it('deletes an entity and returns its id', async () => {
+describe("makeCrudRoute DELETE", () => {
+  it("deletes an entity and returns its id", async () => {
     const currentService = service();
     const response = await route(currentService).DELETE(
-      request('DELETE'),
-      context({ id: 'resource-3' }),
+      request("DELETE"),
+      context({ id: "resource-3" }),
     );
 
     expect(response.status).toBe(200);
-    expect(await body(response)).toEqual({ ok: true, data: { id: 'resource-3' } });
-    expect(currentService.delete).toHaveBeenCalledWith('resource-3');
+    expect(await body(response)).toEqual({ ok: true, data: { id: "resource-3" } });
+    expect(currentService.delete).toHaveBeenCalledWith("resource-3");
   });
 
-  it('requires an id', async () => {
-    const response = await route(service()).DELETE(request('DELETE'), context());
+  it("requires an id", async () => {
+    const response = await route(service()).DELETE(request("DELETE"), context());
 
     expect(response.status).toBe(400);
-    expect(await body(response)).toMatchObject({ error: { message: 'Missing resource id' } });
+    expect(await body(response)).toMatchObject({ error: { message: "Missing resource id" } });
   });
 
-  it('rejects deletion when the service method is absent', async () => {
+  it("rejects deletion when the service method is absent", async () => {
     const response = await route(service({ delete: undefined })).DELETE(
-      request('DELETE'),
-      context({ id: 'resource-3' }),
+      request("DELETE"),
+      context({ id: "resource-3" }),
     );
 
     expect(response.status).toBe(400);
     expect(await body(response)).toMatchObject({
-      error: { message: 'This operation is not supported' },
+      error: { message: "This operation is not supported" },
     });
   });
 });
@@ -336,44 +333,44 @@ describe('makeCrudRoute DELETE', () => {
  * not CRUD: `/api/auth/register` and `/api/auth/login` take a JSON body, use `apiHandler`
  * directly, and must answer the same envelope for the same mistake.
  */
-describe('parseJsonBody', () => {
+describe("parseJsonBody", () => {
   function post(body: string): Request {
-    return new Request('http://devmentor.test/api/auth/login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+    return new Request("http://devmentor.test/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body,
     });
   }
 
-  it('returns the parsed value on a body the schema accepts', async () => {
+  it("returns the parsed value on a body the schema accepts", async () => {
     await expect(parseJsonBody(post('{"name":"Ada"}'), inputSchema)).resolves.toEqual({
-      name: 'Ada',
+      name: "Ada",
     });
   });
 
-  it('drops keys the schema does not declare, so a posted extra never reaches a service', async () => {
+  it("drops keys the schema does not declare, so a posted extra never reaches a service", async () => {
     await expect(
       parseJsonBody(post('{"name":"Ada","roles":["operator"]}'), inputSchema),
-    ).resolves.toEqual({ name: 'Ada' });
+    ).resolves.toEqual({ name: "Ada" });
   });
 
-  it('raises a 400 for a body that is not JSON at all', async () => {
-    await expect(parseJsonBody(post('not json'), inputSchema)).rejects.toMatchObject({
+  it("raises a 400 for a body that is not JSON at all", async () => {
+    await expect(parseJsonBody(post("not json"), inputSchema)).rejects.toMatchObject({
       status: 400,
-      code: 'bad_request',
-      message: 'Request body must be valid JSON',
+      code: "bad_request",
+      message: "Request body must be valid JSON",
     });
   });
 
-  it('raises a 422 with fieldErrors for JSON of the wrong shape', async () => {
+  it("raises a 422 with fieldErrors for JSON of the wrong shape", async () => {
     await expect(parseJsonBody(post('{"name":""}'), inputSchema)).rejects.toMatchObject({
       status: 422,
-      code: 'validation_failed',
+      code: "validation_failed",
       fieldErrors: { name: [expect.any(String)] },
     });
   });
 
-  it('keys an issue with no path as _root', async () => {
+  it("keys an issue with no path as _root", async () => {
     await expect(parseJsonBody(post('"a string"'), inputSchema)).rejects.toMatchObject({
       status: 422,
       fieldErrors: { _root: [expect.any(String)] },

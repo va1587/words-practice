@@ -1,5 +1,5 @@
-import { EmptyState } from '@devmentor/ui/backend';
-import { requirePageRole } from '../../../lib/session';
+import { EmptyState } from "@devmentor/ui/backend";
+import { requirePageRole } from "../../../lib/session";
 
 /**
  * `/home` — where `homeFor` sends a mentee. Named `/home` because #12 names it; the mentor's
@@ -13,10 +13,10 @@ import { requirePageRole } from '../../../lib/session';
  */
 
 // The guard reads the session cookie and reloads the user; never prerendered.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function MenteeHomePage() {
-  await requirePageRole('mentee', '/home');
+  await requirePageRole("mentee", "/home");
 
   return (
     <div className="flex flex-col gap-6">

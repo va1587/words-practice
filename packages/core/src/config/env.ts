@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Split a comma-separated allowlist into normalized entries.
@@ -10,7 +10,7 @@ import { z } from 'zod';
  */
 function parseEmailList(raw: string): readonly string[] {
   return raw
-    .split(',')
+    .split(",")
     .map((entry) => entry.trim().toLowerCase())
     .filter((entry) => entry.length > 0);
 }
@@ -30,20 +30,20 @@ function parseEmailList(raw: string): readonly string[] {
  */
 const appEnvSchema = z
   .object({
-    NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-    APP_NAME: z.string().default('DevMentor'),
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    APP_NAME: z.string().default("DevMentor"),
     LOG_LEVEL: z
-      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
-      .default('info'),
+      .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
+      .default("info"),
 
     // Database — mirrors packages/db `env.ts`. Kept here too so config validation is
     // centralised; `db` reads its own copy for CLI use without importing `core`.
     DATABASE_URL: z.string().url().optional(),
-    DB_HOST: z.string().default('127.0.0.1'),
+    DB_HOST: z.string().default("127.0.0.1"),
     DB_PORT: z.coerce.number().int().positive().default(5432),
-    DB_NAME: z.string().default('devmentor'),
-    DB_USER: z.string().default('devmentor'),
-    DB_PASSWORD: z.string().default('devmentor'),
+    DB_NAME: z.string().default("devmentor"),
+    DB_USER: z.string().default("devmentor"),
+    DB_PASSWORD: z.string().default("devmentor"),
 
     // --- Sessions ---
     // Signs the session cookie and the short-lived purpose tokens. 32 characters is
@@ -67,12 +67,15 @@ const appEnvSchema = z
     // --- Deployment identity and authorization ---
     // Comma-separated founder addresses. `operator` authority is derived live from
     // this list on every guarded request; the stored role is only a cache (D19).
-    OPERATOR_EMAILS: z.string().default('').transform(parseEmailList),
+    OPERATOR_EMAILS: z.string().default("").transform(parseEmailList),
     // Absolute origin used to build OAuth redirect URIs and links in outbound mail.
     // The protocol is pinned: a bare `localhost:3000` parses as a URL with the scheme
     // `localhost:`, which would sail through a plain `.url()` and then produce redirect
     // URIs GitHub rejects.
-    APP_URL: z.string().url({ protocol: /^https?$/ }).default('http://localhost:3000'),
+    APP_URL: z
+      .string()
+      .url({ protocol: /^https?$/ })
+      .default("http://localhost:3000"),
     // How many reverse proxies sit in front of the app, so the rate limiter can take
     // the client IP Nth-from-right out of `x-forwarded-for`. `0` means trust nothing.
     TRUSTED_PROXY_HOPS: z.coerce.number().int().nonnegative().default(0),
@@ -95,8 +98,8 @@ const appEnvSchema = z
     PASSWORD_HASH_WAIT_MS: z.coerce.number().int().nonnegative().default(2000),
 
     // --- Test-double selection (guarded by the superRefine below) ---
-    AUTH_IDENTITY_ADAPTER: z.enum(['github', 'mock']).optional(),
-    MAILER_ADAPTER: z.enum(['resend', 'log']).optional(),
+    AUTH_IDENTITY_ADAPTER: z.enum(["github", "mock"]).optional(),
+    MAILER_ADAPTER: z.enum(["resend", "log"]).optional(),
     // The integration harness runs the app as a child process, so "this is a test
     // run" has to cross the boundary as configuration. Only the literal `1` counts;
     // anything else (including `0`, `true` and an empty value) reads as "not a test
@@ -104,7 +107,7 @@ const appEnvSchema = z
     INTEGRATION_TEST_RUN: z
       .string()
       .optional()
-      .transform((value) => value === '1'),
+      .transform((value) => value === "1"),
 
     // --- Mail (declared here, consumed by the notifications slice) ---
     MAIL_API_KEY: z.string().optional(),
@@ -121,26 +124,26 @@ const appEnvSchema = z
       return;
     }
 
-    if (env.AUTH_IDENTITY_ADAPTER === 'mock') {
+    if (env.AUTH_IDENTITY_ADAPTER === "mock") {
       ctx.addIssue({
-        code: 'custom',
-        path: ['AUTH_IDENTITY_ADAPTER'],
+        code: "custom",
+        path: ["AUTH_IDENTITY_ADAPTER"],
         message:
-          'AUTH_IDENTITY_ADAPTER=mock replaces GitHub sign-in with a fake identity that ' +
-          'signs in as whoever is asked for. It is only allowed in an integration-test ' +
-          'run: set INTEGRATION_TEST_RUN=1 as well, or unset AUTH_IDENTITY_ADAPTER.',
+          "AUTH_IDENTITY_ADAPTER=mock replaces GitHub sign-in with a fake identity that " +
+          "signs in as whoever is asked for. It is only allowed in an integration-test " +
+          "run: set INTEGRATION_TEST_RUN=1 as well, or unset AUTH_IDENTITY_ADAPTER.",
       });
     }
 
-    if (env.MAILER_ADAPTER === 'log') {
+    if (env.MAILER_ADAPTER === "log") {
       ctx.addIssue({
-        code: 'custom',
-        path: ['MAILER_ADAPTER'],
+        code: "custom",
+        path: ["MAILER_ADAPTER"],
         message:
-          'MAILER_ADAPTER=log writes every email to the application log instead of ' +
-          'delivering it, so verification links would never reach a real inbox. It is ' +
-          'only allowed in an integration-test run: set INTEGRATION_TEST_RUN=1 as well, ' +
-          'or unset MAILER_ADAPTER (development picks the log mailer on its own).',
+          "MAILER_ADAPTER=log writes every email to the application log instead of " +
+          "delivering it, so verification links would never reach a real inbox. It is " +
+          "only allowed in an integration-test run: set INTEGRATION_TEST_RUN=1 as well, " +
+          "or unset MAILER_ADAPTER (development picks the log mailer on its own).",
       });
     }
   });

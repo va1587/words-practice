@@ -12,10 +12,10 @@
  */
 
 /** Step outcome states, in increasing order of developer attention required. */
-export const RAN = 'ran';
-export const SKIPPED = 'skipped';
-export const WARNED = 'warned';
-export const FAILED = 'failed';
+export const RAN = "ran";
+export const SKIPPED = "skipped";
+export const WARNED = "warned";
+export const FAILED = "failed";
 
 /**
  * Extract the major version from a `process.version` string.
@@ -53,7 +53,7 @@ export function checkNodeVersion(version, minimumMajor) {
 }
 
 /** Where the local database lives when nothing says otherwise. */
-export const DEFAULT_POSTGRES_HOST = '127.0.0.1';
+export const DEFAULT_POSTGRES_HOST = "127.0.0.1";
 export const DEFAULT_POSTGRES_PORT = 5432;
 
 /**
@@ -74,7 +74,7 @@ export function parseEnvAssignments(text) {
   for (const rawLine of String(text).split(/\r?\n/)) {
     const line = rawLine.trim();
 
-    if (line === '' || line.startsWith('#')) {
+    if (line === "" || line.startsWith("#")) {
       continue;
     }
 
@@ -122,7 +122,7 @@ export function parsePostgresUrl(url) {
     return null;
   }
 
-  if (parsed.hostname === '') {
+  if (parsed.hostname === "") {
     return null;
   }
 
@@ -147,7 +147,7 @@ function toPort(value, fallback) {
  * @returns {boolean}
  */
 function hasValue(value) {
-  return value !== undefined && value !== '';
+  return value !== undefined && value !== "";
 }
 
 /**
@@ -161,7 +161,7 @@ function hasValue(value) {
  * @param {string} [envFileText] contents of `.env`, if it exists
  * @returns {{host: string, port: number, source: string}}
  */
-export function resolveDatabaseTarget(processEnv = {}, envFileText = '') {
+export function resolveDatabaseTarget(processEnv = {}, envFileText = "") {
   const fromFile = parseEnvAssignments(envFileText);
 
   /** @param {string} key */
@@ -169,19 +169,19 @@ export function resolveDatabaseTarget(processEnv = {}, envFileText = '') {
     const ambient = processEnv[key];
 
     if (hasValue(ambient)) {
-      return { value: ambient, origin: 'the environment' };
+      return { value: ambient, origin: "the environment" };
     }
 
     const declared = fromFile[key];
 
     if (hasValue(declared)) {
-      return { value: declared, origin: '.env' };
+      return { value: declared, origin: ".env" };
     }
 
     return null;
   };
 
-  const url = pick('DATABASE_URL');
+  const url = pick("DATABASE_URL");
 
   if (url !== null) {
     const parsed = parsePostgresUrl(url.value);
@@ -191,8 +191,8 @@ export function resolveDatabaseTarget(processEnv = {}, envFileText = '') {
     }
   }
 
-  const host = pick('DB_HOST');
-  const port = pick('DB_PORT');
+  const host = pick("DB_HOST");
+  const port = pick("DB_PORT");
 
   if (host !== null || port !== null) {
     return {
@@ -205,7 +205,7 @@ export function resolveDatabaseTarget(processEnv = {}, envFileText = '') {
   return {
     host: DEFAULT_POSTGRES_HOST,
     port: DEFAULT_POSTGRES_PORT,
-    source: 'the built-in defaults',
+    source: "the built-in defaults",
   };
 }
 
@@ -218,7 +218,7 @@ export function resolveDatabaseTarget(processEnv = {}, envFileText = '') {
  * `DB_DEBUG` are deliberately absent: a connection URL says nothing about them, so
  * they stay individually required.
  */
-export const DATABASE_URL_SUPERSEDES = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
+export const DATABASE_URL_SUPERSEDES = ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD"];
 
 /**
  * Keys the example declares that the developer's `.env` does not.
@@ -276,31 +276,31 @@ export function parseComposeHealth(stdout) {
   const entries = parseComposeEntries(stdout);
 
   if (entries === null) {
-    return 'unknown';
+    return "unknown";
   }
 
   if (entries.length === 0) {
-    return 'absent';
+    return "absent";
   }
 
   const [service] = entries;
-  const health = String(service.Health ?? '').toLowerCase();
+  const health = String(service.Health ?? "").toLowerCase();
 
-  if (health === 'healthy') {
-    return 'healthy';
+  if (health === "healthy") {
+    return "healthy";
   }
 
-  if (health === 'unhealthy') {
-    return 'unhealthy';
+  if (health === "unhealthy") {
+    return "unhealthy";
   }
 
   // A service with no healthcheck reports an empty Health; fall back to its state so a
   // running-but-uncheckable container is not mistaken for a broken one.
-  if (health === '' && String(service.State ?? '').toLowerCase() === 'running') {
-    return 'healthy';
+  if (health === "" && String(service.State ?? "").toLowerCase() === "running") {
+    return "healthy";
   }
 
-  return 'starting';
+  return "starting";
 }
 
 /**
@@ -311,7 +311,7 @@ export function parseComposeHealth(stdout) {
 function parseComposeEntries(stdout) {
   const text = String(stdout).trim();
 
-  if (text === '') {
+  if (text === "") {
     return [];
   }
 
@@ -333,7 +333,7 @@ function parseNdjson(text) {
   for (const line of text.split(/\r?\n/)) {
     const trimmed = line.trim();
 
-    if (trimmed === '') {
+    if (trimmed === "") {
       continue;
     }
 
@@ -348,10 +348,10 @@ function parseNdjson(text) {
 }
 
 const STATUS_MARKS = {
-  [RAN]: '✔',
-  [SKIPPED]: '↷',
-  [WARNED]: '!',
-  [FAILED]: '✖',
+  [RAN]: "✔",
+  [SKIPPED]: "↷",
+  [WARNED]: "!",
+  [FAILED]: "✖",
 };
 
 /**
@@ -361,8 +361,8 @@ const STATUS_MARKS = {
  * @returns {string}
  */
 export function formatStep(result) {
-  const mark = STATUS_MARKS[result.status] ?? '·';
-  const detail = result.detail ? ` — ${result.detail}` : '';
+  const mark = STATUS_MARKS[result.status] ?? "·";
+  const detail = result.detail ? ` — ${result.detail}` : "";
   return `${mark} ${result.name} (${result.status})${detail}`;
 }
 
@@ -377,22 +377,22 @@ export function formatSummary(results) {
   const failures = results.filter((result) => result.status === FAILED);
 
   const lines = [
-    '',
+    "",
     `Setup finished: ${tally(RAN)} ran, ${tally(SKIPPED)} skipped, ${tally(WARNED)} warned, ${failures.length} failed.`,
   ];
 
   if (failures.length > 0) {
-    lines.push('', 'Setup did not complete. Fix the failures above and run `npm run setup` again.');
+    lines.push("", "Setup did not complete. Fix the failures above and run `npm run setup` again.");
     return lines;
   }
 
   lines.push(
-    '',
-    'DevMentor is ready. Start the app with:',
-    '',
-    '  npm run dev',
-    '',
-    'Then open http://localhost:3000 (public) or http://localhost:3000/admin (admin).',
+    "",
+    "DevMentor is ready. Start the app with:",
+    "",
+    "  npm run dev",
+    "",
+    "Then open http://localhost:3000 (public) or http://localhost:3000/admin (admin).",
   );
 
   return lines;

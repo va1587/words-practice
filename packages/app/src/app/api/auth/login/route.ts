@@ -5,10 +5,10 @@ import {
   loginSchema,
   parseJsonBody,
   withScope,
-} from '@devmentor/core';
+} from "@devmentor/core";
 
 // Checks a credential, consumes rate-limit counters and sets the session cookie.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * `POST /api/auth/login` — sign in with an email address and a password (#13), the D07
@@ -62,7 +62,7 @@ export const POST = apiHandler(async (req) => {
     const { cookie } = await sessionService.issue({ id: user.id, sessionVersion });
 
     const response = jsonOk(user);
-    response.headers.append('set-cookie', cookie);
+    response.headers.append("set-cookie", cookie);
     return response;
   });
 });

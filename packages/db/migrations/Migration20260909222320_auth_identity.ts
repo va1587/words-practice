@@ -1,4 +1,4 @@
-import { Migration } from '@mikro-orm/migrations';
+import { Migration } from "@mikro-orm/migrations";
 
 /**
  * Identity and authorization columns on `users` (E01 Slice 2).
@@ -20,23 +20,33 @@ import { Migration } from '@mikro-orm/migrations';
  * is a rollback path, not an undo.
  */
 export class Migration20260909222320_auth_identity extends Migration {
-
-  override name = 'Migration20260909222320_auth_identity';
+  override name = "Migration20260909222320_auth_identity";
 
   override up(): void | Promise<void> {
-    this.addSql(`alter table "users" add "roles" text[] not null default '{mentee}', add "github_id" varchar(64) null, add "github_login" varchar(64) null, add "avatar_url" text null, add "email_verified_at" timestamptz null, add "session_version" int not null default 0;`);
-    this.addSql(`alter table "users" add constraint "users_github_id_unique" unique ("github_id");`);
-    this.addSql(`alter table "users" add constraint "users_roles_non_empty" check (cardinality("roles") >= 1);`);
-    this.addSql(`alter table "users" add constraint "users_roles_check" check ("roles" <@ array['mentee'::text, 'mentor'::text, 'operator'::text]);`);
+    this.addSql(
+      `alter table "users" add "roles" text[] not null default '{mentee}', add "github_id" varchar(64) null, add "github_login" varchar(64) null, add "avatar_url" text null, add "email_verified_at" timestamptz null, add "session_version" int not null default 0;`,
+    );
+    this.addSql(
+      `alter table "users" add constraint "users_github_id_unique" unique ("github_id");`,
+    );
+    this.addSql(
+      `alter table "users" add constraint "users_roles_non_empty" check (cardinality("roles") >= 1);`,
+    );
+    this.addSql(
+      `alter table "users" add constraint "users_roles_check" check ("roles" <@ array['mentee'::text, 'mentor'::text, 'operator'::text]);`,
+    );
 
-    this.addSql(`update "users" set "email_verified_at" = now() where "email_verified_at" is null;`);
+    this.addSql(
+      `update "users" set "email_verified_at" = now() where "email_verified_at" is null;`,
+    );
   }
 
   override down(): void | Promise<void> {
     this.addSql(`alter table "users" drop constraint "users_github_id_unique";`);
     this.addSql(`alter table "users" drop constraint "users_roles_non_empty";`);
     this.addSql(`alter table "users" drop constraint "users_roles_check";`);
-    this.addSql(`alter table "users" drop column "roles", drop column "github_id", drop column "github_login", drop column "avatar_url", drop column "email_verified_at", drop column "session_version";`);
+    this.addSql(
+      `alter table "users" drop column "roles", drop column "github_id", drop column "github_login", drop column "avatar_url", drop column "email_verified_at", drop column "session_version";`,
+    );
   }
-
 }

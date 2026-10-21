@@ -1,4 +1,3 @@
-
 # Software delivery process
 
 ## Purpose
@@ -18,18 +17,18 @@ Before intake, the work is shaped: `om-brainstorm` turns an idea or a question i
 
 ## Ticket lifecycle
 
-| Stage | What happens | Driven by | Done when |
-|---|---|---|---|
-| Discovery | An idea, question, or itch is talked through before any artifact exists: the problem is questioned, alternatives (including building nothing) are weighed, and the conversation ends in a routing decision — an answer, a filed ticket, a brief for a spec, or a direct change. | `om-brainstorm` or a human | Conversation routed; a brief written when the work continues |
-| Intake | A ticket or task brief is filed in github and meets the Definition of Ready below. `om-prepare-issue` files it with SDLC labels and the ready sections; `om-auto-manage-issues` reports what an existing ticket still lacks. | Anyone, `om-prepare-issue`, `om-auto-manage-issues` | Ticket exists and is ready, or its gaps are named on the ticket |
-| Triage | Confirm the issue is real, still unfixed on `master`, and not already claimed or covered by an open PR. Read-only; stops the chain cleanly when there is nothing to do. | `om-verify-in-repo` or a human | Confirmed actionable, or closed as no-action |
-| Claim | The author claims the ticket so concurrent agents back off. See the claim protocol below. | `om-fix` / `om-auto-create-pr`, or a human | Claim visible on the ticket |
-| Implement | Locate the minimal change surface (`om-root-cause`, read-only), then implement the change with regression tests and run the validation gate. Task briefs without a ticket go through `om-auto-create-pr`, which plans, implements phase by phase in an isolated worktree, and runs the same gate. | `om-root-cause` + `om-fix`, `om-auto-create-pr`, or a human author | Change complete, validation gate green |
-| PR | Commit, push, and open a PR against `master` with normalized labels. On a hand-worked branch, `om-check-and-commit` runs the gate, fixes obvious drift, and pushes when green. | `om-open-pr`, `om-auto-create-pr`, or `om-check-and-commit` | Open, labeled PR |
-| Review loop | The reviewer reads the diff against the `om-code-review` checklist and approves or requests changes. Requested changes are addressed (`om-auto-continue-pr` resumes agent PRs from the tracking plan, and adopts a PR that has none by reconstructing the plan from the PR's own context) and the PR is re-reviewed until approved. | `om-auto-review-pr` (single PR), `om-review-prs` (sweep), or a human | Approving review submitted |
-| QA | A PR carrying `needs-qa` waits for manual QA. A QA reviewer tests it and records the outcome. See the QA gate below. | QA reviewer (manual) | `qa-approved` applied, or `qa-failed` routes it back |
-| Merge | `om-merge-buddy` reports, read-only, which PRs can merge now and which are close but blocked. `om-approve-merge-pr` re-checks every gate, approves, and squash-merges. | `om-merge-buddy` + `om-approve-merge-pr`, or a human | PR squash-merged into `master` |
-| Post-merge housekeeping | Close issues the merged PR fixes; comment on issues whose PRs were closed without merging; turn leftover asks or review comments into tracked follow-up issues. | `om-close-fixed-issues`, `om-followup-issue-from-pr` | Tracker reconciled, follow-ups filed |
+| Stage                   | What happens                                                                                                                                                                                                                                                                                                                        | Driven by                                                            | Done when                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Discovery               | An idea, question, or itch is talked through before any artifact exists: the problem is questioned, alternatives (including building nothing) are weighed, and the conversation ends in a routing decision — an answer, a filed ticket, a brief for a spec, or a direct change.                                                     | `om-brainstorm` or a human                                           | Conversation routed; a brief written when the work continues    |
+| Intake                  | A ticket or task brief is filed in github and meets the Definition of Ready below. `om-prepare-issue` files it with SDLC labels and the ready sections; `om-auto-manage-issues` reports what an existing ticket still lacks.                                                                                                        | Anyone, `om-prepare-issue`, `om-auto-manage-issues`                  | Ticket exists and is ready, or its gaps are named on the ticket |
+| Triage                  | Confirm the issue is real, still unfixed on `master`, and not already claimed or covered by an open PR. Read-only; stops the chain cleanly when there is nothing to do.                                                                                                                                                             | `om-verify-in-repo` or a human                                       | Confirmed actionable, or closed as no-action                    |
+| Claim                   | The author claims the ticket so concurrent agents back off. See the claim protocol below.                                                                                                                                                                                                                                           | `om-fix` / `om-auto-create-pr`, or a human                           | Claim visible on the ticket                                     |
+| Implement               | Locate the minimal change surface (`om-root-cause`, read-only), then implement the change with regression tests and run the validation gate. Task briefs without a ticket go through `om-auto-create-pr`, which plans, implements phase by phase in an isolated worktree, and runs the same gate.                                   | `om-root-cause` + `om-fix`, `om-auto-create-pr`, or a human author   | Change complete, validation gate green                          |
+| PR                      | Commit, push, and open a PR against `master` with normalized labels. On a hand-worked branch, `om-check-and-commit` runs the gate, fixes obvious drift, and pushes when green.                                                                                                                                                      | `om-open-pr`, `om-auto-create-pr`, or `om-check-and-commit`          | Open, labeled PR                                                |
+| Review loop             | The reviewer reads the diff against the `om-code-review` checklist and approves or requests changes. Requested changes are addressed (`om-auto-continue-pr` resumes agent PRs from the tracking plan, and adopts a PR that has none by reconstructing the plan from the PR's own context) and the PR is re-reviewed until approved. | `om-auto-review-pr` (single PR), `om-review-prs` (sweep), or a human | Approving review submitted                                      |
+| QA                      | A PR carrying `needs-qa` waits for manual QA. A QA reviewer tests it and records the outcome. See the QA gate below.                                                                                                                                                                                                                | QA reviewer (manual)                                                 | `qa-approved` applied, or `qa-failed` routes it back            |
+| Merge                   | `om-merge-buddy` reports, read-only, which PRs can merge now and which are close but blocked. `om-approve-merge-pr` re-checks every gate, approves, and squash-merges.                                                                                                                                                              | `om-merge-buddy` + `om-approve-merge-pr`, or a human                 | PR squash-merged into `master`                                  |
+| Post-merge housekeeping | Close issues the merged PR fixes; comment on issues whose PRs were closed without merging; turn leftover asks or review comments into tracked follow-up issues.                                                                                                                                                                     | `om-close-fixed-issues`, `om-followup-issue-from-pr`                 | Tracker reconciled, follow-ups filed                            |
 
 After merge, this process stops. Deployment, smoke tests, monitoring, and rollback belong to the repository's release process, not to this document: the Release Manager role drafts the changelog with `om-auto-update-changelog` and reconciles the tracker with `om-close-fixed-issues`, and `om-pipeline-retro` reads finished runs to rank what second passes cost. Merge is where this document ends; delivering the change to users is a separate process the team owns.
 
@@ -61,7 +60,7 @@ For a bug, ready means reproducible: `om-verify-in-repo` is that gate, and the l
 When `om-discover` has written `.ai/specs/product-brief.md`, its **Non-goals**, **Business rules**, and **Decisions** tables are protected the way `BACKWARD_COMPATIBILITY.md` protects contract surfaces. Each entry carries a stable id (`N01`, `R03`, `D07`), an owner, a status (`active` or `superseded`), a review-by date, and a required path for changing it. The rules:
 
 - A PR that builds something a non-goal excludes, or contradicts a business rule or a decision, without a superseding entry in the same PR is a **blocker** in review, quoting the entry and its id. The way out is never "delete the code": it is "change the decision explicitly" — a superseding row approved by the entry's owner, with the maintainer arbitrating a dispute, as in Roles.
-- The decisions in play are surfaced where people work, not remembered: `om-auto-manage-issues` lists them in its implementation-notes comment, `om-spec-writing` carries a *Decisions in play* section, and every PR body carries *Decisions touched*. A newcomer or a new agent reads them at the issue, the spec, or the PR, not in a chat history.
+- The decisions in play are surfaced where people work, not remembered: `om-auto-manage-issues` lists them in its implementation-notes comment, `om-spec-writing` carries a _Decisions in play_ section, and every PR body carries _Decisions touched_. A newcomer or a new agent reads them at the issue, the spec, or the PR, not in a chat history.
 - An autonomous assumption a human confirmed on a spec PR (the resolved-assumptions comment) is recorded as a decision on the next `om-discover --refresh`, with the confirmer as owner, so the reason a thing is the way it is survives the people who decided it.
 - Decisions age: an entry past its review-by date is flagged in review as due for a look, not enforced blindly. Which entries block more than they protect is a retro question.
 
@@ -75,13 +74,13 @@ Pipeline labels are mutually exclusive: a PR carries at most one, and it names w
 - Only a QA reviewer sets the `qa` pipeline label. They move a queued `needs-qa` PR from `merge-queue` to `qa` while testing, then back to `merge-queue` with `qa-approved` on pass, or to `qa-failed` on failure. Automated skills request QA with `needs-qa`; they never set `qa`.
 - `blocked` and `do-not-merge` are set and cleared by humans and stop the flow wherever it is.
 
-| Group | Labels | Exclusivity | Meaning |
-|---|---|---|---|
-| Pipeline | `review`, `changes-requested`, `qa`, `qa-failed`, `merge-queue`, `blocked`, `do-not-merge` | one at a time | Workflow state |
-| Category | `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation` | additive | Kind of change |
-| Meta | `needs-qa`, `skip-qa`, `qa-approved`, `qa-self-verified`, `in-progress`, `ci-monitoring` | additive | Process signals |
-| Priority | `priority-low`, `priority-medium`, `priority-high`, `priority-extreme` | one at a time; unset = medium | Urgency of the work |
-| Risk | `risk-low`, `risk-medium`, `risk-high` | one at a time; unset = medium | Blast radius of the change |
+| Group    | Labels                                                                                     | Exclusivity                   | Meaning                    |
+| -------- | ------------------------------------------------------------------------------------------ | ----------------------------- | -------------------------- |
+| Pipeline | `review`, `changes-requested`, `qa`, `qa-failed`, `merge-queue`, `blocked`, `do-not-merge` | one at a time                 | Workflow state             |
+| Category | `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`                  | additive                      | Kind of change             |
+| Meta     | `needs-qa`, `skip-qa`, `qa-approved`, `qa-self-verified`, `in-progress`, `ci-monitoring`   | additive                      | Process signals            |
+| Priority | `priority-low`, `priority-medium`, `priority-high`, `priority-extreme`                     | one at a time; unset = medium | Urgency of the work        |
+| Risk     | `risk-low`, `risk-medium`, `risk-high`                                                     | one at a time; unset = medium | Blast radius of the change |
 
 Priority is how urgent the work is; risk is how dangerous the change is to ship. A one-line fix for an outage can be `priority-extreme` and `risk-low`; a large auth refactor that can wait can be `priority-low` and `risk-high`. A PR inherits both from its source issue unless the scope clearly changed. When an automated skill adds or changes a pipeline or meta label, it leaves a short comment explaining why.
 
@@ -100,14 +99,14 @@ When no risk label is set, infer one:
 
 When signals conflict, pick the higher label and say why in the label comment. A `risk-high` PR is not merely advised to get more scrutiny; it triggers gates:
 
-| Area behind `risk-high` | What the PR must carry |
-|---|---|
-| Auth, sessions, permissions | an integration test for the denied path and the wrong-scope read; a second person's review |
-| Data scoping | an isolation test proving one scope cannot read another |
-| Money | tests for the failure, retry, and idempotency paths; a second person's review |
-| Schema migrations | a migration test up and down, and a rollback plan in the PR body |
-| Shared contract surfaces | the consuming side exercised, per `BACKWARD_COMPATIBILITY.md` |
-| Any `risk-high` | `needs-qa` when user-facing; no self-QA; `om-code-review` blocks without the evidence above unless a maintainer waives it on the PR |
+| Area behind `risk-high`     | What the PR must carry                                                                                                              |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Auth, sessions, permissions | an integration test for the denied path and the wrong-scope read; a second person's review                                          |
+| Data scoping                | an isolation test proving one scope cannot read another                                                                             |
+| Money                       | tests for the failure, retry, and idempotency paths; a second person's review                                                       |
+| Schema migrations           | a migration test up and down, and a rollback plan in the PR body                                                                    |
+| Shared contract surfaces    | the consuming side exercised, per `BACKWARD_COMPATIBILITY.md`                                                                       |
+| Any `risk-high`             | `needs-qa` when user-facing; no self-QA; `om-code-review` blocks without the evidence above unless a maintainer waives it on the PR |
 
 One label lives outside this taxonomy: `do-not-close`, applied by humans to issues that housekeeping skills must never auto-close. Skills only ever read it.
 

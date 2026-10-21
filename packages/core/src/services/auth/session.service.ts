@@ -1,8 +1,8 @@
-import { SignJWT, jwtVerify } from 'jose';
-import type { AppEnv } from '../../config/env';
-import type { Clock } from '../../time/clock';
-import { readCookie, serializeCookie } from '../../http/cookies';
-import { signingKey, verificationKeys } from './session-secret';
+import { SignJWT, jwtVerify } from "jose";
+import type { AppEnv } from "../../config/env";
+import type { Clock } from "../../time/clock";
+import { readCookie, serializeCookie } from "../../http/cookies";
+import { signingKey, verificationKeys } from "./session-secret";
 
 /**
  * The session mechanism — platform primitives **B2**.
@@ -46,7 +46,7 @@ import { signingKey, verificationKeys } from './session-secret';
  * integration harness asserts the cookie was stored. It is a §7 protected surface —
  * renaming it signs every live user out.
  */
-export const SESSION_COOKIE_NAME = 'devmentor_session';
+export const SESSION_COOKIE_NAME = "devmentor_session";
 
 /**
  * 24 hours. Long enough that a mentee arranging a session over an evening is never
@@ -58,14 +58,13 @@ export const SESSION_COOKIE_NAME = 'devmentor_session';
 const SESSION_TTL_SECONDS = 24 * 60 * 60;
 
 /** The one audience this service issues and the only one it accepts. */
-const SESSION_AUDIENCE = 'session';
+const SESSION_AUDIENCE = "session";
 
 /** `HS256` and nothing else — see the note on the allowlist in `verify`. */
-const ALGORITHM = 'HS256';
+const ALGORITHM = "HS256";
 
 /** Names the capability that is down, never the value that is missing. */
-const SECRET_UNAVAILABLE =
-  'Sessions are unavailable because SESSION_SECRET is not configured.';
+const SECRET_UNAVAILABLE = "Sessions are unavailable because SESSION_SECRET is not configured.";
 
 /** What `issue` needs from a user row, and deliberately nothing else. */
 export interface SessionUser {
@@ -164,12 +163,12 @@ export class SessionService {
         // carrying neither. We signed it, but it is not one of ours — and returning
         // here rather than continuing the loop is deliberate: the signature already
         // matched, so another key cannot produce a better answer.
-        if (typeof payload.sub !== 'string' || payload.sub === '') {
+        if (typeof payload.sub !== "string" || payload.sub === "") {
           // Unlike a purpose token, whose subject may legitimately be `''` ("no
           // particular destination"), a session with no user is meaningless.
           return null;
         }
-        if (typeof payload.sv !== 'number' || !Number.isInteger(payload.sv)) {
+        if (typeof payload.sv !== "number" || !Number.isInteger(payload.sv)) {
           // `sv` is compared for equality against an integer column. Anything else —
           // absent, a string, a float — cannot be that value, and letting it through
           // would move the type check into every guard. No range check beyond this:
@@ -199,7 +198,7 @@ export class SessionService {
    * only when a live session was actually presented; there is nothing to bump otherwise.
    */
   clear(): string {
-    return this.serializeCookie('', 0);
+    return this.serializeCookie("", 0);
   }
 
   /**

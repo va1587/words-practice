@@ -1,5 +1,5 @@
-import { defineEntity, type InferEntity } from '@mikro-orm/core';
-import { defineSingletonEntity } from '../define';
+import { defineEntity, type InferEntity } from "@mikro-orm/core";
+import { defineSingletonEntity } from "../define";
 
 const p = defineEntity.properties;
 
@@ -39,10 +39,10 @@ const p = defineEntity.properties;
  * has to be a single atomic statement. The entity exists so the schema is generated,
  * diffed and migrated like everything else — not as a repository target.
  */
-export const AuthRateLimit = defineSingletonEntity('AuthRateLimit', () =>
+export const AuthRateLimit = defineSingletonEntity("AuthRateLimit", () =>
   defineEntity({
-    name: 'AuthRateLimit',
-    tableName: 'auth_rate_limits',
+    name: "AuthRateLimit",
+    tableName: "auth_rate_limits",
     properties: {
       key: p.text().primary(),
       windowStart: p.datetime().index(),

@@ -14,5 +14,5 @@
  * counts as a safe destination lives.
  */
 export function withReturnTo(path: string, returnTo: string): string {
-  return returnTo === '' ? path : `${path}?returnTo=${encodeURIComponent(returnTo)}`;
+  return returnTo === "" ? path : `${path}?returnTo=${encodeURIComponent(returnTo)}`;
 }

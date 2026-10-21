@@ -1,4 +1,4 @@
-import { dirname, join, parse } from 'node:path';
+import { dirname, join, parse } from "node:path";
 
 /**
  * Find a Yarn Plug'n'Play manifest visible from a prospective working directory.
@@ -12,7 +12,7 @@ export async function findPnpAncestor(startDirectory, fileExists) {
   let directory = startDirectory;
 
   while (true) {
-    for (const name of ['.pnp.cjs', '.pnp.js']) {
+    for (const name of [".pnp.cjs", ".pnp.js"]) {
       const candidate = join(directory, name);
 
       if (await fileExists(candidate)) {
@@ -49,9 +49,8 @@ export async function runStorybook(cliArguments, effects) {
     );
   }
 
-  const outputArguments = cliArguments[0] === 'build'
-    ? ['--output-dir', effects.outputDirectory]
-    : [];
+  const outputArguments =
+    cliArguments[0] === "build" ? ["--output-dir", effects.outputDirectory] : [];
 
   return effects.run(
     effects.nodeExecutable,
@@ -59,7 +58,7 @@ export async function runStorybook(cliArguments, effects) {
       effects.storybookExecutable,
       ...cliArguments,
       ...outputArguments,
-      '--config-dir',
+      "--config-dir",
       effects.configDirectory,
     ],
     workingDirectory,

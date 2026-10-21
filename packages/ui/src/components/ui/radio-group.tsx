@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "../../lib/utils"
-import { RadioGroup as RadioGroupPrimitive } from "radix-ui"
+import * as React from "react";
+import { cn } from "../../lib/utils";
+import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 
 function RadioGroup({
   className,
@@ -14,7 +14,7 @@ function RadioGroup({
       className={cn("dm-radio-group", className)}
       {...props}
     />
-  )
+  );
 }
 
 function RadioGroupItem({
@@ -24,10 +24,7 @@ function RadioGroupItem({
   return (
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
-      className={cn(
-        "dm-radio-control",
-        className
-      )}
+      className={cn("dm-radio-control", className)}
       {...props}
     >
       <RadioGroupPrimitive.Indicator
@@ -35,7 +32,7 @@ function RadioGroupItem({
         className="dm-radio-indicator"
       />
     </RadioGroupPrimitive.Item>
-  )
+  );
 }
 
-export { RadioGroup, RadioGroupItem }
+export { RadioGroup, RadioGroupItem };

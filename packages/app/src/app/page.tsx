@@ -8,15 +8,15 @@ export default function Home() {
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-6 py-24">
       <div className="flex flex-col gap-4">
-        <span className="text-sm font-medium uppercase tracking-widest text-zinc-500">
+        <span className="text-sm font-medium tracking-widest text-zinc-500 uppercase">
           DevMentor
         </span>
         <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 sm:text-5xl dark:text-zinc-50">
           Grow faster with the right mentor.
         </h1>
         <p className="max-w-xl text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          DevMentor connects developers with experienced mentors for pairing,
-          reviews, and career guidance.
+          DevMentor connects developers with experienced mentors for pairing, reviews, and career
+          guidance.
         </p>
       </div>
       <div className="flex flex-col gap-4 sm:flex-row">

@@ -1,7 +1,7 @@
-import { createLogger, type Logger } from '../logger';
-import { requireCsrfHeader } from './auth';
-import { type AppError, type FieldErrors, isAppError } from './errors';
-import { requestPath } from './safe-url';
+import { createLogger, type Logger } from "../logger";
+import { requireCsrfHeader } from "./auth";
+import { type AppError, type FieldErrors, isAppError } from "./errors";
+import { requestPath } from "./safe-url";
 
 /**
  * The response envelope every `/api/*` route returns. This is a *shape convention*
@@ -48,7 +48,7 @@ function json(
     status,
     // `content-type` is written last: an error may add headers (`Retry-After`), never
     // change the envelope's media type.
-    headers: { ...headers, 'content-type': 'application/json' },
+    headers: { ...headers, "content-type": "application/json" },
   });
 }
 
@@ -125,10 +125,7 @@ export interface ApiHandlerOptions {
  * refusal is a `ForbiddenError`, so it takes the same path to the client as any other
  * denial: 403 `forbidden`, in the standard envelope, with nothing of the route having run.
  */
-export function apiHandler(
-  logic: RouteLogic,
-  options?: ApiHandlerOptions,
-): ApiRouteHandler {
+export function apiHandler(logic: RouteLogic, options?: ApiHandlerOptions): ApiRouteHandler {
   const csrf = options?.csrf ?? true;
 
   return async (req, ctx) => {
@@ -148,8 +145,8 @@ export function apiHandler(
       // credentials into the log on any unexpected failure of those routes. pino's
       // key-based `redact` cannot see a secret embedded in a URL string, so the query is
       // dropped here, at the call site. See `safe-url.ts`.
-      logger().error({ err: error, path: requestPath(req.url) }, 'unhandled route error');
-      return jsonError(500, 'internal_error', 'Something went wrong');
+      logger().error({ err: error, path: requestPath(req.url) }, "unhandled route error");
+      return jsonError(500, "internal_error", "Something went wrong");
     }
   };
 }

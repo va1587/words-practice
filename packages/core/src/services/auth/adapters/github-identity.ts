@@ -1,14 +1,14 @@
-import { z } from 'zod';
-import type { AppEnv } from '../../../config/env';
-import type { Logger } from '../../../logger';
-import { ConflictError, ServiceUnavailableError } from '../../../http/errors';
-import { fetchJson } from '../../../http/outbound';
+import { z } from "zod";
+import type { AppEnv } from "../../../config/env";
+import type { Logger } from "../../../logger";
+import { ConflictError, ServiceUnavailableError } from "../../../http/errors";
+import { fetchJson } from "../../../http/outbound";
 import {
   GITHUB_CALLBACK_PATH,
   type AuthorizeUrlInput,
   type GithubIdentity,
   type GithubIdentityPort,
-} from '../github-identity.port';
+} from "../github-identity.port";
 
 /**
  * The real GitHub identity adapter (platform primitives B14).
@@ -28,22 +28,22 @@ import {
  * rather than outages.
  */
 
-const AUTHORIZE_ENDPOINT = 'https://github.com/login/oauth/authorize';
-const ACCESS_TOKEN_ENDPOINT = 'https://github.com/login/oauth/access_token';
-const USER_ENDPOINT = 'https://api.github.com/user';
-const USER_EMAILS_ENDPOINT = 'https://api.github.com/user/emails';
+const AUTHORIZE_ENDPOINT = "https://github.com/login/oauth/authorize";
+const ACCESS_TOKEN_ENDPOINT = "https://github.com/login/oauth/access_token";
+const USER_ENDPOINT = "https://api.github.com/user";
+const USER_EMAILS_ENDPOINT = "https://api.github.com/user/emails";
 
 /**
  * `read:user` for the profile, `user:email` for `/user/emails`. Without the second, the
  * emails endpoint 403s and no account could ever produce a verified primary address.
  */
-const SCOPE = 'read:user user:email';
+const SCOPE = "read:user user:email";
 
 /** api.github.com rejects a request without a `User-Agent`, so this is not optional. */
-const USER_AGENT = 'DevMentor';
+const USER_AGENT = "DevMentor";
 
 /** Pinned so a future default at GitHub cannot change the payloads parsed below. */
-const API_VERSION = '2022-11-28';
+const API_VERSION = "2022-11-28";
 
 /**
  * B6: *missing* configuration fails at the route, not at boot — an unset
@@ -51,12 +51,12 @@ const API_VERSION = '2022-11-28';
  * variables and never quotes a value.
  */
 const NOT_CONFIGURED_MESSAGE =
-  'GitHub sign-in is not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET to ' +
-  'the credentials of the registered OAuth app.';
+  "GitHub sign-in is not configured. Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET to " +
+  "the credentials of the registered OAuth app.";
 
 /** Shown for every upstream failure; deliberately says nothing about what GitHub returned. */
 const UNAVAILABLE_MESSAGE =
-  'GitHub sign-in is temporarily unavailable. Please try again in a moment.';
+  "GitHub sign-in is temporarily unavailable. Please try again in a moment.";
 
 /**
  * Edge case 3. The address is what links a GitHub identity to an account, and linking on an
@@ -64,8 +64,8 @@ const UNAVAILABLE_MESSAGE =
  * without a primary *verified* email is refused here and no account is created.
  */
 const NO_VERIFIED_EMAIL_MESSAGE =
-  'Your GitHub account has no verified primary email address, so we cannot confirm who ' +
-  'you are. Verify an email address on GitHub and try signing in again.';
+  "Your GitHub account has no verified primary email address, so we cannot confirm who " +
+  "you are. Verify an email address on GitHub and try signing in again.";
 
 /**
  * Only the fields sign-in reads. Unknown keys are stripped by zod, so a payload GitHub
@@ -97,8 +97,8 @@ const emailsSchema = z.array(
  * The login is always present and is what the account is called anyway.
  */
 function displayNameFor(name: string | null | undefined, login: string): string {
-  const trimmed = name?.trim() ?? '';
-  return trimmed === '' ? login : trimmed;
+  const trimmed = name?.trim() ?? "";
+  return trimmed === "" ? login : trimmed;
 }
 
 export class GithubIdentityAdapter implements GithubIdentityPort {
@@ -113,15 +113,15 @@ export class GithubIdentityAdapter implements GithubIdentityPort {
   authorizeUrl({ state, login }: AuthorizeUrlInput): string {
     const { clientId } = this.credentials();
     const url = new URL(AUTHORIZE_ENDPOINT);
-    url.searchParams.set('client_id', clientId);
-    url.searchParams.set('redirect_uri', this.redirectUri());
-    url.searchParams.set('scope', SCOPE);
-    url.searchParams.set('state', state);
+    url.searchParams.set("client_id", clientId);
+    url.searchParams.set("redirect_uri", this.redirectUri());
+    url.searchParams.set("scope", SCOPE);
+    url.searchParams.set("state", state);
     if (login !== undefined) {
       // GitHub's own hint parameter: it pre-selects an account on the authorisation
       // screen. Forwarding it is all this adapter does with it — the identity that comes
       // back is whoever actually authorised, not whoever was hinted.
-      url.searchParams.set('login', login);
+      url.searchParams.set("login", login);
     }
     return url.toString();
   }
@@ -130,7 +130,7 @@ export class GithubIdentityAdapter implements GithubIdentityPort {
     const { clientId, clientSecret } = this.credentials();
 
     const payload = await fetchJson<unknown>(ACCESS_TOKEN_ENDPOINT, {
-      method: 'POST',
+      method: "POST",
       body: {
         client_id: clientId,
         client_secret: clientSecret,
@@ -139,12 +139,12 @@ export class GithubIdentityAdapter implements GithubIdentityPort {
       },
     });
 
-    const parsed = this.parse(accessTokenSchema, payload, 'malformed token-exchange response');
+    const parsed = this.parse(accessTokenSchema, payload, "malformed token-exchange response");
     if (parsed.access_token === undefined) {
       // A stale, replayed or forged `code` — and a wrong `client_secret` — all arrive this
       // way. The code is logged because it names which of those it was and is not a
       // credential; `error_description` is not, because it is upstream free text.
-      throw this.unavailable(`token exchange refused: ${parsed.error ?? 'no access_token'}`);
+      throw this.unavailable(`token exchange refused: ${parsed.error ?? "no access_token"}`);
     }
     return parsed.access_token;
   }
@@ -152,9 +152,9 @@ export class GithubIdentityAdapter implements GithubIdentityPort {
   async fetchIdentity(accessToken: string): Promise<GithubIdentity> {
     const headers = {
       authorization: `Bearer ${accessToken}`,
-      accept: 'application/vnd.github+json',
-      'user-agent': USER_AGENT,
-      'x-github-api-version': API_VERSION,
+      accept: "application/vnd.github+json",
+      "user-agent": USER_AGENT,
+      "x-github-api-version": API_VERSION,
     };
 
     // Concurrent because neither response feeds the other, and a sign-in pays for the
@@ -164,8 +164,8 @@ export class GithubIdentityAdapter implements GithubIdentityPort {
       fetchJson<unknown>(USER_EMAILS_ENDPOINT, { headers }),
     ]);
 
-    const account = this.parse(accountSchema, accountPayload, 'malformed account payload');
-    const emails = this.parse(emailsSchema, emailsPayload, 'malformed email payload');
+    const account = this.parse(accountSchema, accountPayload, "malformed account payload");
+    const emails = this.parse(emailsSchema, emailsPayload, "malformed email payload");
 
     // Primary *and* verified, not "any verified address": the primary is the one GitHub
     // treats as the account's address, and picking a different one would link the account
@@ -221,7 +221,7 @@ export class GithubIdentityAdapter implements GithubIdentityPort {
    * transport failures; these are the ones it cannot see, because GitHub answered 200.
    */
   private unavailable(reason: string, cause?: unknown): ServiceUnavailableError {
-    this.logger.warn({ reason }, 'github identity request failed');
+    this.logger.warn({ reason }, "github identity request failed");
     return new ServiceUnavailableError(UNAVAILABLE_MESSAGE, { cause });
   }
 }

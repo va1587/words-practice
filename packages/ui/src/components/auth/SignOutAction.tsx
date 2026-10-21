@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { WorkflowAction } from '../../backend/actions/WorkflowAction';
+import { WorkflowAction } from "../../backend/actions/WorkflowAction";
 
 /**
  * Sign out — the first `WorkflowAction` (**F4**), and the one place the hard-navigation rule
@@ -35,7 +35,7 @@ export function SignOutAction() {
         // router cache this sign-out has just invalidated, and `ui` has no `next` dependency
         // to import either of them from.
         // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-        window.location.assign('/');
+        window.location.assign("/");
       }}
     />
   );

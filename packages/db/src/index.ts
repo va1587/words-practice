@@ -1,8 +1,8 @@
-export * from './entities/index';
-export { createOrmConfig } from './config';
-export { getOrm, closeOrm, checkDbConnection, MikroORM } from './orm';
-export type { EntityManager } from './orm';
-export { getDbEnv, type DbEnv } from './env';
+export * from "./entities/index";
+export { createOrmConfig } from "./config";
+export { getOrm, closeOrm, checkDbConnection, MikroORM } from "./orm";
+export type { EntityManager } from "./orm";
+export { getDbEnv, type DbEnv } from "./env";
 
 /**
  * The seeded personas' password and its hash. Exported from the barrel rather than reached
@@ -13,7 +13,7 @@ export { getDbEnv, type DbEnv } from './env';
  * They come from their own module so importing `@devmentor/db` does not drag in
  * `@mikro-orm/seeder` and the `DatabaseSeeder` class along with them.
  */
-export { SEED_PASSWORD, SEED_PASSWORD_HASH } from './seeders/seed-password';
+export { SEED_PASSWORD, SEED_PASSWORD_HASH } from "./seeders/seed-password";
 
 // Re-export the MikroORM primitives the rest of the monorepo needs so that only
 // `db` depends on `@mikro-orm/*` directly.
@@ -22,7 +22,7 @@ export {
   type FilterQuery,
   type Loaded,
   type RequiredEntityData,
-} from '@mikro-orm/core';
+} from "@mikro-orm/core";
 
 /**
  * The driver-neutral wrapper MikroORM raises for a `23505` unique violation. Exported
@@ -32,4 +32,4 @@ export {
  * properties — including `constraint` — are copied onto the wrapper by `DriverException`,
  * so the constraint name survives the translation.
  */
-export { UniqueConstraintViolationException } from '@mikro-orm/core';
+export { UniqueConstraintViolationException } from "@mikro-orm/core";

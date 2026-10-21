@@ -24,7 +24,7 @@
  */
 
 /** Paths the user must never be *navigated* to, matched on the first path segment. */
-const BLOCKED_PREFIXES = ['/api', '/_next'];
+const BLOCKED_PREFIXES = ["/api", "/_next"];
 
 /**
  * ASCII control characters. Browsers strip tab, CR and LF from a URL before resolving it,
@@ -35,18 +35,18 @@ const BLOCKED_PREFIXES = ['/api', '/_next'];
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
 
 export function safeReturnTo(value: string | null | undefined, fallback: string): string {
-  if (typeof value !== 'string') return fallback;
+  if (typeof value !== "string") return fallback;
   // Rejects `''`, `https://evil.example`, `javascript:…`, and bare `evil.example` alike:
   // anything that does not start with a slash can carry its own origin or scheme.
-  if (!value.startsWith('/')) return fallback;
+  if (!value.startsWith("/")) return fallback;
   // `//evil.example` is protocol-relative — same origin as us in syntax only.
-  if (value.startsWith('//')) return fallback;
+  if (value.startsWith("//")) return fallback;
   // Browsers normalise `\` to `/` inside the authority, which turns `/\evil.example` into
   // `//evil.example`. Backslashes anywhere are rejected: a page path never needs one.
-  if (value.includes('\\')) return fallback;
+  if (value.includes("\\")) return fallback;
   if (CONTROL_CHARACTERS.test(value)) return fallback;
 
-  const path = value.replace(/[?#][\s\S]*$/, '');
+  const path = value.replace(/[?#][\s\S]*$/, "");
   // Next matches routes on the decoded pathname, so `/%61pi/users` reaches `/api/users`.
   // Compare what the router will see, not what the query string spelled. Malformed
   // percent-encoding cannot be a path we ever issued, so it falls back rather than

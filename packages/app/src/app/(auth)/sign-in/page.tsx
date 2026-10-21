@@ -1,11 +1,11 @@
-import Link from 'next/link';
-import { safeReturnTo } from '@devmentor/core';
-import { Button } from '@devmentor/ui';
-import { AuthLayout, ErrorMessage } from '@devmentor/ui/backend';
-import { EmailAuthForm } from '../../../components/email-auth-form';
-import { withReturnTo } from '../return-to-href';
-import { redirectIfSignedIn } from '../../../lib/session';
-import type { SignInErrorCode } from '../../../lib/sign-in-redirect';
+import Link from "next/link";
+import { safeReturnTo } from "@devmentor/core";
+import { Button } from "@devmentor/ui";
+import { AuthLayout, ErrorMessage } from "@devmentor/ui/backend";
+import { EmailAuthForm } from "../../../components/email-auth-form";
+import { withReturnTo } from "../return-to-href";
+import { redirectIfSignedIn } from "../../../lib/session";
+import type { SignInErrorCode } from "../../../lib/sign-in-redirect";
 
 /**
  * `/sign-in` — the one screen the whole OAuth flow returns to, in every outcome, and from
@@ -30,13 +30,13 @@ import type { SignInErrorCode } from '../../../lib/sign-in-redirect';
  */
 
 // Reads the session cookie and the query string; nothing here may be prerendered.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /** Where the provider button sends the browser. Not `<Link>`: it is a route handler. */
-const GITHUB_START_PATH = '/api/auth/github';
+const GITHUB_START_PATH = "/api/auth/github";
 
 /** The other half of the pair. A page, so this one is a `<Link>`. */
-const REGISTER_PATH = '/register';
+const REGISTER_PATH = "/register";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -48,25 +48,26 @@ type SearchParams = Record<string, string | string[] | undefined>;
  * user reads about it belongs to the screen that renders it, in the current UI language.
  */
 const ERROR_MESSAGES: Record<SignInErrorCode, string> = {
-  state: 'That sign-in request could not be verified, usually because it was left open too long. Start again from this page.',
+  state:
+    "That sign-in request could not be verified, usually because it was left open too long. Start again from this page.",
   unavailable:
-    'GitHub sign-in is not available right now. It is either not configured for this deployment or GitHub did not answer. Try again in a moment.',
+    "GitHub sign-in is not available right now. It is either not configured for this deployment or GitHub did not answer. Try again in a moment.",
   // Every untrustworthy link lands here, and the copy has to be true of all of them: an
   // expired token, a truncated one, a link a mail client rewrote, and the unexpected failures
   // `verify-email` maps here rather than showing a JSON envelope. "Register again" is the
   // recovery E01 actually ships — there is no resend route, and re-registering an unconfirmed
   // address re-claims the row and sends a fresh link.
   verification:
-    'That verification link did not work. It may have expired, or it may have been altered on the way to you. Open the most recent verification email for that address, or create the account again to get a new link.',
+    "That verification link did not work. It may have expired, or it may have been altered on the way to you. Open the most recent verification email for that address, or create the account again to get a new link.",
   // Both refusals that reach here are about an address, and they are indistinguishable to
   // the browser, so the remedy covers both directions (edge cases 3 and 4).
   email:
-    'DevMentor could not use the email address on that GitHub account. Verify a primary address in your GitHub email settings, and confirm any DevMentor registration for that address, then try again.',
+    "DevMentor could not use the email address on that GitHub account. Verify a primary address in your GitHub email settings, and confirm any DevMentor registration for that address, then try again.",
 };
 
 /** Cancelling on GitHub is not an error, and the thing to say about it is what did *not* happen. */
 const CANCELLED_MESSAGE =
-  'Sign-in was cancelled and no account was created. Choose Continue with GitHub to try again.';
+  "Sign-in was cancelled and no account was created. Choose Continue with GitHub to try again.";
 
 /**
  * A repeated query parameter arrives as an array. Neither of the two this page reads is ever
@@ -102,7 +103,7 @@ export default async function SignInPage({
   // validates it again and turns it into the state token's subject; doing it here as well is
   // what keeps a hostile value out of the link this page *renders*. `''` means "no particular
   // destination", which each consumer turns into its own default.
-  const returnTo = safeReturnTo(single(params.returnTo), '');
+  const returnTo = safeReturnTo(single(params.returnTo), "");
 
   return (
     <AuthLayout
@@ -117,12 +118,7 @@ export default async function SignInPage({
       <div className="dm-account-form">
         {notice === null ? null : <ErrorMessage message={notice} />}
 
-        <Button
-          asChild
-          intent="neutral"
-          appearance="stroke"
-          className="dm-account-provider"
-        >
+        <Button asChild intent="neutral" appearance="stroke" className="dm-account-provider">
           <a href={withReturnTo(GITHUB_START_PATH, returnTo)}>Continue with GitHub</a>
         </Button>
 

@@ -1,12 +1,12 @@
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
-import { defineConfig } from '@mikro-orm/postgresql';
-import { Migrator } from '@mikro-orm/migrations';
-import { SeedManager } from '@mikro-orm/seeder';
-import { entities } from './entities/index';
-import { getDbEnv } from './env';
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+import { defineConfig } from "@mikro-orm/postgresql";
+import { Migrator } from "@mikro-orm/migrations";
+import { SeedManager } from "@mikro-orm/seeder";
+import { entities } from "./entities/index";
+import { getDbEnv } from "./env";
 
-const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /**
  * Build the MikroORM configuration from validated environment. Used by both the
@@ -38,27 +38,27 @@ export function createOrmConfig() {
       idleTimeoutMillis: env.DB_POOL_IDLE_MS,
     },
     migrations: {
-      path: resolve(packageRoot, 'migrations'),
-      pathTs: resolve(packageRoot, 'migrations'),
+      path: resolve(packageRoot, "migrations"),
+      pathTs: resolve(packageRoot, "migrations"),
       // On for real work; the integration harness sets DB_MIGRATIONS_SNAPSHOT=false so a
       // throwaway database can never rewrite this repository's committed snapshot.
       snapshot: env.DB_MIGRATIONS_SNAPSHOT,
       // Fixed name so the snapshot file is deterministic regardless of the connected
       // database name (which may come from DATABASE_URL and vary per environment).
-      snapshotName: 'devmentor',
+      snapshotName: "devmentor",
       transactional: true,
-      emit: 'ts',
+      emit: "ts",
     },
     seeder: {
-      path: resolve(packageRoot, 'src', 'seeders'),
-      pathTs: resolve(packageRoot, 'src', 'seeders'),
-      defaultSeeder: 'DatabaseSeeder',
-      emit: 'ts',
+      path: resolve(packageRoot, "src", "seeders"),
+      pathTs: resolve(packageRoot, "src", "seeders"),
+      defaultSeeder: "DatabaseSeeder",
+      emit: "ts",
       // MikroORM's default glob (`!(*.d).{js,ts}`) imports *every* TS file in the
       // seeder directory to build its class map — including the colocated
       // `*.test.ts` files this repo requires, which then blow up `db:seed` inside
       // the Vitest runner. Exclude them explicitly.
-      glob: '!(*.d|*.test).{js,ts}',
+      glob: "!(*.d|*.test).{js,ts}",
     },
   });
 }

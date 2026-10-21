@@ -1,6 +1,6 @@
-import { createLogger, type Logger } from '../logger';
-import { ServiceUnavailableError } from './errors';
-import { withoutQuery } from './safe-url';
+import { createLogger, type Logger } from "../logger";
+import { ServiceUnavailableError } from "./errors";
+import { withoutQuery } from "./safe-url";
 
 /**
  * The one sanctioned way to call an upstream JSON API (platform primitives B20).
@@ -28,7 +28,7 @@ import { withoutQuery } from './safe-url';
 export const DEFAULT_TIMEOUT_MS = 10_000;
 
 export type FetchJsonOptions = {
-  method?: 'GET' | 'POST';
+  method?: "GET" | "POST";
   /** Sent as-is. May carry `authorization`; never logged. */
   headers?: Record<string, string>;
   /** Serialised as JSON, which also sets `content-type`. Never logged. */
@@ -47,7 +47,7 @@ export class OutboundHttpError extends Error {
 
   constructor(method: string, url: string, status: number) {
     super(`${method} ${url} responded with ${status}`);
-    this.name = 'OutboundHttpError';
+    this.name = "OutboundHttpError";
     this.status = status;
     this.url = url;
   }
@@ -67,12 +67,12 @@ function logger(): Logger {
 function logFailure(method: string, url: string, reason: string, status?: number): void {
   logger().warn(
     { method, url, reason, ...(status === undefined ? {} : { status }) },
-    'outbound request failed',
+    "outbound request failed",
   );
 }
 
 export async function fetchJson<T>(url: string, options: FetchJsonOptions = {}): Promise<T> {
-  const { method = 'GET', headers, body, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
+  const { method = "GET", headers, body, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
   // Some upstreams accept credentials as query parameters, and a URL is the one part of
   // a request this module does log. `withoutQuery` keeps the host, so a failure log still
   // names which integration failed. See `safe-url.ts` for why redaction cannot do this.
@@ -84,9 +84,9 @@ export async function fetchJson<T>(url: string, options: FetchJsonOptions = {}):
     response = await fetch(url, {
       method,
       headers: {
-        accept: 'application/json',
+        accept: "application/json",
         ...headers,
-        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        ...(body === undefined ? {} : { "content-type": "application/json" }),
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       signal,
@@ -94,7 +94,7 @@ export async function fetchJson<T>(url: string, options: FetchJsonOptions = {}):
   } catch (cause) {
     // `AbortSignal.timeout` rejects the fetch with its own reason; anything else is DNS,
     // TLS or a dropped connection. Both are "the integration is unavailable".
-    const reason = signal.aborted ? `timed out after ${timeoutMs}ms` : 'network failure';
+    const reason = signal.aborted ? `timed out after ${timeoutMs}ms` : "network failure";
     logFailure(method, target, reason);
     throw new ServiceUnavailableError(undefined, { cause });
   }
@@ -103,7 +103,7 @@ export async function fetchJson<T>(url: string, options: FetchJsonOptions = {}):
     const cause = new OutboundHttpError(method, target, response.status);
     // The upstream body is not read, so it can neither be logged nor leak into the
     // envelope the client sees.
-    logFailure(method, target, 'upstream error status', response.status);
+    logFailure(method, target, "upstream error status", response.status);
     throw new ServiceUnavailableError(undefined, { cause });
   }
 
@@ -112,7 +112,7 @@ export async function fetchJson<T>(url: string, options: FetchJsonOptions = {}):
     // adapter). This layer owns transport, not schema.
     return (await response.json()) as T;
   } catch (cause) {
-    logFailure(method, target, 'malformed JSON response', response.status);
+    logFailure(method, target, "malformed JSON response", response.status);
     throw new ServiceUnavailableError(undefined, { cause });
   }
 }

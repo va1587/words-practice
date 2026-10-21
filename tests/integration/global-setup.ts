@@ -1,28 +1,25 @@
-import { execFile, spawn, type ChildProcess } from 'node:child_process';
-import { createWriteStream, type WriteStream } from 'node:fs';
-import { mkdir } from 'node:fs/promises';
-import { createServer } from 'node:net';
-import { promisify } from 'node:util';
-import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
-import type { TestProject } from 'vitest/node';
-import {
-  closeAgentBrowser,
-  integrationArtifactsDirectory,
-} from './agent-browser';
-import { integrationChildEnvironment } from './environment';
+import { execFile, spawn, type ChildProcess } from "node:child_process";
+import { createWriteStream, type WriteStream } from "node:fs";
+import { mkdir } from "node:fs/promises";
+import { createServer } from "node:net";
+import { promisify } from "node:util";
+import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import type { TestProject } from "vitest/node";
+import { closeAgentBrowser, integrationArtifactsDirectory } from "./agent-browser";
+import { integrationChildEnvironment } from "./environment";
 // The one definition of where the app's output lands, shared with the reader that polls it.
-import { appLogPath } from './mail';
+import { appLogPath } from "./mail";
 
 const execFileAsync = promisify(execFile);
 const root = process.cwd();
-const npmExecutable = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npmExecutable = process.platform === "win32" ? "npm.cmd" : "npm";
 
 let postgres: StartedPostgreSqlContainer | undefined;
 let app: ChildProcess | undefined;
 let appLog: WriteStream | undefined;
 let appStartError: Error | undefined;
 
-declare module 'vitest' {
+declare module "vitest" {
   export interface ProvidedContext {
     integrationBaseUrl: string;
     homeBrowserSession: string;
@@ -42,12 +39,12 @@ async function runNpm(args: string[], environment: NodeJS.ProcessEnv): Promise<v
 async function availablePort(): Promise<number> {
   return new Promise((resolvePort, reject) => {
     const server = createServer();
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
       const address = server.address();
-      if (!address || typeof address === 'string') {
+      if (!address || typeof address === "string") {
         server.close();
-        reject(new Error('Unable to reserve an application port'));
+        reject(new Error("Unable to reserve an application port"));
         return;
       }
       server.close((error) => {
@@ -60,7 +57,7 @@ async function availablePort(): Promise<number> {
 
 async function waitForReady(baseUrl: string): Promise<void> {
   const deadline = Date.now() + 60_000;
-  let lastFailure = 'the app did not answer';
+  let lastFailure = "the app did not answer";
 
   while (Date.now() < deadline) {
     if (appStartError) {
@@ -75,7 +72,7 @@ async function waitForReady(baseUrl: string): Promise<void> {
     try {
       const response = await fetch(`${baseUrl}/api/health`);
       const health = (await response.json()) as { status?: string; database?: string };
-      if (response.ok && health.status === 'ok' && health.database === 'up') {
+      if (response.ok && health.status === "ok" && health.database === "up") {
         return;
       }
       lastFailure = `health returned ${response.status} with database=${String(health.database)}`;
@@ -90,40 +87,32 @@ async function waitForReady(baseUrl: string): Promise<void> {
 }
 
 async function stopApp(): Promise<void> {
-  if (
-    !app ||
-    app.exitCode !== null ||
-    app.signalCode !== null ||
-    app.pid === undefined
-  ) {
+  if (!app || app.exitCode !== null || app.signalCode !== null || app.pid === undefined) {
     appLog?.end();
     return;
   }
 
-  const exited = new Promise<void>((resolveExit) => app?.once('exit', () => resolveExit()));
-  if (process.platform === 'win32') {
-    app.kill('SIGTERM');
+  const exited = new Promise<void>((resolveExit) => app?.once("exit", () => resolveExit()));
+  if (process.platform === "win32") {
+    app.kill("SIGTERM");
   } else {
     try {
-      process.kill(-app.pid, 'SIGTERM');
+      process.kill(-app.pid, "SIGTERM");
     } catch {
-      app.kill('SIGTERM');
+      app.kill("SIGTERM");
     }
   }
 
-  await Promise.race([
-    exited,
-    new Promise((resolveDelay) => setTimeout(resolveDelay, 5_000)),
-  ]);
+  await Promise.race([exited, new Promise((resolveDelay) => setTimeout(resolveDelay, 5_000))]);
 
   if (app.exitCode === null && app.signalCode === null) {
-    if (process.platform === 'win32') {
-      app.kill('SIGKILL');
+    if (process.platform === "win32") {
+      app.kill("SIGKILL");
     } else {
       try {
-        process.kill(-app.pid, 'SIGKILL');
+        process.kill(-app.pid, "SIGKILL");
       } catch {
-        app.kill('SIGKILL');
+        app.kill("SIGKILL");
       }
     }
     await exited;
@@ -132,10 +121,7 @@ async function stopApp(): Promise<void> {
 }
 
 async function cleanup(homeSession: string, adminSession: string): Promise<void> {
-  await Promise.all([
-    closeAgentBrowser(homeSession),
-    closeAgentBrowser(adminSession),
-  ]);
+  await Promise.all([closeAgentBrowser(homeSession), closeAgentBrowser(adminSession)]);
   await stopApp();
   if (postgres) {
     await postgres.stop();
@@ -150,10 +136,10 @@ export default async function setup(project: TestProject) {
 
   try {
     await mkdir(integrationArtifactsDirectory, { recursive: true });
-    postgres = await new PostgreSqlContainer('postgres:17-alpine')
-      .withDatabase('devmentor_test')
-      .withUsername('devmentor')
-      .withPassword('devmentor')
+    postgres = await new PostgreSqlContainer("postgres:17-alpine")
+      .withDatabase("devmentor_test")
+      .withUsername("devmentor")
+      .withPassword("devmentor")
       .start();
 
     // The port is reserved **before** the child environment is built, because `APP_URL` is
@@ -169,38 +155,38 @@ export default async function setup(project: TestProject) {
     const baseUrl = `http://127.0.0.1:${port}`;
 
     const environment = integrationChildEnvironment(postgres.getConnectionUri(), baseUrl);
-    await runNpm(['run', 'db:migrate'], environment);
-    await runNpm(['run', 'db:seed'], environment);
+    await runNpm(["run", "db:migrate"], environment);
+    await runNpm(["run", "db:seed"], environment);
     // Seed a second time on purpose. `npm run setup` re-seeds on every invocation, so
     // a non-idempotent seeder would break it — `users.email` is unique, and the old
     // seeder raised a unique violation here. Failing in setup makes that regression
     // impossible to miss.
-    await runNpm(['run', 'db:seed'], environment);
-    await runNpm(['run', 'build'], environment);
+    await runNpm(["run", "db:seed"], environment);
+    await runNpm(["run", "build"], environment);
 
     // `'w'` truncates, so a run never reads a previous run's mail out of a stale file.
-    appLog = createWriteStream(appLogPath, { flags: 'w' });
+    appLog = createWriteStream(appLogPath, { flags: "w" });
     app = spawn(
       npmExecutable,
       [
-        'run',
-        'start',
-        '--workspace',
-        '@devmentor/app',
-        '--',
-        '--hostname',
-        '127.0.0.1',
-        '--port',
+        "run",
+        "start",
+        "--workspace",
+        "@devmentor/app",
+        "--",
+        "--hostname",
+        "127.0.0.1",
+        "--port",
         String(port),
       ],
       {
         cwd: root,
         env: environment,
-        detached: process.platform !== 'win32',
-        stdio: ['ignore', 'pipe', 'pipe'],
+        detached: process.platform !== "win32",
+        stdio: ["ignore", "pipe", "pipe"],
       },
     );
-    app.once('error', (error) => {
+    app.once("error", (error) => {
       appStartError = error;
       appLog?.write(`\nFailed to start Next.js: ${error.stack ?? error.message}\n`);
     });
@@ -208,9 +194,9 @@ export default async function setup(project: TestProject) {
     app.stderr?.pipe(appLog);
 
     await waitForReady(baseUrl);
-    project.provide('integrationBaseUrl', baseUrl);
-    project.provide('homeBrowserSession', homeSession);
-    project.provide('adminBrowserSession', adminSession);
+    project.provide("integrationBaseUrl", baseUrl);
+    project.provide("homeBrowserSession", homeSession);
+    project.provide("adminBrowserSession", adminSession);
 
     return () => cleanup(homeSession, adminSession);
   } catch (error) {

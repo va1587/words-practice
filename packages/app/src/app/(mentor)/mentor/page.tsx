@@ -1,5 +1,5 @@
-import { EmptyState } from '@devmentor/ui/backend';
-import { requirePageRole } from '../../../lib/session';
+import { EmptyState } from "@devmentor/ui/backend";
+import { requirePageRole } from "../../../lib/session";
 
 /**
  * `/mentor` — where `homeFor` sends a mentor, and the route #15 and #17 already build on
@@ -8,10 +8,10 @@ import { requirePageRole } from '../../../lib/session';
  */
 
 // The guard reads the session cookie and reloads the user; never prerendered.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function MentorHomePage() {
-  await requirePageRole('mentor', '/mentor');
+  await requirePageRole("mentor", "/mentor");
 
   return (
     <div className="flex flex-col gap-6">

@@ -1,4 +1,5 @@
 # Interview — working developer, mid-size product company, 2026-08-20
+
 - Situation: stuck on a TypeScript generics error the day before a release; team's only senior was on leave.
 - What they did: 40 minutes on Stack Overflow, asked in a Discord, got two contradictory answers, shipped a workaround with a TODO.
 - Cost: "half a day, and I still don't trust that code."

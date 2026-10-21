@@ -1,8 +1,8 @@
-import { defineEntity, type InferEntity } from '@mikro-orm/core';
-import { baseProperties } from '../base.entity';
-import { defineSingletonEntity } from '../define';
-import { MentorProfile } from '../mentors/mentor-profile.entity';
-import { ROLES } from './roles';
+import { defineEntity, type InferEntity } from "@mikro-orm/core";
+import { baseProperties } from "../base.entity";
+import { defineSingletonEntity } from "../define";
+import { MentorProfile } from "../mentors/mentor-profile.entity";
+import { ROLES } from "./roles";
 
 const p = defineEntity.properties;
 
@@ -49,15 +49,15 @@ const p = defineEntity.properties;
  * a URL, and `createLogger` censors the `passwordHash` key as a backstop. Adding it to a
  * serialized shape is a review blocker, not a preference.
  */
-export const User = defineSingletonEntity('User', () =>
+export const User = defineSingletonEntity("User", () =>
   defineEntity({
-    name: 'User',
-    tableName: 'users',
+    name: "User",
+    tableName: "users",
     properties: {
       ...baseProperties,
       email: p.string().unique(),
       displayName: p.string(),
-      roles: p.enum(ROLES).array().default(['mentee']),
+      roles: p.enum(ROLES).array().default(["mentee"]),
       githubId: p.string().length(64).nullable().unique(),
       githubLogin: p.string().length(64).nullable(),
       avatarUrl: p.text().nullable(),
@@ -66,11 +66,9 @@ export const User = defineSingletonEntity('User', () =>
       sessionVersion: p.integer().default(0),
       // Per-property thunk so the cross-entity reference is resolved lazily at
       // discovery time, avoiding the circular-import pitfall between the two files.
-      mentorProfile: () => p.oneToOne(MentorProfile).mappedBy('user').nullable(),
+      mentorProfile: () => p.oneToOne(MentorProfile).mappedBy("user").nullable(),
     },
-    checks: [
-      { name: 'users_roles_non_empty', expression: 'cardinality("roles") >= 1' },
-    ],
+    checks: [{ name: "users_roles_non_empty", expression: 'cardinality("roles") >= 1' }],
   }),
 );
 

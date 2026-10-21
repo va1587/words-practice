@@ -1,8 +1,6 @@
 {
   "name": "public",
-  "namespaces": [
-    "public"
-  ],
+  "namespaces": ["public"],
   "tables": [
     {
       "name": "auth_rate_limits",
@@ -62,9 +60,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "key"
-          ],
+          "columnNames": ["key"],
           "composite": false,
           "constraint": true,
           "keyName": "auth_rate_limits_pkey",
@@ -72,9 +68,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "window_start"
-          ],
+          "columnNames": ["window_start"],
           "composite": false,
           "constraint": false,
           "keyName": "auth_rate_limits_window_start_index",
@@ -213,9 +207,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "mentor_profiles_pkey",
@@ -223,9 +215,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "composite": false,
           "constraint": true,
           "keyName": "mentor_profiles_user_id_unique",
@@ -237,14 +227,10 @@
       "triggers": [],
       "foreignKeys": {
         "mentor_profiles_user_id_foreign": {
-          "columnNames": [
-            "user_id"
-          ],
+          "columnNames": ["user_id"],
           "constraintName": "mentor_profiles_user_id_foreign",
           "localTableName": "public.mentor_profiles",
-          "referencedColumnNames": [
-            "id"
-          ],
+          "referencedColumnNames": ["id"],
           "referencedTableName": "public.users",
           "deleteRule": "cascade"
         }
@@ -462,9 +448,7 @@
       },
       "indexes": [
         {
-          "columnNames": [
-            "email"
-          ],
+          "columnNames": ["email"],
           "composite": false,
           "constraint": true,
           "keyName": "users_email_unique",
@@ -472,9 +456,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "github_id"
-          ],
+          "columnNames": ["github_id"],
           "composite": false,
           "constraint": true,
           "keyName": "users_github_id_unique",
@@ -482,9 +464,7 @@
           "unique": true
         },
         {
-          "columnNames": [
-            "id"
-          ],
+          "columnNames": ["id"],
           "composite": false,
           "constraint": true,
           "keyName": "users_pkey",

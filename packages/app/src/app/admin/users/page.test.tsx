@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { elements, text } from '../../../test/element-tree';
-import { UsersList } from './users-list';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { elements, text } from "../../../test/element-tree";
+import { UsersList } from "./users-list";
 
 /**
  * `/admin/users` invoked directly — the page edge case 21 is about.
@@ -14,31 +14,31 @@ import { UsersList } from './users-list';
 class RedirectSentinel extends Error {}
 
 const session = vi.hoisted(() => ({ requirePageRole: vi.fn() }));
-vi.mock('../../../lib/session', () => ({ requirePageRole: session.requirePageRole }));
+vi.mock("../../../lib/session", () => ({ requirePageRole: session.requirePageRole }));
 
-const { default: AdminUsersPage } = await import('./page');
+const { default: AdminUsersPage } = await import("./page");
 
 beforeEach(() => {
   vi.clearAllMocks();
-  session.requirePageRole.mockResolvedValue({ userId: 'u-3', roles: ['operator'] });
+  session.requirePageRole.mockResolvedValue({ userId: "u-3", roles: ["operator"] });
 });
 
-describe('admin users page', () => {
-  it('enforces the operator role at the page, with its own path', async () => {
+describe("admin users page", () => {
+  it("enforces the operator role at the page, with its own path", async () => {
     await AdminUsersPage();
 
-    expect(session.requirePageRole).toHaveBeenCalledWith('operator', '/admin/users');
+    expect(session.requirePageRole).toHaveBeenCalledWith("operator", "/admin/users");
   });
 
-  it('renders the heading itself and delegates the table to the client list', async () => {
+  it("renders the heading itself and delegates the table to the client list", async () => {
     const tree = await AdminUsersPage();
 
-    expect(text(tree)).toContain('Users');
+    expect(text(tree)).toContain("Users");
     expect(elements(tree).some((element) => element.type === UsersList)).toBe(true);
   });
 
-  it('renders nothing when the guard refuses', async () => {
-    session.requirePageRole.mockRejectedValue(new RedirectSentinel('NEXT_REDIRECT'));
+  it("renders nothing when the guard refuses", async () => {
+    session.requirePageRole.mockRejectedValue(new RedirectSentinel("NEXT_REDIRECT"));
 
     await expect(AdminUsersPage()).rejects.toBeInstanceOf(RedirectSentinel);
   });

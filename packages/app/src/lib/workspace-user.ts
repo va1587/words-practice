@@ -1,5 +1,5 @@
-import { withScope } from '@devmentor/core';
-import { User } from '@devmentor/db';
+import { withScope } from "@devmentor/core";
+import { User } from "@devmentor/db";
 
 /**
  * The one field `AppShell`'s user block needs and the session cannot supply.
@@ -29,12 +29,12 @@ import { User } from '@devmentor/db';
  * inventing a name or echoing a raw id, per `Guidelines.mdx`: show an unavailable value as
  * unavailable.
  */
-const UNAVAILABLE_NAME = 'Name unavailable';
+const UNAVAILABLE_NAME = "Name unavailable";
 
 /** The display name for an already-authorized user id. */
 export async function displayNameFor(userId: string): Promise<string> {
   return withScope(async ({ em }) => {
-    const user = await em.findOne(User, { id: userId }, { fields: ['displayName'] });
+    const user = await em.findOne(User, { id: userId }, { fields: ["displayName"] });
     return user?.displayName ?? UNAVAILABLE_NAME;
   });
 }

@@ -1,6 +1,6 @@
-import { makeCrudRoute, requireRole, requireSession } from '@devmentor/core';
+import { makeCrudRoute, requireRole, requireSession } from "@devmentor/core";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * Reference CRUD route: `route.ts` is configuration, not logic. `GET` is generated from
@@ -23,6 +23,6 @@ export const dynamic = 'force-dynamic';
 export const { GET } = makeCrudRoute({
   resolve: (cradle) => cradle.userService,
   authorize: async (req, cradle) => {
-    requireRole(await requireSession(req, cradle), 'operator');
+    requireRole(await requireSession(req, cradle), "operator");
   },
 });

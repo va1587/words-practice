@@ -5,8 +5,8 @@ import {
   OAUTH_STATE_TTL_SECONDS,
   safeReturnTo,
   withScope,
-} from '@devmentor/core';
-import { redirectTo, signInError, signInErrorCodeFor } from '../../../../lib/sign-in-redirect';
+} from "@devmentor/core";
+import { redirectTo, signInError, signInErrorCodeFor } from "../../../../lib/sign-in-redirect";
 
 /**
  * Start of the GitHub OAuth flow.
@@ -35,7 +35,7 @@ import { redirectTo, signInError, signInErrorCodeFor } from '../../../../lib/sig
 
 // Mints a signed token, sets a cookie and reads the query string — nothing about this
 // response is the same twice, and none of it may be prerendered.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * GitHub's own account-hint parameter, validated against GitHub's own rule for a username:
@@ -55,13 +55,13 @@ function loginHint(value: string | null): string | undefined {
 
 export const GET = apiHandler(async (req) => {
   const query = new URL(req.url).searchParams;
-  const returnTo = safeReturnTo(query.get('returnTo'), '');
-  const login = loginHint(query.get('login'));
+  const returnTo = safeReturnTo(query.get("returnTo"), "");
+  const login = loginHint(query.get("login"));
 
   try {
     return await withScope(async ({ githubIdentity, tokenService }) => {
       const state = await tokenService.signPurposeToken({
-        purpose: 'oauth-state',
+        purpose: "oauth-state",
         subject: returnTo,
         ttlSeconds: OAUTH_STATE_TTL_SECONDS,
       });
@@ -75,6 +75,6 @@ export const GET = apiHandler(async (req) => {
       ]);
     });
   } catch (error) {
-    return signInError(signInErrorCodeFor(error, '/api/auth/github'));
+    return signInError(signInErrorCodeFor(error, "/api/auth/github"));
   }
 });

@@ -1,4 +1,4 @@
-import type { AppEnv } from '../config/env';
+import type { AppEnv } from "../config/env";
 
 /**
  * The hand-rolled `Set-Cookie` writer and `Cookie` reader — platform primitives **B2**'s
@@ -17,7 +17,7 @@ import type { AppEnv } from '../config/env';
  */
 
 /** What the serializer needs from the environment, and deliberately nothing else. */
-export type CookieEnv = Pick<AppEnv, 'NODE_ENV'>;
+export type CookieEnv = Pick<AppEnv, "NODE_ENV">;
 
 export interface SerializeCookieInput {
   /** The cookie's name. Never encoded — every name this codebase writes is a bare token. */
@@ -53,27 +53,22 @@ export interface SerializeCookieInput {
  * `Domain`, was weighed and rejected in B2: it forbids `Secure`-less cookies outright,
  * which is the local-development case above.
  */
-export function serializeCookie({
-  name,
-  value,
-  maxAgeSeconds,
-  env,
-}: SerializeCookieInput): string {
+export function serializeCookie({ name, value, maxAgeSeconds, env }: SerializeCookieInput): string {
   const attributes = [
     `${name}=${value}`,
-    'Path=/',
+    "Path=/",
     `Max-Age=${maxAgeSeconds}`,
     // Unreadable to `document.cookie`, so an XSS bug cannot exfiltrate a session or a
     // state token.
-    'HttpOnly',
-    'SameSite=Lax',
+    "HttpOnly",
+    "SameSite=Lax",
   ];
 
-  if (env.NODE_ENV === 'production') {
-    attributes.push('Secure');
+  if (env.NODE_ENV === "production") {
+    attributes.push("Secure");
   }
 
-  return attributes.join('; ');
+  return attributes.join("; ");
 }
 
 /**
@@ -87,13 +82,13 @@ export function serializeCookie({
  * `%zz` — a 500 handed to anyone who could set a cookie.
  */
 export function readCookie(req: Request, name: string): string | null {
-  const header = req.headers.get('cookie');
+  const header = req.headers.get("cookie");
   if (!header) {
     return null;
   }
 
-  for (const pair of header.split(';')) {
-    const separator = pair.indexOf('=');
+  for (const pair of header.split(";")) {
+    const separator = pair.indexOf("=");
     if (separator === -1) {
       // A bare attribute with no `=`. Not a cookie; skip it rather than reading the whole
       // segment as a name.

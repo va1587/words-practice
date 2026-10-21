@@ -1,4 +1,5 @@
 # Interview — senior engineer who mentors on the side, 2026-08-22
+
 - Situation: answers the same three questions every month in DMs and on a community Slack, unpaid.
 - What they did: wrote a private notes file with the answers, pastes from it.
 - Cost: "two evenings a month, for free, and the notes rot."

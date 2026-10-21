@@ -58,7 +58,7 @@
  * 26 characters, so it satisfies `registerSchema`'s 12-character minimum and 72-byte cap and
  * can be re-registered as well as verified.
  */
-export const SEED_PASSWORD = 'mock-password-not-a-secret';
+export const SEED_PASSWORD = "mock-password-not-a-secret";
 
 /**
  * `SEED_PASSWORD` hashed with `scrypt` at the parameters `PasswordService` uses. Written to
@@ -66,4 +66,4 @@ export const SEED_PASSWORD = 'mock-password-not-a-secret';
  * the format, the guard tests, and how to regenerate it.
  */
 export const SEED_PASSWORD_HASH =
-  '$scrypt$ln=17,r=8,p=1,dk=32$yqJF24Lca/ynF1oLBXj3Pg$VQI/jNSlZf2P+rEAvFFO+Ss7fpL/64gKancF+ny26uU';
+  "$scrypt$ln=17,r=8,p=1,dk=32$yqJF24Lca/ynF1oLBXj3Pg$VQI/jNSlZf2P+rEAvFFO+Ss7fpL/64gKancF+ny26uU";

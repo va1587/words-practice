@@ -145,7 +145,7 @@ Read the diff in this order. A finding higher on the list outranks everything be
   `tests/integration/environment.ts` (ephemeral test configuration for child
   processes) and `scripts/setup/effects.mjs` (the installer runs before `npm install`
   and cannot import zod; it reads the environment behind the `SetupEffects` adapter and
-  mirrors the `DATABASE_URL`-over-`DB_*` precedence in `steps.mjs`). A *third*
+  mirrors the `DATABASE_URL`-over-`DB_*` precedence in `steps.mjs`). A _third_
   reader is a finding — and any change to the precedence must land in all three
   places at once.
 - Secrets never enter the repository; `.env` stays ignored.

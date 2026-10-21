@@ -5,8 +5,8 @@ import {
   type MakeCrudRouteOptions,
   type Session,
   type UserDto,
-} from '@devmentor/core';
-import { describe, expect, it, vi } from 'vitest';
+} from "@devmentor/core";
+import { describe, expect, it, vi } from "vitest";
 
 /**
  * The route is configuration, and what is worth asserting about it is the configuration:
@@ -25,19 +25,19 @@ const captured = vi.hoisted(() => ({
   options: undefined as MakeCrudRouteOptions<UserDto, never, never> | undefined,
 }));
 
-vi.mock('@devmentor/core', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@devmentor/core')>()),
+vi.mock("@devmentor/core", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@devmentor/core")>()),
   makeCrudRoute: (options: MakeCrudRouteOptions<UserDto, never, never>) => {
     captured.options = options;
-    return { GET: 'GET', POST: 'POST', PUT: 'PUT', DELETE: 'DELETE' };
+    return { GET: "GET", POST: "POST", PUT: "PUT", DELETE: "DELETE" };
   },
 }));
 
-const route = await import('./route');
+const route = await import("./route");
 
 function options(): MakeCrudRouteOptions<UserDto, never, never> {
   if (captured.options === undefined) {
-    throw new Error('route.ts did not call makeCrudRoute');
+    throw new Error("route.ts did not call makeCrudRoute");
   }
   return captured.options;
 }
@@ -49,57 +49,57 @@ function options(): MakeCrudRouteOptions<UserDto, never, never> {
  */
 function cradle(session: Session | null): Cradle {
   return {
-    sessionService: { readCookie: () => 'a.signed.cookie' },
-    sessionCookie: 'a.signed.cookie',
+    sessionService: { readCookie: () => "a.signed.cookie" },
+    sessionCookie: "a.signed.cookie",
     session: Promise.resolve(session),
     userService: { list: async () => [] },
   } as unknown as Cradle;
 }
 
 function request(): Request {
-  return new Request('http://devmentor.test/api/users');
+  return new Request("http://devmentor.test/api/users");
 }
 
 function authorize(session: Session | null): Promise<void> {
   const hook = options().authorize;
   if (hook === undefined) {
-    throw new Error('the route exposes no authorize hook');
+    throw new Error("the route exposes no authorize hook");
   }
   return Promise.resolve(hook(request(), cradle(session)));
 }
 
-describe('/api/users route configuration', () => {
-  it('exports GET and nothing that could create a user', () => {
-    expect(Object.keys(route).sort()).toEqual(['GET', 'dynamic']);
+describe("/api/users route configuration", () => {
+  it("exports GET and nothing that could create a user", () => {
+    expect(Object.keys(route).sort()).toEqual(["GET", "dynamic"]);
     // No `POST` export at all, so Next answers 405 rather than the envelope — and no
     // create schema, so even a re-export could not carry a body into the service.
-    expect(route).not.toHaveProperty('POST');
+    expect(route).not.toHaveProperty("POST");
     expect(options().createSchema).toBeUndefined();
     expect(options().updateSchema).toBeUndefined();
   });
 
-  it('is force-dynamic, because it reads the database and the session cookie', () => {
-    expect(route.dynamic).toBe('force-dynamic');
+  it("is force-dynamic, because it reads the database and the session cookie", () => {
+    expect(route.dynamic).toBe("force-dynamic");
   });
 
-  it('resolves the user service from the request scope', () => {
+  it("resolves the user service from the request scope", () => {
     const scope = cradle(null);
 
     expect(options().resolve(scope)).toBe(scope.userService);
   });
 
-  it('refuses an anonymous caller with 401', async () => {
+  it("refuses an anonymous caller with 401", async () => {
     await expect(authorize(null)).rejects.toThrow(UnauthorizedError);
   });
 
-  it.each([['mentee'], ['mentor']] as const)('refuses a signed-in %s with 403', async (role) => {
-    await expect(authorize({ userId: 'user-1', roles: [role] })).rejects.toThrow(ForbiddenError);
+  it.each([["mentee"], ["mentor"]] as const)("refuses a signed-in %s with 403", async (role) => {
+    await expect(authorize({ userId: "user-1", roles: [role] })).rejects.toThrow(ForbiddenError);
   });
 
-  it('admits an operator, and an operator who holds other roles too', async () => {
-    await expect(authorize({ userId: 'user-1', roles: ['operator'] })).resolves.toBeUndefined();
+  it("admits an operator, and an operator who holds other roles too", async () => {
+    await expect(authorize({ userId: "user-1", roles: ["operator"] })).resolves.toBeUndefined();
     await expect(
-      authorize({ userId: 'user-1', roles: ['mentee', 'mentor', 'operator'] }),
+      authorize({ userId: "user-1", roles: ["mentee", "mentor", "operator"] }),
     ).resolves.toBeUndefined();
   });
 });

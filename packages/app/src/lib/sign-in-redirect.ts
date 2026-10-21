@@ -1,4 +1,4 @@
-import { ConflictError, createLogger, isAppError } from '@devmentor/core';
+import { ConflictError, createLogger, isAppError } from "@devmentor/core";
 
 /**
  * The `code` a `ConflictError` carries. Read off the class rather than written as the string
@@ -18,7 +18,7 @@ const CONFLICT_CODE = new ConflictError().code;
  */
 
 /** Where every refusal in the GitHub flow lands. */
-const SIGN_IN_PATH = '/sign-in';
+const SIGN_IN_PATH = "/sign-in";
 
 /**
  * The `?error=` vocabulary `/sign-in` renders. Four of these are named in the spec's UI/UX
@@ -41,7 +41,7 @@ const SIGN_IN_PATH = '/sign-in';
  *   registration for it — rather than echoing the service's message, which is server text
  *   and not a query parameter's job to carry.
  */
-export type SignInErrorCode = 'state' | 'unavailable' | 'verification' | 'email';
+export type SignInErrorCode = "state" | "unavailable" | "verification" | "email";
 
 /**
  * A 302 built by hand rather than with `Response.redirect()`, which **cannot carry
@@ -52,16 +52,13 @@ export type SignInErrorCode = 'state' | 'unavailable' | 'verification' | 'email'
 export function redirectTo(location: string, setCookies: readonly string[] = []): Response {
   const headers = new Headers({ location });
   for (const cookie of setCookies) {
-    headers.append('set-cookie', cookie);
+    headers.append("set-cookie", cookie);
   }
   return new Response(null, { status: 302, headers });
 }
 
 /** 302 to `/sign-in?error=<code>`. */
-export function signInError(
-  code: SignInErrorCode,
-  setCookies: readonly string[] = [],
-): Response {
+export function signInError(code: SignInErrorCode, setCookies: readonly string[] = []): Response {
   return redirectTo(`${SIGN_IN_PATH}?error=${code}`, setCookies);
 }
 
@@ -95,10 +92,10 @@ export function signInCancelled(setCookies: readonly string[] = []): Response {
  */
 export function signInErrorCodeFor(error: unknown, route: string): SignInErrorCode {
   if (isAppError(error) && error.code === CONFLICT_CODE) {
-    return 'email';
+    return "email";
   }
   if (!isAppError(error)) {
-    createLogger().error({ err: error, route }, 'unhandled failure in the GitHub sign-in flow');
+    createLogger().error({ err: error, route }, "unhandled failure in the GitHub sign-in flow");
   }
-  return 'unavailable';
+  return "unavailable";
 }

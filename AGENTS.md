@@ -10,18 +10,18 @@ monorepo built on the latest Next.js + TypeScript + React.
 
 ### Tech stack
 
-| Concern            | Choice                                             |
-| ------------------ | -------------------------------------------------- |
-| Framework          | Next.js 16 (App Router, Turbopack) + React 19      |
-| Language           | TypeScript 5 (strict), ESM everywhere              |
-| Database           | PostgreSQL                                          |
-| ORM                | MikroORM v7 (PostgreSQL driver) — migrations + pool |
-| Dependency injection | awilix v13 (`PROXY` mode, typed `Cradle`)        |
-| Config validation  | zod                                                |
-| Logging            | pino                                               |
-| Frontend styling   | Tailwind CSS v4 (public/marketing pages)           |
-| Backend/admin UI   | shadcn-ui components (in `@devmentor/ui`)          |
-| Package manager    | npm workspaces (Node ≥ 24)                          |
+| Concern              | Choice                                              |
+| -------------------- | --------------------------------------------------- |
+| Framework            | Next.js 16 (App Router, Turbopack) + React 19       |
+| Language             | TypeScript 5 (strict), ESM everywhere               |
+| Database             | PostgreSQL                                          |
+| ORM                  | MikroORM v7 (PostgreSQL driver) — migrations + pool |
+| Dependency injection | awilix v13 (`PROXY` mode, typed `Cradle`)           |
+| Config validation    | zod                                                 |
+| Logging              | pino                                                |
+| Frontend styling     | Tailwind CSS v4 (public/marketing pages)            |
+| Backend/admin UI     | shadcn-ui components (in `@devmentor/ui`)           |
+| Package manager      | npm workspaces (Node ≥ 24)                          |
 
 ### Monorepo layout
 
@@ -91,7 +91,7 @@ New reusable components have one designated home each — never scattered ad hoc
 4. Used by exactly one page → colocate next to that `page.tsx` until a second
    consumer appears.
 
-The API envelope (`{ ok, data }` / `{ ok, error }`) is a *shape convention*, not a
+The API envelope (`{ ok, data }` / `{ ok, error }`) is a _shape convention_, not a
 shared type: `core/src/http` and `ui/src/backend/api` each declare their own matching
 type because `ui` must not import `core`. `/api/users` + `/admin/users/page.tsx` are
 the reference example every new concept copies. See
@@ -155,7 +155,7 @@ webhook, which authenticates by verifying a signature. See `BACKWARD_COMPATIBILI
   outside `packages/`:
   - `tests/integration/environment.ts` — inherits the parent environment to pass
     ephemeral test configuration to migration/build/app child processes.
-  - `scripts/setup/effects.mjs` — `npm run setup` runs on a fresh clone *before*
+  - `scripts/setup/effects.mjs` — `npm run setup` runs on a fresh clone _before_
     `npm install`, so it cannot import zod. It reads `process.env`, `process.version`,
     and `process.platform` behind the injectable `SetupEffects` adapter, and
     re-implements the `DATABASE_URL`-over-`DB_*` precedence in `steps.mjs`
@@ -359,7 +359,7 @@ artifacts live under `.ai/`.
 
 Distilled from [Boris Cherny's Claude Code
 tips](https://ykdojo.github.io/claude-code-tips/content/boris-claude-code-tips).
-These govern *how* you work; the SDD section above governs *what artifacts* you leave
+These govern _how_ you work; the SDD section above governs _what artifacts_ you leave
 behind.
 
 1. **Plan first, and re-plan instead of patching.** Front-load the thinking: a
@@ -370,7 +370,7 @@ behind.
 
 2. **Capture every correction the moment it happens.** When the user corrects your
    approach, write the lesson to `.ai/lessons.md` (and update this file if it's a
-   standing rule) *before* continuing the task. Rules that only live in the current
+   standing rule) _before_ continuing the task. Rules that only live in the current
    conversation are lost; the point is that the same mistake never recurs.
 
 3. **Promote anything repeated into a skill or command.** If you find yourself doing

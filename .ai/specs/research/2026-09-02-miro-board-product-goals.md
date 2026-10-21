@@ -3,6 +3,7 @@
 Document type: the founders' own discovery board; positions, not evidence.
 
 ## Product (what it is, what stands out, feasibility)
+
 - Product: marketplace to find, book and pay senior engineers for 25/50-min sessions.
 - Product: each mentor sells a knowledge vault as a subscription.
 - Product: three tiers — ask the vault via MCP, ask the mentor async in 24h, book a session.
@@ -16,6 +17,7 @@ Document type: the founders' own discovery board; positions, not evidence.
 - Feasible: MVP in 25 hours, one AI feature (answer from vault), transcription and AI note drafting deferred.
 
 ## Business Goals (how the product benefits the company)
+
 - Benefit: recurring revenue from vault subscriptions, not just session commissions.
 - Benefit: knowledge asset that grows with every session; competitors reset to zero each call.
 - Benefit: mentors bring their own audience, low acquisition cost on both sides.

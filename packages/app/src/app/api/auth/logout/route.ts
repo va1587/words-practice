@@ -1,7 +1,7 @@
-import { apiHandler, jsonOk, withRequestScope } from '@devmentor/core';
+import { apiHandler, jsonOk, withRequestScope } from "@devmentor/core";
 
 // Reads the session cookie and writes one back; never a cached answer.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * Sign out.
@@ -40,7 +40,7 @@ export const POST = apiHandler(async (req) =>
     }
 
     const response = jsonOk(null);
-    response.headers.append('set-cookie', sessionService.clear());
+    response.headers.append("set-cookie", sessionService.clear());
     return response;
   }),
 );

@@ -1,5 +1,5 @@
-import { pino, type DestinationStream, type Logger, type LoggerOptions } from 'pino';
-import { getEnv } from './config/env';
+import { pino, type DestinationStream, type Logger, type LoggerOptions } from "pino";
+import { getEnv } from "./config/env";
 
 /**
  * Key names whose value is never safe in a log line: the plaintext password a user
@@ -9,10 +9,10 @@ import { getEnv } from './config/env';
  * These are *names*, not paths — `REDACT_PATHS` below expands each one to the depths a
  * log call actually reaches.
  */
-const SECRET_KEYS = ['password', 'passwordHash', 'token', 'authorization', 'cookie'] as const;
+const SECRET_KEYS = ["password", "passwordHash", "token", "authorization", "cookie"] as const;
 
 /** What a redacted value is replaced with, so a redacted field is obvious in a log. */
-export const REDACT_CENSOR = '[redacted]';
+export const REDACT_CENSOR = "[redacted]";
 
 /**
  * pino's `redact` takes **paths**, not a key list: `password` alone matches only a

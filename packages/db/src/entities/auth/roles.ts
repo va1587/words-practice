@@ -9,6 +9,6 @@
  * `SDLC.md` grades tightening a constraint existing rows may violate as breaking, so
  * removing a value later is an expand-then-contract migration.
  */
-export const ROLES = ['mentee', 'mentor', 'operator'] as const;
+export const ROLES = ["mentee", "mentor", "operator"] as const;
 
 export type Role = (typeof ROLES)[number];

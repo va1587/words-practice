@@ -1,10 +1,10 @@
-import { ServiceUnavailableError } from '../../../http/errors';
+import { ServiceUnavailableError } from "../../../http/errors";
 import {
   GITHUB_CALLBACK_PATH,
   type AuthorizeUrlInput,
   type GithubIdentity,
   type GithubIdentityPort,
-} from '../github-identity.port';
+} from "../github-identity.port";
 
 /**
  * The fake GitHub identity adapter (platform primitives B14).
@@ -40,13 +40,13 @@ import {
  */
 
 /** The persona a sign-in with no `?login=` lands on: the seeded mentee. */
-export const DEFAULT_MOCK_LOGIN = 'mock-mentee';
+export const DEFAULT_MOCK_LOGIN = "mock-mentee";
 
 /**
  * The domain every mock address is built from. `devmentor.test` is an RFC 2606 reserved
  * TLD, so an address minted here can never be deliverable to a real inbox.
  */
-const MOCK_EMAIL_DOMAIN = 'devmentor.test';
+const MOCK_EMAIL_DOMAIN = "devmentor.test";
 
 /**
  * A mock `github_id` is `mock-<login>`: stable per login, distinct between logins, and —
@@ -54,17 +54,17 @@ const MOCK_EMAIL_DOMAIN = 'devmentor.test';
  * identity. A test database that later meets the real adapter can therefore never hand a
  * real user someone else's row.
  */
-const ID_PREFIX = 'mock-';
+const ID_PREFIX = "mock-";
 
 /**
  * A base `new URL()` can resolve `GITHUB_CALLBACK_PATH` against so `URLSearchParams` does
  * the query encoding. It is discarded before anything is returned — see `authorizeUrl`.
  */
-const RELATIVE_BASE = 'https://mock-github.invalid';
+const RELATIVE_BASE = "https://mock-github.invalid";
 
 /** Prefixes so a value this adapter never minted is recognisable rather than decoded. */
-const CODE_PREFIX = 'mock-code-';
-const TOKEN_PREFIX = 'mock-token-';
+const CODE_PREFIX = "mock-code-";
+const TOKEN_PREFIX = "mock-token-";
 
 /**
  * `mock-mentor` → `Mock Mentor`, which is exactly the display name the seeder gives that
@@ -73,9 +73,9 @@ const TOKEN_PREFIX = 'mock-token-';
  */
 function displayNameFor(login: string): string {
   return login
-    .split('-')
+    .split("-")
     .map((word) => `${word.charAt(0).toUpperCase()}${word.slice(1)}`)
-    .join(' ');
+    .join(" ");
 }
 
 /** Every field derived from the login, so the mapping is total, stable and injective. */
@@ -117,17 +117,17 @@ export class MockGithubIdentityAdapter implements GithubIdentityPort {
     // Resolved against a placeholder base purely to get the query encoding right; only the
     // path-and-query is returned, so no origin ever reaches the `Location` header.
     const url = new URL(GITHUB_CALLBACK_PATH, RELATIVE_BASE);
-    url.searchParams.set('code', `${CODE_PREFIX}${login ?? DEFAULT_MOCK_LOGIN}`);
-    url.searchParams.set('state', state);
+    url.searchParams.set("code", `${CODE_PREFIX}${login ?? DEFAULT_MOCK_LOGIN}`);
+    url.searchParams.set("state", state);
     return `${url.pathname}${url.search}`;
   }
 
   async exchangeCode(code: string): Promise<string> {
-    return `${TOKEN_PREFIX}${loginFrom(code, CODE_PREFIX, 'authorization code')}`;
+    return `${TOKEN_PREFIX}${loginFrom(code, CODE_PREFIX, "authorization code")}`;
   }
 
   async fetchIdentity(accessToken: string): Promise<GithubIdentity> {
-    return identityFor(loginFrom(accessToken, TOKEN_PREFIX, 'access token'));
+    return identityFor(loginFrom(accessToken, TOKEN_PREFIX, "access token"));
   }
 }
 
@@ -144,7 +144,7 @@ function loginFrom(value: string, prefix: string, kind: string): string {
   if (!value.startsWith(prefix) || value.length === prefix.length) {
     throw new ServiceUnavailableError(
       `The mock GitHub identity adapter was given an ${kind} it did not mint. Start the ` +
-        'flow at /api/auth/github so the code and token come from authorizeUrl.',
+        "flow at /api/auth/github so the code and token come from authorizeUrl.",
     );
   }
   return value.slice(prefix.length);

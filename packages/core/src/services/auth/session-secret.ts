@@ -1,5 +1,5 @@
-import type { AppEnv } from '../../config/env';
-import { ServiceUnavailableError } from '../../http/errors';
+import type { AppEnv } from "../../config/env";
+import { ServiceUnavailableError } from "../../http/errors";
 
 /**
  * Key derivation for the `SESSION_SECRET` family, shared by the two services that sign
@@ -26,7 +26,7 @@ const encoder = new TextEncoder();
  * nothing else, and it lets a test construct an input without inventing a whole
  * environment.
  */
-export type SessionSecretEnv = Pick<AppEnv, 'SESSION_SECRET' | 'SESSION_SECRET_PREVIOUS'>;
+export type SessionSecretEnv = Pick<AppEnv, "SESSION_SECRET" | "SESSION_SECRET_PREVIOUS">;
 
 /**
  * The one key anything ever signs with. Never the previous secret.
@@ -54,10 +54,7 @@ export function signingKey(env: SessionSecretEnv, unavailableMessage: string): U
  * Note that a missing `SESSION_SECRET` throws here too, via `signingKey`. Verifying
  * against a rotation's tail alone would mean serving traffic we could not issue for.
  */
-export function verificationKeys(
-  env: SessionSecretEnv,
-  unavailableMessage: string,
-): Uint8Array[] {
+export function verificationKeys(env: SessionSecretEnv, unavailableMessage: string): Uint8Array[] {
   const keys = [signingKey(env, unavailableMessage)];
   const previous = env.SESSION_SECRET_PREVIOUS;
   if (previous) {

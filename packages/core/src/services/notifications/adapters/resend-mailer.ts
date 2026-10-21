@@ -1,9 +1,9 @@
-import { z } from 'zod';
-import type { AppEnv } from '../../../config/env';
-import type { Logger } from '../../../logger';
-import { ServiceUnavailableError } from '../../../http/errors';
-import { fetchJson } from '../../../http/outbound';
-import type { Mailer, MailMessage } from '../mailer.port';
+import { z } from "zod";
+import type { AppEnv } from "../../../config/env";
+import type { Logger } from "../../../logger";
+import { ServiceUnavailableError } from "../../../http/errors";
+import { fetchJson } from "../../../http/outbound";
+import type { Mailer, MailMessage } from "../mailer.port";
 
 /**
  * The real mailer (platform primitives B14).
@@ -32,7 +32,7 @@ import type { Mailer, MailMessage } from '../mailer.port';
  */
 
 /** Resend's transactional send endpoint. A constant here, not configuration (B14). */
-const ENDPOINT = 'https://api.resend.com/emails';
+const ENDPOINT = "https://api.resend.com/emails";
 
 /**
  * B6: *missing* configuration fails at the point of use, not at boot — an unset
@@ -45,8 +45,8 @@ const ENDPOINT = 'https://api.resend.com/emails';
  * an upstream 422. The message names both variables and quotes neither value.
  */
 const NOT_CONFIGURED_MESSAGE =
-  'Email delivery is not configured. Set MAIL_API_KEY to the Resend API key and MAIL_FROM ' +
-  'to the verified sender address.';
+  "Email delivery is not configured. Set MAIL_API_KEY to the Resend API key and MAIL_FROM " +
+  "to the verified sender address.";
 
 /**
  * The only field this adapter reads back, and it is parsed *softly* — a mismatch logs
@@ -71,7 +71,7 @@ export class ResendMailerAdapter implements Mailer {
     const { apiKey, from } = this.credentials();
 
     const payload = await fetchJson<unknown>(ENDPOINT, {
-      method: 'POST',
+      method: "POST",
       // The key rides an `authorization` header rather than the body, so `logger.ts`'s
       // redaction is a second line of defence over `fetchJson` never logging headers at all.
       headers: { authorization: `Bearer ${apiKey}` },
@@ -87,7 +87,7 @@ export class ResendMailerAdapter implements Mailer {
     const accepted = acceptedSchema.safeParse(payload);
     this.logger.info(
       { to, messageId: accepted.success ? accepted.data.id : null },
-      'mail.accepted',
+      "mail.accepted",
     );
   }
 

@@ -104,20 +104,20 @@ const HEADER_LINE = /^(?:Page|URL):/;
 function parseSnapshot(snapshot: string): SnapshotNode[] {
   const nodes: SnapshotNode[] = [];
 
-  for (const raw of snapshot.split('\n')) {
+  for (const raw of snapshot.split("\n")) {
     const line = raw.trim();
-    if (line === '' || HEADER_LINE.test(line)) {
+    if (line === "" || HEADER_LINE.test(line)) {
       continue;
     }
-    const match = NODE_LINE.exec(line.replace(/^-\s*/, ''));
+    const match = NODE_LINE.exec(line.replace(/^-\s*/, ""));
     if (match === null) {
       continue;
     }
     nodes.push({
-      role: match[1] ?? '',
+      role: match[1] ?? "",
       // The tree escapes quotes inside a name; unescape so the query is written the way the
       // name reads.
-      name: (match[2] ?? '').replace(/\\(.)/g, '$1'),
+      name: (match[2] ?? "").replace(/\\(.)/g, "$1"),
       line,
     });
   }
@@ -133,11 +133,11 @@ function parseSnapshot(snapshot: string): SnapshotNode[] {
  * second node it looks at. Callers should not have to know that.
  */
 function stateless(pattern: RegExp): RegExp {
-  return new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, ''));
+  return new RegExp(pattern.source, pattern.flags.replace(/[gy]/g, ""));
 }
 
 function matchesName(name: string, text: string | RegExp): boolean {
-  return typeof text === 'string'
+  return typeof text === "string"
     ? name.toLowerCase() === text.toLowerCase()
     : stateless(text).test(name);
 }
@@ -151,16 +151,16 @@ function matches(node: SnapshotNode, query: NodeQuery): boolean {
 
 /** How a query reads in a failure message. */
 function describe(query: NodeQuery): string {
-  const role = query.role ?? 'any node';
+  const role = query.role ?? "any node";
   if (query.text === undefined) {
     return role;
   }
-  return `${role} named ${typeof query.text === 'string' ? `"${query.text}"` : String(query.text)}`;
+  return `${role} named ${typeof query.text === "string" ? `"${query.text}"` : String(query.text)}`;
 }
 
 function preview(snapshot: string): string {
-  const lines = snapshot.split('\n');
-  const shown = lines.slice(0, PREVIEW_LINES).join('\n');
+  const lines = snapshot.split("\n");
+  const shown = lines.slice(0, PREVIEW_LINES).join("\n");
   return lines.length > PREVIEW_LINES
     ? `${shown}\n… ${lines.length - PREVIEW_LINES} more line(s)`
     : shown;
@@ -181,22 +181,18 @@ function preview(snapshot: string): string {
  * Throws — with the query, the control and a preview of the tree — when the node is there,
  * when the control is not, when the tree parsed to nothing, or when the query is empty.
  */
-export function expectAbsent(
-  snapshot: string,
-  absent: NodeQuery,
-  proof: AbsenceProof,
-): void {
+export function expectAbsent(snapshot: string, absent: NodeQuery, proof: AbsenceProof): void {
   if (absent.role === undefined && absent.text === undefined) {
     throw new Error(
-      'expectAbsent needs a role, a text, or both: an empty query matches every node, so ' +
+      "expectAbsent needs a role, a text, or both: an empty query matches every node, so " +
         'it can only ever fail, and a caller who meant "nothing at all" wants a different ' +
-        'assertion.',
+        "assertion.",
     );
   }
   if (proof.provenBy.length === 0) {
     throw new Error(
       `expectAbsent needs at least one positive control for ${proof.tree}. Absence in a ` +
-        'tree nobody proved had loaded is not evidence of anything.',
+        "tree nobody proved had loaded is not evidence of anything.",
     );
   }
 
@@ -213,8 +209,8 @@ export function expectAbsent(
   if (missing.length > 0) {
     throw new Error(
       `The positive control for ${proof.tree} failed, so "${describe(absent)} is absent" ` +
-        'proves nothing — this is not the screen the assertion is about. Expected but not ' +
-        `found: ${missing.map(describe).join(', ')}.\n\n${preview(snapshot)}`,
+        "proves nothing — this is not the screen the assertion is about. Expected but not " +
+        `found: ${missing.map(describe).join(", ")}.\n\n${preview(snapshot)}`,
     );
   }
 
@@ -222,7 +218,7 @@ export function expectAbsent(
   if (found.length > 0) {
     throw new Error(
       `Expected no ${describe(absent)} in ${proof.tree}, but found ` +
-        `${String(found.length)}:\n${found.map((node) => `  ${node.line}`).join('\n')}`,
+        `${String(found.length)}:\n${found.map((node) => `  ${node.line}`).join("\n")}`,
     );
   }
 }

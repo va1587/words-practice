@@ -1,10 +1,10 @@
-import Link from 'next/link';
-import { safeReturnTo } from '@devmentor/core';
-import { Button } from '@devmentor/ui';
-import { AuthLayout } from '@devmentor/ui/backend';
-import { EmailAuthForm } from '../../../components/email-auth-form';
-import { withReturnTo } from '../return-to-href';
-import { redirectIfSignedIn } from '../../../lib/session';
+import Link from "next/link";
+import { safeReturnTo } from "@devmentor/core";
+import { Button } from "@devmentor/ui";
+import { AuthLayout } from "@devmentor/ui/backend";
+import { EmailAuthForm } from "../../../components/email-auth-form";
+import { withReturnTo } from "../return-to-href";
+import { redirectIfSignedIn } from "../../../lib/session";
 
 /**
  * `/register` — create an account with an email address and a password (#13).
@@ -32,13 +32,13 @@ import { redirectIfSignedIn } from '../../../lib/session';
  */
 
 // Reads the session cookie and the query string; nothing here may be prerendered.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /** Where the provider button sends the browser. Not `<Link>`: it is a route handler. */
-const GITHUB_START_PATH = '/api/auth/github';
+const GITHUB_START_PATH = "/api/auth/github";
 
 /** The other half of the pair. A page, so this one is a `<Link>`. */
-const SIGN_IN_PATH = '/sign-in';
+const SIGN_IN_PATH = "/sign-in";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -58,7 +58,7 @@ export default async function RegisterPage({
   // link, and the register request that puts it in a mailed link — and none of them should be
   // the one deciding whether it is safe. The server validates it again when it builds the
   // link, and a third time when the link is opened.
-  const returnTo = safeReturnTo(single(params.returnTo), '');
+  const returnTo = safeReturnTo(single(params.returnTo), "");
 
   return (
     <AuthLayout

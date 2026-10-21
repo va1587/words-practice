@@ -26,8 +26,8 @@ export default async function AdminUsersPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Users</h1>
         <p className="text-sm text-muted-foreground">
-          Fetched from <code>/api/users</code> (built with <code>makeCrudRoute</code>)
-          and rendered with <code>DataTable</code>.
+          Fetched from <code>/api/users</code> (built with <code>makeCrudRoute</code>) and rendered
+          with <code>DataTable</code>.
         </p>
       </div>
 
