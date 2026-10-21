@@ -1,11 +1,11 @@
-import { User, type EntityManager, type Role } from '@devmentor/db';
-import type { AppEnv } from '../../config/env';
-import type { Logger } from '../../logger';
-import type { Clock } from '../../time/clock';
-import { safeReturnTo } from '../../http/return-to';
-import type { Mailer } from '../notifications/mailer.port';
-import { normalizeRoles } from './operator-authority';
-import type { TokenService } from './token.service';
+import { User, type EntityManager, type Role } from "@devmentor/db";
+import type { AppEnv } from "../../config/env";
+import type { Logger } from "../../logger";
+import type { Clock } from "../../time/clock";
+import { safeReturnTo } from "../../http/return-to";
+import type { Mailer } from "../notifications/mailer.port";
+import { normalizeRoles } from "./operator-authority";
+import type { TokenService } from "./token.service";
 
 /**
  * Email verification — the second half of password registration (Slice 4, step 25).
@@ -41,7 +41,7 @@ import type { TokenService } from './token.service';
  * `@devmentor/app` *implements* the route, and a hand-copied string in either place would
  * mail out links to a 404. Same reason `GITHUB_CALLBACK_PATH` is a constant.
  */
-export const VERIFY_EMAIL_PATH = '/api/auth/verify-email';
+export const VERIFY_EMAIL_PATH = "/api/auth/verify-email";
 
 /**
  * 24 hours.
@@ -65,7 +65,7 @@ export const VERIFY_EMAIL_PATH = '/api/auth/verify-email';
  */
 const VERIFICATION_TTL_SECONDS = 24 * 60 * 60;
 
-const MAIL_SUBJECT = 'Confirm your email address for DevMentor';
+const MAIL_SUBJECT = "Confirm your email address for DevMentor";
 
 /** What a route needs in order to finish the sign-in this link authorised. */
 export interface VerifiedAccount {
@@ -167,7 +167,7 @@ export class EmailVerificationService {
    */
   async sendVerificationLink({ user, returnTo }: SendVerificationLinkInput): Promise<void> {
     const token = await this.tokenService.signPurposeToken({
-      purpose: 'email-verify',
+      purpose: "email-verify",
       // The whole claim. Not the email (it is on the row this id names), not the roles, and
       // above all not the password hash — see the note at the top of this file.
       subject: user.id,
@@ -180,22 +180,22 @@ export class EmailVerificationService {
       to: user.email,
       subject: MAIL_SUBJECT,
       text: [
-        'Confirm this address to finish creating your DevMentor account:',
-        '',
+        "Confirm this address to finish creating your DevMentor account:",
+        "",
         link,
-        '',
+        "",
         `The link works for ${VERIFICATION_TTL_SECONDS / 3600} hours. If it has expired, ` +
-          'register again with the same address and a new link will be sent.',
-        '',
-        'If you did not sign up for DevMentor, ignore this message. The address cannot be ' +
-          'used to sign in until this link is opened.',
-      ].join('\n'),
+          "register again with the same address and a new link will be sent.",
+        "",
+        "If you did not sign up for DevMentor, ignore this message. The address cannot be " +
+          "used to sign in until this link is opened.",
+      ].join("\n"),
     });
 
     // `userId` only. The link contains a live token, and a URL is a composed string that
     // pino's `redact` cannot reach inside — key names are what it matches (2026-09-10
     // lesson). Neither the link nor the token nor the address goes near a log line.
-    this.logger.info({ userId: user.id }, 'sent an email verification link');
+    this.logger.info({ userId: user.id }, "sent an email verification link");
   }
 
   /**
@@ -232,7 +232,7 @@ export class EmailVerificationService {
   async verify(token: string): Promise<VerifiedAccount | null> {
     const claims = await this.tokenService.verifyPurposeToken({
       token,
-      purpose: 'email-verify',
+      purpose: "email-verify",
     });
     if (claims === null) {
       return null;
@@ -244,7 +244,7 @@ export class EmailVerificationService {
     // service never signs an empty subject, so an empty one is not ours whatever it
     // verified against; refusing it here also keeps a non-uuid from reaching the driver as
     // a `where` value, which would be a 500 rather than a redirect.
-    if (claims.subject === '') {
+    if (claims.subject === "") {
       return null;
     }
 
@@ -258,12 +258,12 @@ export class EmailVerificationService {
     if (user.emailVerifiedAt) {
       this.logger.info(
         { userId: user.id },
-        'reopened a verification link for an already confirmed address',
+        "reopened a verification link for an already confirmed address",
       );
     } else {
       user.emailVerifiedAt = this.clock.now();
       await this.em.flush();
-      this.logger.info({ userId: user.id }, 'confirmed an email address');
+      this.logger.info({ userId: user.id }, "confirmed an email address");
     }
 
     return {
@@ -292,11 +292,11 @@ export class EmailVerificationService {
    */
   private verificationUrl(token: string, returnTo: string | null | undefined): string {
     const url = new URL(VERIFY_EMAIL_PATH, this.env.APP_URL);
-    url.searchParams.set('token', token);
+    url.searchParams.set("token", token);
 
-    const destination = safeReturnTo(returnTo, '');
-    if (destination !== '') {
-      url.searchParams.set('returnTo', destination);
+    const destination = safeReturnTo(returnTo, "");
+    if (destination !== "") {
+      url.searchParams.set("returnTo", destination);
     }
 
     return url.toString();

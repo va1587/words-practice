@@ -1,14 +1,12 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { cn } from "../../lib/utils"
-import { PlusIcon, MinusIcon } from "lucide-react"
-import { Accordion as AccordionPrimitive } from "radix-ui"
+import * as React from "react";
+import { cn } from "../../lib/utils";
+import { PlusIcon, MinusIcon } from "lucide-react";
+import { Accordion as AccordionPrimitive } from "radix-ui";
 
-function Accordion({
-  ...props
-}: React.ComponentProps<typeof AccordionPrimitive.Root>) {
-  return <AccordionPrimitive.Root data-slot="accordion" {...props} />
+function Accordion({ ...props }: React.ComponentProps<typeof AccordionPrimitive.Root>) {
+  return <AccordionPrimitive.Root data-slot="accordion" {...props} />;
 }
 
 function AccordionItem({
@@ -21,7 +19,7 @@ function AccordionItem({
       className={cn("dm-accordion-item", className)}
       {...props}
     />
-  )
+  );
 }
 
 function AccordionTrigger({
@@ -41,7 +39,7 @@ function AccordionTrigger({
         <MinusIcon className="dm-accordion-minus" />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
-  )
+  );
 }
 
 function AccordionContent({
@@ -57,7 +55,7 @@ function AccordionContent({
     >
       <div className={cn("dm-accordion-content-inner", className)}>{children}</div>
     </AccordionPrimitive.Content>
-  )
+  );
 }
 
-export { Accordion, AccordionItem, AccordionTrigger, AccordionContent }
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };

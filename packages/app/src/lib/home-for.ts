@@ -1,4 +1,4 @@
-import type { Role } from '@devmentor/core';
+import type { Role } from "@devmentor/core";
 
 /**
  * Where a signed-in user lands when nothing more specific was asked for.
@@ -31,11 +31,11 @@ import type { Role } from '@devmentor/core';
  * assignable to this, so the page guards lose nothing.
  */
 export function homeFor(roles: readonly Role[]): string {
-  if (roles.includes('operator')) {
-    return '/admin';
+  if (roles.includes("operator")) {
+    return "/admin";
   }
-  if (roles.includes('mentor')) {
-    return '/mentor';
+  if (roles.includes("mentor")) {
+    return "/mentor";
   }
-  return '/home';
+  return "/home";
 }

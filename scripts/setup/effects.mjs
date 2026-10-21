@@ -1,6 +1,6 @@
-import { spawn } from 'node:child_process';
-import { readFile, stat, writeFile } from 'node:fs/promises';
-import { connect } from 'node:net';
+import { spawn } from "node:child_process";
+import { readFile, stat, writeFile } from "node:fs/promises";
+import { connect } from "node:net";
 
 /** Exit code reported when a command could not be launched at all (e.g. ENOENT). */
 export const SPAWN_FAILED = -1;
@@ -38,29 +38,29 @@ export function createNodeEffects() {
      */
     run: (command, args) =>
       new Promise((resolve) => {
-        const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-        let stdout = '';
-        let stderr = '';
+        const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
+        let stdout = "";
+        let stderr = "";
 
-        child.stdout.on('data', (chunk) => {
+        child.stdout.on("data", (chunk) => {
           stdout += String(chunk);
         });
-        child.stderr.on('data', (chunk) => {
+        child.stderr.on("data", (chunk) => {
           stderr += String(chunk);
         });
         // A command that cannot be launched at all (Docker not installed) is an
         // expected condition here, not an exception: report it as a failed exit so
         // the calling step can print its own actionable message instead of a stack.
-        child.on('error', (error) => {
+        child.on("error", (error) => {
           resolve({ code: SPAWN_FAILED, stdout, stderr: error.message });
         });
-        child.on('close', (code) => resolve({ code: code ?? 0, stdout, stderr }));
+        child.on("close", (code) => resolve({ code: code ?? 0, stdout, stderr }));
       }),
 
     /** Read a UTF-8 file, or `null` when it does not exist. */
-    readText: (path) => readFile(path, 'utf8').catch(() => null),
+    readText: (path) => readFile(path, "utf8").catch(() => null),
 
-    writeText: (path, text) => writeFile(path, text, 'utf8'),
+    writeText: (path, text) => writeFile(path, text, "utf8"),
 
     /** Modification time in epoch milliseconds, or `null` when the path is absent. */
     mtime: (path) =>
@@ -87,8 +87,8 @@ export function createNodeEffects() {
         const unreachable = () => settle(false);
 
         socket.setTimeout(timeoutMs, unreachable);
-        socket.once('error', unreachable);
-        socket.once('connect', () => settle(true));
+        socket.once("error", unreachable);
+        socket.once("connect", () => settle(true));
       }),
 
     log: (line) => {

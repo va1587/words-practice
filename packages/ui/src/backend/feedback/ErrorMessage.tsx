@@ -1,5 +1,5 @@
-import { cn } from '../../lib/utils';
-import type { ReactNode } from 'react';
+import { cn } from "../../lib/utils";
+import type { ReactNode } from "react";
 
 /** The sanctioned error renderer — pages compose this instead of bespoke error text. */
 export function ErrorMessage({
@@ -12,7 +12,7 @@ export function ErrorMessage({
   action?: ReactNode;
 }) {
   return (
-    <div role="alert" className={cn('dm-error-message', className)}>
+    <div role="alert" className={cn("dm-error-message", className)}>
       <p>{message}</p>
       {action}
     </div>

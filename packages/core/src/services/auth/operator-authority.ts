@@ -1,4 +1,4 @@
-import { ROLES, type Role } from '@devmentor/db';
+import { ROLES, type Role } from "@devmentor/db";
 
 /**
  * The one implementation of D19's live-operator rule.
@@ -101,9 +101,9 @@ export function resolveLiveRoles(
   const held = new Set<Role>(subject.roles);
 
   if (isAllowlisted(subject, operatorEmails)) {
-    held.add('operator');
+    held.add("operator");
   } else {
-    held.delete('operator');
+    held.delete("operator");
   }
 
   return normalizeRoles(held);

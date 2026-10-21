@@ -1,7 +1,7 @@
-import { User, type Role } from '@devmentor/db';
-import type { Cradle } from '../container/cradle';
-import { resolveLiveRoles } from '../services/auth/operator-authority';
-import { ForbiddenError, UnauthorizedError } from './errors';
+import { User, type Role } from "@devmentor/db";
+import type { Cradle } from "../container/cradle";
+import { resolveLiveRoles } from "../services/auth/operator-authority";
+import { ForbiddenError, UnauthorizedError } from "./errors";
 
 /**
  * Authorization — platform primitives **B3**.
@@ -54,7 +54,7 @@ export interface Session {
  * one. A `BACKWARD_COMPATIBILITY.md` §7 surface: renaming it here without renaming it in
  * `packages/ui/src/backend/api/apiCall.ts` rejects every mutation the app makes.
  */
-export const CSRF_HEADER = 'x-devmentor-request';
+export const CSRF_HEADER = "x-devmentor-request";
 
 /**
  * The methods a CSRF check does not apply to. `GET`/`HEAD` are the safe methods a
@@ -62,7 +62,7 @@ export const CSRF_HEADER = 'x-devmentor-request';
  * sends without our header and which must be allowed to be answered (or, as here, not
  * answered) on its own terms.
  */
-const CSRF_EXEMPT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const CSRF_EXEMPT_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 /**
  * Edge case 30b, as an ordinary `Error` — logged by `apiHandler` and answered with a
@@ -75,8 +75,8 @@ const CSRF_EXEMPT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 function corruptRoleSetError(userId: string): Error {
   return new Error(
     `User ${userId} has no roles. The users.roles column is constrained non-empty and ` +
-      'every account holds at least one role besides operator, so this row is corrupt: ' +
-      'repair the data rather than treating the request as unauthenticated.',
+      "every account holds at least one role besides operator, so this row is corrupt: " +
+      "repair the data rather than treating the request as unauthenticated.",
   );
 }
 
@@ -99,7 +99,7 @@ function toRoleSet(roles: readonly Role[], userId: string): readonly [Role, ...R
  * `session` registration resolves these three eagerly, so the dependency set is declared
  * in one place instead of being discovered by walking a proxy asynchronously.
  */
-type SessionResolutionCradle = Pick<Cradle, 'sessionService' | 'em' | 'env'>;
+type SessionResolutionCradle = Pick<Cradle, "sessionService" | "em" | "env">;
 
 /**
  * The live session behind a raw cookie value, or `null` if there isn't one.
@@ -246,7 +246,7 @@ export function requireCsrfHeader(req: Request): void {
   if (req.headers.get(CSRF_HEADER) === null) {
     throw new ForbiddenError(
       `This request must carry the ${CSRF_HEADER} header. Send it through the app rather ` +
-        'than as a plain form submission.',
+        "than as a plain form submission.",
     );
   }
 }

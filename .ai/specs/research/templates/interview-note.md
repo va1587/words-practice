@@ -1,4 +1,5 @@
 # Interview — {role}, {date}
+
 - Recent situation or task the person described:
 - What they did, step by step:
 - What worked, what did not, and any consequences they described:

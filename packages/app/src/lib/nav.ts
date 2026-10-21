@@ -1,4 +1,4 @@
-import type { Role } from '@devmentor/core';
+import type { Role } from "@devmentor/core";
 
 /**
  * The signed-in workspace navigation, derived from the roles a user actually holds — step
@@ -53,11 +53,11 @@ export interface NavLink {
  */
 const LINKS_BY_ROLE: Readonly<Record<Role, readonly NavLink[]>> = {
   operator: [
-    { href: '/admin', label: 'Dashboard' },
-    { href: '/admin/users', label: 'Users' },
+    { href: "/admin", label: "Dashboard" },
+    { href: "/admin/users", label: "Users" },
   ],
-  mentor: [{ href: '/mentor', label: 'Mentor workspace' }],
-  mentee: [{ href: '/home', label: 'My sessions' }],
+  mentor: [{ href: "/mentor", label: "Mentor workspace" }],
+  mentee: [{ href: "/home", label: "My sessions" }],
 };
 
 /**
@@ -65,7 +65,7 @@ const LINKS_BY_ROLE: Readonly<Record<Role, readonly NavLink[]>> = {
  * the surface the user landed on. A role missing from here would contribute nothing, which
  * `nav.test.ts` checks against `ROLES` for every member.
  */
-const NAV_ORDER: readonly Role[] = ['operator', 'mentor', 'mentee'];
+const NAV_ORDER: readonly Role[] = ["operator", "mentor", "mentee"];
 
 /**
  * The links a session may see, in one deterministic order.

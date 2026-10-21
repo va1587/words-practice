@@ -1,4 +1,5 @@
 # D04 — Deweloper musi mieć konto przed wysłaniem pytania
+
 - Data, właściciel: 2026-10-19, mkz (właściciel produktu; potwierdzone w sesji om-backlog --dry-run 2026-10-19)
 - Kontekst i rozważane opcje: pytanie z konta albo bez konta. Luka wykryta przy rozpisywaniu E02-S01; agent nie rekomendował odpowiedzi.
 - Decyzja i dlaczego: konto wymagane. Uzasadnienia nie podano w sesji.

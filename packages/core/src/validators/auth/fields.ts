@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * The field-level rules `registerSchema` and `loginSchema` share.
@@ -26,8 +26,11 @@ export const EMAIL_MAX_CHARACTERS = 254;
  * of it.
  */
 export const emailSchema = z
-  .email('Enter a valid email address.')
-  .max(EMAIL_MAX_CHARACTERS, `This email address is too long. The limit is ${EMAIL_MAX_CHARACTERS} characters.`);
+  .email("Enter a valid email address.")
+  .max(
+    EMAIL_MAX_CHARACTERS,
+    `This email address is too long. The limit is ${EMAIL_MAX_CHARACTERS} characters.`,
+  );
 
 /**
  * Where the browser goes once it is signed in. Validated as a string and nothing more.
@@ -81,8 +84,7 @@ export const PASSWORD_MAX_BYTES = 72;
  * The message names the unit, because someone who typed 40 emoji did not type 72 of
  * anything and would otherwise be told a limit they appear to be well under.
  */
-export const PASSWORD_TOO_LONG_MESSAGE =
-  `This password is too long. The limit is ${PASSWORD_MAX_BYTES} bytes; letters and digits count as one byte each, accented letters as two and most emoji as four.`;
+export const PASSWORD_TOO_LONG_MESSAGE = `This password is too long. The limit is ${PASSWORD_MAX_BYTES} bytes; letters and digits count as one byte each, accented letters as two and most emoji as four.`;
 
 const utf8 = new TextEncoder();
 

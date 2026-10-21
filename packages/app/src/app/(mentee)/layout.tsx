@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
-import { WorkspaceShell } from '../../components/workspace-shell';
-import { requirePageRole } from '../../lib/session';
+import type { ReactNode } from "react";
+import { WorkspaceShell } from "../../components/workspace-shell";
+import { requirePageRole } from "../../lib/session";
 
 /**
  * The mentee surface — signed in, so `AppShell` and shadcn rather than the public Tailwind
@@ -16,7 +16,7 @@ import { requirePageRole } from '../../lib/session';
  * a mentor exists anywhere in it (R07).
  */
 export default async function MenteeLayout({ children }: { children: ReactNode }) {
-  const session = await requirePageRole('mentee', '/home');
+  const session = await requirePageRole("mentee", "/home");
 
   return <WorkspaceShell session={session}>{children}</WorkspaceShell>;
 }

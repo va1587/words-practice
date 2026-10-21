@@ -1,8 +1,8 @@
-import { SEED_PASSWORD, SEED_PASSWORD_HASH } from '@devmentor/db';
-import { describe, expect, it } from 'vitest';
-import { getEnv } from '../../config/env';
-import type { Logger } from '../../logger';
-import { PasswordService } from './password.service';
+import { SEED_PASSWORD, SEED_PASSWORD_HASH } from "@devmentor/db";
+import { describe, expect, it } from "vitest";
+import { getEnv } from "../../config/env";
+import type { Logger } from "../../logger";
+import { PasswordService } from "./password.service";
 
 /**
  * The guard that keeps the seeded credential a credential.
@@ -29,30 +29,30 @@ const silentLogger = {
   debug: () => undefined,
 } as unknown as Logger;
 
-describe('the seeded password hash', () => {
+describe("the seeded password hash", () => {
   const service = new PasswordService({ env: getEnv(), logger: silentLogger });
 
-  it('verifies against the real PasswordService', async () => {
+  it("verifies against the real PasswordService", async () => {
     // If this fails, `PasswordService`'s stored form changed. Regenerate
     // `SEED_PASSWORD_HASH` with `passwordService.hash(SEED_PASSWORD)` and paste the result
     // into `packages/db/src/seeders/seed-password.ts` — do not weaken this assertion.
     expect(await service.verify(SEED_PASSWORD, SEED_PASSWORD_HASH)).toBe(true);
   });
 
-  it('rejects anything other than the documented plaintext', async () => {
+  it("rejects anything other than the documented plaintext", async () => {
     // Without this, a `verify` that returned `true` unconditionally would satisfy the
     // assertion above, and so would a hash of some other password.
     expect(await service.verify(`${SEED_PASSWORD}!`, SEED_PASSWORD_HASH)).toBe(false);
-    expect(await service.verify('', SEED_PASSWORD_HASH)).toBe(false);
+    expect(await service.verify("", SEED_PASSWORD_HASH)).toBe(false);
   });
 
-  it('is the same shape the service produces today', async () => {
+  it("is the same shape the service produces today", async () => {
     // A freshly hashed value and the frozen one must be interchangeable: same algorithm,
     // same parameters, differing only in salt and digest. Comparing the parameter section
     // catches a silent parameter downgrade, which `verify` alone would happily accept.
     const fresh = await service.hash(SEED_PASSWORD);
 
-    expect(fresh.split('$').slice(0, 3)).toEqual(SEED_PASSWORD_HASH.split('$').slice(0, 3));
+    expect(fresh.split("$").slice(0, 3)).toEqual(SEED_PASSWORD_HASH.split("$").slice(0, 3));
     expect(fresh).not.toBe(SEED_PASSWORD_HASH);
     expect(await service.verify(SEED_PASSWORD, fresh)).toBe(true);
   });

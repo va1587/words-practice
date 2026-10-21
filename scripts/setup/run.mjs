@@ -10,7 +10,7 @@ import {
   missingEnvKeys,
   parseComposeHealth,
   resolveDatabaseTarget,
-} from './steps.mjs';
+} from "./steps.mjs";
 
 /** Lowest Node major DevMentor supports — keep in sync with `engines.node`. */
 export const MINIMUM_NODE_MAJOR = 24;
@@ -30,7 +30,7 @@ export const DATABASE_PROBE_TIMEOUT_MS = 2_000;
  * @returns {string}
  */
 export function npmExecutable(platform) {
-  return platform === 'win32' ? 'npm.cmd' : 'npm';
+  return platform === "win32" ? "npm.cmd" : "npm";
 }
 
 /**
@@ -55,9 +55,7 @@ function step(name, status, detail) {
 export function preflight(effects) {
   const node = checkNodeVersion(effects.nodeVersion, MINIMUM_NODE_MAJOR);
 
-  return node.ok
-    ? step('Preflight', RAN, node.detail)
-    : step('Preflight', FAILED, node.detail);
+  return node.ok ? step("Preflight", RAN, node.detail) : step("Preflight", FAILED, node.detail);
 }
 
 /**
@@ -67,21 +65,25 @@ export function preflight(effects) {
  */
 export async function installDependencies(effects) {
   const [lockMtime, markerMtime] = await Promise.all([
-    effects.mtime('package-lock.json'),
-    effects.mtime('node_modules/.package-lock.json'),
+    effects.mtime("package-lock.json"),
+    effects.mtime("node_modules/.package-lock.json"),
   ]);
 
   if (isInstallCurrent(lockMtime, markerMtime)) {
-    return step('Install dependencies', SKIPPED, 'node_modules is up to date with package-lock.json');
+    return step(
+      "Install dependencies",
+      SKIPPED,
+      "node_modules is up to date with package-lock.json",
+    );
   }
 
-  const result = await effects.run(npmExecutable(effects.platform), ['install']);
+  const result = await effects.run(npmExecutable(effects.platform), ["install"]);
 
   if (result.code !== 0) {
-    return step('Install dependencies', FAILED, `npm install exited with code ${result.code}`);
+    return step("Install dependencies", FAILED, `npm install exited with code ${result.code}`);
   }
 
-  return step('Install dependencies', RAN, 'npm install');
+  return step("Install dependencies", RAN, "npm install");
 }
 
 /**
@@ -92,30 +94,30 @@ export async function installDependencies(effects) {
  * @param {import('./effects.mjs').SetupEffects} effects
  */
 export async function configureEnvironment(effects) {
-  const example = await effects.readText('.env.example');
+  const example = await effects.readText(".env.example");
 
   if (example === null) {
-    return step('Configure .env', FAILED, '.env.example is missing from the repository');
+    return step("Configure .env", FAILED, ".env.example is missing from the repository");
   }
 
-  const existing = await effects.readText('.env');
+  const existing = await effects.readText(".env");
 
   if (existing === null) {
-    await effects.writeText('.env', example);
-    return step('Configure .env', RAN, 'copied .env.example to .env');
+    await effects.writeText(".env", example);
+    return step("Configure .env", RAN, "copied .env.example to .env");
   }
 
   const missing = missingEnvKeys(example, existing);
 
   if (missing.length > 0) {
     return step(
-      'Configure .env',
+      "Configure .env",
       WARNED,
-      `.env already exists and was left untouched, but it does not set: ${missing.join(', ')}`,
+      `.env already exists and was left untouched, but it does not set: ${missing.join(", ")}`,
     );
   }
 
-  return step('Configure .env', SKIPPED, '.env already exists and sets every documented variable');
+  return step("Configure .env", SKIPPED, ".env already exists and sets every documented variable");
 }
 
 /**
@@ -124,17 +126,17 @@ export async function configureEnvironment(effects) {
  * @param {import('./effects.mjs').SetupEffects} effects
  */
 export async function startDatabase(effects) {
-  const result = await effects.run('docker', ['compose', 'up', '-d', 'postgres']);
+  const result = await effects.run("docker", ["compose", "up", "-d", "postgres"]);
 
   if (result.code !== 0) {
     return step(
-      'Start PostgreSQL',
+      "Start PostgreSQL",
       FAILED,
-      `docker compose up exited with code ${result.code}${result.stderr.trim() ? `: ${result.stderr.trim()}` : ''}`,
+      `docker compose up exited with code ${result.code}${result.stderr.trim() ? `: ${result.stderr.trim()}` : ""}`,
     );
   }
 
-  return step('Start PostgreSQL', RAN, 'docker compose up -d postgres');
+  return step("Start PostgreSQL", RAN, "docker compose up -d postgres");
 }
 
 /**
@@ -149,14 +151,14 @@ export async function waitForDatabase(effects, options = {}) {
   // Clamp the interval: a zero would make `attempts` Infinity and spin forever.
   const intervalMs = Math.max(1, options.intervalMs ?? DATABASE_POLL_INTERVAL_MS);
   const attempts = Math.max(1, Math.ceil(timeoutMs / intervalMs));
-  let last = 'unknown';
+  let last = "unknown";
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {
-    const result = await effects.run('docker', ['compose', 'ps', '--format', 'json', 'postgres']);
-    last = result.code === 0 ? parseComposeHealth(result.stdout) : 'unknown';
+    const result = await effects.run("docker", ["compose", "ps", "--format", "json", "postgres"]);
+    last = result.code === 0 ? parseComposeHealth(result.stdout) : "unknown";
 
-    if (last === 'healthy') {
-      return step('Wait for PostgreSQL', RAN, 'container reports healthy');
+    if (last === "healthy") {
+      return step("Wait for PostgreSQL", RAN, "container reports healthy");
     }
 
     // Nothing to wait for after the final check — the loop is about to give up.
@@ -166,7 +168,7 @@ export async function waitForDatabase(effects, options = {}) {
   }
 
   return step(
-    'Wait for PostgreSQL',
+    "Wait for PostgreSQL",
     FAILED,
     `the postgres container did not become healthy within ${Math.round(timeoutMs / 1000)}s (last state: ${last})`,
   );
@@ -186,7 +188,7 @@ export async function waitForDatabase(effects, options = {}) {
  * @returns {Promise<Array<{name: string, status: string, detail: string}>>}
  */
 export async function provisionDatabase(effects, options = {}) {
-  const envText = (await effects.readText('.env')) ?? '';
+  const envText = (await effects.readText(".env")) ?? "";
   const target = resolveDatabaseTarget(effects.env, envText);
   const address = `${target.host}:${target.port}`;
 
@@ -202,19 +204,19 @@ export async function provisionDatabase(effects, options = {}) {
     // DevMentor database, the migrate step below reports the real error.
     return [
       step(
-        'Provision PostgreSQL',
+        "Provision PostgreSQL",
         SKIPPED,
         `something is accepting connections on ${address} (per ${target.source}) — reusing it as the DevMentor database; Docker not needed`,
       ),
     ];
   }
 
-  const docker = await effects.run('docker', ['compose', 'version']);
+  const docker = await effects.run("docker", ["compose", "version"]);
 
   if (docker.code !== 0) {
     return [
       step(
-        'Provision PostgreSQL',
+        "Provision PostgreSQL",
         FAILED,
         `nothing is listening on ${address} (per ${target.source}) and Docker with Compose v2 is not available to start one — either start Docker, or point DATABASE_URL at a PostgreSQL you already run, then run \`npm run setup\` again`,
       ),
@@ -239,13 +241,13 @@ export async function provisionDatabase(effects, options = {}) {
  * @param {string} script
  */
 export async function runNpmScript(effects, name, script) {
-  const result = await effects.run(npmExecutable(effects.platform), ['run', script]);
+  const result = await effects.run(npmExecutable(effects.platform), ["run", script]);
 
   if (result.code !== 0) {
     return step(
       name,
       FAILED,
-      `npm run ${script} exited with code ${result.code}${result.stderr.trim() ? `: ${result.stderr.trim()}` : ''}`,
+      `npm run ${script} exited with code ${result.code}${result.stderr.trim() ? `: ${result.stderr.trim()}` : ""}`,
     );
   }
 
@@ -269,12 +271,12 @@ export async function runSetup(effects, options = {}) {
     async () => [await installDependencies(effects)],
     async () => [await configureEnvironment(effects)],
     () => provisionDatabase(effects, options),
-    async () => [await runNpmScript(effects, 'Apply migrations', 'db:migrate')],
-    async () => [await runNpmScript(effects, 'Seed sample data', 'db:seed')],
+    async () => [await runNpmScript(effects, "Apply migrations", "db:migrate")],
+    async () => [await runNpmScript(effects, "Seed sample data", "db:seed")],
   ];
 
-  effects.log('DevMentor setup — re-running is safe; completed steps are skipped.');
-  effects.log('');
+  effects.log("DevMentor setup — re-running is safe; completed steps are skipped.");
+  effects.log("");
 
   const results = [];
 

@@ -1,13 +1,13 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { homeFor } from './home-for';
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { homeFor } from "./home-for";
 import {
   SESSION_COOKIE_NAME,
   safeReturnTo,
   withCookieScope,
   type Role,
   type Session,
-} from '@devmentor/core';
+} from "@devmentor/core";
 
 /**
  * Session helpers for the App Router — **F3** of
@@ -34,7 +34,7 @@ import {
  */
 
 /** Where a visitor with no session is sent. */
-const SIGN_IN_PATH = '/sign-in';
+const SIGN_IN_PATH = "/sign-in";
 
 /**
  * The page a user lands on when nothing more specific was asked for.
@@ -82,8 +82,8 @@ export async function getPageSession(): Promise<Session | null> {
  * landing is `homeFor` and a guessed `returnTo` would override it with something worse.
  */
 function signInPathFor(currentPath: string): string {
-  const returnTo = safeReturnTo(currentPath, '');
-  if (returnTo === '') {
+  const returnTo = safeReturnTo(currentPath, "");
+  if (returnTo === "") {
     return SIGN_IN_PATH;
   }
   return `${SIGN_IN_PATH}?returnTo=${encodeURIComponent(returnTo)}`;

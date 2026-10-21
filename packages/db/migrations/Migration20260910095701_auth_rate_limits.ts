@@ -1,4 +1,4 @@
-import { Migration } from '@mikro-orm/migrations';
+import { Migration } from "@mikro-orm/migrations";
 
 /**
  * The rate-limit counter table (E01 Slice 4, platform primitives B8).
@@ -28,16 +28,18 @@ import { Migration } from '@mikro-orm/migrations';
  * account is exactly the case that matters most.
  */
 export class Migration20260910095701_auth_rate_limits extends Migration {
-
-  override name = 'Migration20260910095701_auth_rate_limits';
+  override name = "Migration20260910095701_auth_rate_limits";
 
   override up(): void | Promise<void> {
-    this.addSql(`create table "auth_rate_limits" ("key" text not null, "window_start" timestamptz not null, "count" int not null, primary key ("key"));`);
-    this.addSql(`create index "auth_rate_limits_window_start_index" on "auth_rate_limits" ("window_start");`);
+    this.addSql(
+      `create table "auth_rate_limits" ("key" text not null, "window_start" timestamptz not null, "count" int not null, primary key ("key"));`,
+    );
+    this.addSql(
+      `create index "auth_rate_limits_window_start_index" on "auth_rate_limits" ("window_start");`,
+    );
   }
 
   override down(): void | Promise<void> {
     this.addSql(`drop table if exists "auth_rate_limits" cascade;`);
   }
-
 }

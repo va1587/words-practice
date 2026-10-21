@@ -4,24 +4,24 @@ import {
   type EntityManager,
   type IUser,
   type Role,
-} from '@devmentor/db';
-import type { AppEnv } from '../../config/env';
-import type { Logger } from '../../logger';
-import type { Clock } from '../../time/clock';
-import type { EventBus } from '../../events/event-bus';
-import type { EventMap } from '../../events/event-map';
-import { requireRole, type Session } from '../../http/auth';
-import { ConflictError, NotFoundError, UnauthorizedError } from '../../http/errors';
+} from "@devmentor/db";
+import type { AppEnv } from "../../config/env";
+import type { Logger } from "../../logger";
+import type { Clock } from "../../time/clock";
+import type { EventBus } from "../../events/event-bus";
+import type { EventMap } from "../../events/event-map";
+import { requireRole, type Session } from "../../http/auth";
+import { ConflictError, NotFoundError, UnauthorizedError } from "../../http/errors";
 import {
   rateLimitKey,
   REGISTRATION_IP_POLICY,
   SIGN_IN_EMAIL_POLICY,
   SIGN_IN_IP_POLICY,
   type RateLimiter,
-} from '../../http/rate-limit';
-import type { EmailVerificationService } from './email-verification.service';
-import type { PasswordService } from './password.service';
-import { normalizeRoles, resolveLiveRoles } from './operator-authority';
+} from "../../http/rate-limit";
+import type { EmailVerificationService } from "./email-verification.service";
+import type { PasswordService } from "./password.service";
+import { normalizeRoles, resolveLiveRoles } from "./operator-authority";
 
 /**
  * Plain, JSON-safe shape a user is exposed as over the API. Services own their output
@@ -173,7 +173,7 @@ export interface AuthenticateWithPasswordInput {
  * it, on the same reasoning as `RATE_LIMITED_MESSAGE`.
  */
 export const INVALID_CREDENTIALS_MESSAGE =
-  'That email address and password do not match an account. Check both and try again.';
+  "That email address and password do not match an account. Check both and try again.";
 
 /**
  * The refusal for a correct password on an address nobody has confirmed yet (edge case 15).
@@ -190,8 +190,8 @@ export const INVALID_CREDENTIALS_MESSAGE =
  * and sends a fresh one (the last two rows of the state matrix).
  */
 export const EMAIL_NOT_VERIFIED_MESSAGE =
-  'Confirm your email address before signing in. Open the link sent when this account was ' +
-  'registered, or register again with the same address to get a new one.';
+  "Confirm your email address before signing in. Open the link sent when this account was " +
+  "registered, or register again with the same address to get a new one.";
 
 /**
  * Said to someone registering an address that already has a usable account.
@@ -201,7 +201,7 @@ export const EMAIL_NOT_VERIFIED_MESSAGE =
  * would widen the recorded oracle without helping the user do anything differently.
  */
 export const ACCOUNT_EXISTS_MESSAGE =
-  'An account already exists for this email address. Sign in with it instead.';
+  "An account already exists for this email address. Sign in with it instead.";
 
 /**
  * Said to someone registering an address that belongs to a GitHub-only account — a row with
@@ -218,7 +218,7 @@ export const ACCOUNT_EXISTS_MESSAGE =
  */
 export const GITHUB_ACCOUNT_MESSAGE =
   'This email address is already registered through GitHub. Use "Sign in with GitHub" ' +
-  'instead of a password.';
+  "instead of a password.";
 
 /**
  * The two unique constraints a *concurrent identical sign-in* can lose on, and nothing
@@ -226,7 +226,7 @@ export const GITHUB_ACCOUNT_MESSAGE =
  * is also a unique violation and is unambiguously a bug, so hiding it behind a retry would
  * turn a defect into a silent second round trip (primitives B10).
  */
-const IDENTITY_CONSTRAINTS = new Set(['users_email_unique', 'users_github_id_unique']);
+const IDENTITY_CONSTRAINTS = new Set(["users_email_unique", "users_github_id_unique"]);
 
 /**
  * The name of the identity constraint this error lost on, or `null` if the error is not a
@@ -242,7 +242,7 @@ function lostIdentityRace(error: unknown): string | null {
     return null;
   }
   const { constraint } = error as { constraint?: unknown };
-  if (typeof constraint !== 'string' || !IDENTITY_CONSTRAINTS.has(constraint)) {
+  if (typeof constraint !== "string" || !IDENTITY_CONSTRAINTS.has(constraint)) {
     return null;
   }
   return constraint;
@@ -300,8 +300,8 @@ function sameMembership(a: readonly Role[], b: readonly Role[]): boolean {
 function corruptRoleSetError(userId: string): Error {
   return new Error(
     `Reconciling user ${userId} derived an empty role set. The only stored role was the ` +
-      'operator cache and the address is not allowlisted, so there is no base role to ' +
-      'fall back to: repair the row rather than writing a set the CHECK constraint rejects.',
+      "operator cache and the address is not allowlisted, so there is no base role to " +
+      "fall back to: repair the row rather than writing a set the CHECK constraint rejects.",
   );
 }
 
@@ -324,7 +324,7 @@ function toUserDto(user: IUser): UserDto {
 }
 
 /** A `roles_changed` payload waiting for its transaction to commit, or nothing to say. */
-type PendingRolesChange = EventMap['auth.user.roles_changed'] | null;
+type PendingRolesChange = EventMap["auth.user.roles_changed"] | null;
 
 /** Everything one attempt at the GitHub sign-in produced, before anything is announced. */
 interface GithubSignInOutcome {
@@ -413,7 +413,7 @@ export class UserService {
     const users = await this.em.find(
       User,
       {},
-      { populate: ['mentorProfile'], orderBy: { createdAt: 'desc' } },
+      { populate: ["mentorProfile"], orderBy: { createdAt: "desc" } },
     );
     return users.map(toUserDto);
   }
@@ -495,7 +495,7 @@ export class UserService {
   async registerWithPassword(input: RegisterWithPasswordInput): Promise<RegistrationOutcome> {
     const user = await this.passwordService.withSlot(async (work) => {
       await this.rateLimiter.consume(
-        rateLimitKey('register', 'ip', input.clientIp),
+        rateLimitKey("register", "ip", input.clientIp),
         REGISTRATION_IP_POLICY,
       );
 
@@ -550,30 +550,28 @@ export class UserService {
    * with a password lands on `/admin` instead of `/home` for one request. Authority is
    * unaffected — `requireSession` derives `operator` live on their very next request (D19).
    */
-  async authenticateWithPassword(
-    input: AuthenticateWithPasswordInput,
-  ): Promise<SignedInUser> {
+  async authenticateWithPassword(input: AuthenticateWithPasswordInput): Promise<SignedInUser> {
     const user = await this.passwordService.withSlot(async (work) => {
       await this.rateLimiter.consume(
-        rateLimitKey('sign-in', 'ip', input.clientIp),
+        rateLimitKey("sign-in", "ip", input.clientIp),
         SIGN_IN_IP_POLICY,
       );
       await this.rateLimiter.consume(
-        rateLimitKey('sign-in', 'email', input.email),
+        rateLimitKey("sign-in", "email", input.email),
         SIGN_IN_EMAIL_POLICY,
       );
 
       const candidate = await this.em.findOne(
         User,
         { email: input.email },
-        { populate: ['mentorProfile'] },
+        { populate: ["mentorProfile"] },
       );
       const matched = await work.verify(input.password, candidate?.passwordHash ?? null);
 
       if (candidate === null || !matched) {
         // No address, no user id, no hash and no reason code that distinguishes the two
         // cases: the log line must not be the oracle the response refuses to be.
-        this.logger.info('refused a password sign-in');
+        this.logger.info("refused a password sign-in");
         throw new UnauthorizedError(INVALID_CREDENTIALS_MESSAGE);
       }
       return candidate;
@@ -582,11 +580,11 @@ export class UserService {
     // Outside the slot: the credential is already checked, so this decision needs no
     // hashing capacity.
     if (!user.emailVerifiedAt) {
-      this.logger.info({ userId: user.id }, 'refused a sign-in for an unconfirmed address');
+      this.logger.info({ userId: user.id }, "refused a sign-in for an unconfirmed address");
       throw new UnauthorizedError(EMAIL_NOT_VERIFIED_MESSAGE);
     }
 
-    this.logger.info({ userId: user.id }, 'signed in with a password');
+    this.logger.info({ userId: user.id }, "signed in with a password");
     return { user: toUserDto(user), sessionVersion: user.sessionVersion };
   }
 
@@ -628,7 +626,7 @@ export class UserService {
       // is not retried — two consecutive losses are not a race, they are a defect.
       this.logger.info(
         { githubId: identity.githubId, constraint },
-        'lost the GitHub identity race, re-reading the winner',
+        "lost the GitHub identity race, re-reading the winner",
       );
       outcome = await this.attemptGithubSignIn(identity);
     }
@@ -663,7 +661,7 @@ export class UserService {
    * concurrent invitation acceptances can exist.
    */
   async grantRole(userId: string, role: Role): Promise<SignedInUser> {
-    return this.changeRoleMembership(userId, role, 'granted');
+    return this.changeRoleMembership(userId, role, "granted");
   }
 
   /**
@@ -674,7 +672,7 @@ export class UserService {
    * and D19 has no concept of a roleless account.
    */
   async revokeRole(userId: string, role: Role): Promise<SignedInUser> {
-    return this.changeRoleMembership(userId, role, 'revoked');
+    return this.changeRoleMembership(userId, role, "revoked");
   }
 
   /**
@@ -707,7 +705,7 @@ export class UserService {
 
     user.sessionVersion += 1;
     await this.em.flush();
-    this.logger.info({ userId }, 'ended every session for a user');
+    this.logger.info({ userId }, "ended every session for a user");
   }
 
   /**
@@ -722,7 +720,7 @@ export class UserService {
     if (session === null) {
       throw new UnauthorizedError();
     }
-    return requireRole(session, 'operator');
+    return requireRole(session, "operator");
   }
 
   /**
@@ -750,8 +748,8 @@ export class UserService {
     });
     this.em.persist(user);
     await this.em.flush();
-    this.logger.info({ userId: user.id }, 'created user');
-    await this.eventBus.emit('auth.user.created', { userId: user.id, email: user.email });
+    this.logger.info({ userId: user.id }, "created user");
+    await this.eventBus.emit("auth.user.created", { userId: user.id, email: user.email });
     return user;
   }
 
@@ -788,13 +786,13 @@ export class UserService {
     try {
       return await this.persistRegistration(existing, input, passwordHash);
     } catch (error) {
-      if (lostIdentityRace(error) !== 'users_email_unique') {
+      if (lostIdentityRace(error) !== "users_email_unique") {
         throw error;
       }
 
       this.logger.info(
-        { constraint: 'users_email_unique' },
-        'lost the registration race, re-reading the winner',
+        { constraint: "users_email_unique" },
+        "lost the registration race, re-reading the winner",
       );
       this.em.clear();
       const winner = await this.em.findOne(User, { email: input.email });
@@ -817,7 +815,7 @@ export class UserService {
       // overwritten because it grants nothing — see `registerWithPassword`.
       existing.passwordHash = passwordHash;
       await this.em.flush();
-      this.logger.info({ userId: existing.id }, 'claimed an unconfirmed account');
+      this.logger.info({ userId: existing.id }, "claimed an unconfirmed account");
       return existing;
     }
 
@@ -842,12 +840,12 @@ export class UserService {
     em: EntityManager,
     identity: GithubIdentityInput,
   ): Promise<GithubSignInOutcome> {
-    const announce: GithubSignInOutcome['announce'] = [];
+    const announce: GithubSignInOutcome["announce"] = [];
 
     const linked = await em.findOne(
       User,
       { githubId: identity.githubId },
-      { populate: ['mentorProfile'] },
+      { populate: ["mentorProfile"] },
     );
     if (linked !== null) {
       this.refreshGithubProfile(linked, identity);
@@ -859,7 +857,7 @@ export class UserService {
     const byEmail = await em.findOne(
       User,
       { email: identity.email },
-      { populate: ['mentorProfile'] },
+      { populate: ["mentorProfile"] },
     );
     if (byEmail !== null) {
       if (!byEmail.emailVerifiedAt) {
@@ -876,9 +874,9 @@ export class UserService {
         // The message is shown to the user, and disclosing that an account exists for this
         // address costs nothing here: GitHub has just proven the caller owns it.
         throw new ConflictError(
-          'An account already exists for this email address but it has not been ' +
-            'confirmed yet. Confirm it using the link sent when it was registered, then ' +
-            'sign in with GitHub again.',
+          "An account already exists for this email address but it has not been " +
+            "confirmed yet. Confirm it using the link sent when it was registered, then " +
+            "sign in with GitHub again.",
         );
       }
 
@@ -888,7 +886,7 @@ export class UserService {
       await em.flush();
       this.logger.info(
         { userId: byEmail.id, githubId: identity.githubId },
-        'linked a GitHub identity to a verified account',
+        "linked a GitHub identity to a verified account",
       );
       return { user: byEmail, announce };
     }
@@ -898,7 +896,7 @@ export class UserService {
       displayName: identity.displayName,
       // Every new account starts as a mentee (D19). No self-service path grants anything
       // else; `operator` may be added a line below, but only by the allowlist.
-      roles: ['mentee'],
+      roles: ["mentee"],
       githubId: identity.githubId,
       githubLogin: identity.githubLogin,
       avatarUrl: identity.avatarUrl,
@@ -914,9 +912,9 @@ export class UserService {
     const rolesChanged = this.reconcileOperatorRole(created);
     await em.flush();
 
-    this.logger.info({ userId: created.id }, 'created user from a GitHub identity');
+    this.logger.info({ userId: created.id }, "created user from a GitHub identity");
     announce.push(() =>
-      this.eventBus.emit('auth.user.created', {
+      this.eventBus.emit("auth.user.created", {
         userId: created.id,
         email: created.email,
       }),
@@ -926,13 +924,13 @@ export class UserService {
   }
 
   private pushRolesChange(
-    announce: GithubSignInOutcome['announce'],
+    announce: GithubSignInOutcome["announce"],
     change: PendingRolesChange,
   ): void {
     if (change === null) {
       return;
     }
-    announce.push(() => this.eventBus.emit('auth.user.roles_changed', change));
+    announce.push(() => this.eventBus.emit("auth.user.roles_changed", change));
   }
 
   /**
@@ -981,24 +979,24 @@ export class UserService {
     user.roles = roles;
     this.logger.info(
       { userId: user.id, previousRoles, roles },
-      'reconciled the stored operator role against OPERATOR_EMAILS',
+      "reconciled the stored operator role against OPERATOR_EMAILS",
     );
-    return { userId: user.id, roles, previousRoles, reason: 'reconciled' };
+    return { userId: user.id, roles, previousRoles, reason: "reconciled" };
   }
 
   private async changeRoleMembership(
     userId: string,
     role: Role,
-    reason: 'granted' | 'revoked',
+    reason: "granted" | "revoked",
   ): Promise<SignedInUser> {
-    const user = await this.em.findOne(User, { id: userId }, { populate: ['mentorProfile'] });
+    const user = await this.em.findOne(User, { id: userId }, { populate: ["mentorProfile"] });
     if (user === null) {
-      throw new NotFoundError('No such user');
+      throw new NotFoundError("No such user");
     }
 
     const previousRoles = normalizeRoles(user.roles);
     const held = new Set<Role>(previousRoles);
-    if (reason === 'granted') {
+    if (reason === "granted") {
       held.add(role);
     } else {
       held.delete(role);
@@ -1008,7 +1006,7 @@ export class UserService {
     if (roles.length === 0) {
       throw new ConflictError(
         `Cannot revoke ${role}: it is the only role this user holds, and an account with ` +
-          'no roles cannot sign in. Grant the replacement role first.',
+          "no roles cannot sign in. Grant the replacement role first.",
       );
     }
 
@@ -1024,8 +1022,8 @@ export class UserService {
     user.sessionVersion += 1;
     await this.em.flush();
 
-    this.logger.info({ userId, role, reason, roles }, 'changed a user role assignment');
-    await this.eventBus.emit('auth.user.roles_changed', {
+    this.logger.info({ userId, role, reason, roles }, "changed a user role assignment");
+    await this.eventBus.emit("auth.user.roles_changed", {
       userId,
       roles,
       previousRoles,

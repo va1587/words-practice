@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { symbols, type Logger } from 'pino';
-import type { AppEnv } from '../config/env';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { symbols, type Logger } from "pino";
+import type { AppEnv } from "../config/env";
 
 /**
  * The one test that resolves the **real** logger from a **real** awilix container.
@@ -22,15 +22,15 @@ import type { AppEnv } from '../config/env';
 /** A forked EntityManager stand-in; nothing here touches it, it just has to exist. */
 const fakeOrm = { em: { fork: () => ({ findOne: async () => null }) } };
 
-vi.mock('@devmentor/db', () => ({
+vi.mock("@devmentor/db", () => ({
   getOrm: async () => fakeOrm,
   User: {},
-  ROLES: ['mentee', 'mentor', 'operator'],
+  ROLES: ["mentee", "mentor", "operator"],
 }));
-vi.mock('../config/env', () => ({ getEnv: () => currentEnv }));
+vi.mock("../config/env", () => ({ getEnv: () => currentEnv }));
 // `../logger` is NOT mocked. That is the entire point of this file.
 
-const { getContainer } = await import('./container');
+const { getContainer } = await import("./container");
 
 /** The container is cached on `globalThis` to survive HMR; tests must clear that cache. */
 const globalForContainer = globalThis as unknown as { __devmentorContainer?: unknown };
@@ -39,16 +39,16 @@ const globalForContainer = globalThis as unknown as { __devmentorContainer?: unk
 let currentEnv: AppEnv;
 
 const BASE_ENV = {
-  NODE_ENV: 'development',
-  APP_NAME: 'DevMentor',
-  LOG_LEVEL: 'info',
-  DB_HOST: '127.0.0.1',
+  NODE_ENV: "development",
+  APP_NAME: "DevMentor",
+  LOG_LEVEL: "info",
+  DB_HOST: "127.0.0.1",
   DB_PORT: 5432,
-  DB_NAME: 'devmentor',
-  DB_USER: 'devmentor',
-  DB_PASSWORD: 'devmentor',
+  DB_NAME: "devmentor",
+  DB_USER: "devmentor",
+  DB_PASSWORD: "devmentor",
   OPERATOR_EMAILS: [],
-  APP_URL: 'http://localhost:3000',
+  APP_URL: "http://localhost:3000",
   TRUSTED_PROXY_HOPS: 0,
   INTEGRATION_TEST_RUN: false,
 } as unknown as AppEnv;
@@ -79,54 +79,52 @@ function captureLines(logger: Logger): string[] {
   return lines;
 }
 
-describe('the logger registered on the container', () => {
-  it('resolves and logs, instead of throwing "Could not resolve \'emit\'"', async () => {
+describe("the logger registered on the container", () => {
+  it("resolves and logs, instead of throwing \"Could not resolve 'emit'\"", async () => {
     // Pre-fix this line alone threw: `build()` wires the default event subscribers, which
     // resolves `eventBus`, whose constructor depends on `logger`.
     const container = await getContainer();
     const logger = container.cradle.logger;
     const lines = captureLines(logger);
 
-    logger.info({ userId: 'user-1' }, 'auth.user.created');
+    logger.info({ userId: "user-1" }, "auth.user.created");
 
     expect(lines).toHaveLength(1);
-    expect(JSON.parse(lines.join(''))).toMatchObject({
+    expect(JSON.parse(lines.join(""))).toMatchObject({
       // `app` proves this is the repository's configured pino instance and not a stub,
       // i.e. that `loggerOptions()` was applied to a real destination.
-      app: 'DevMentor',
-      userId: 'user-1',
-      msg: 'auth.user.created',
+      app: "DevMentor",
+      userId: "user-1",
+      msg: "auth.user.created",
     });
   });
 
-  it('never hands the cradle to the logger factory as a destination', async () => {
+  it("never hands the cradle to the logger factory as a destination", async () => {
     // The mechanism, asserted directly. In PROXY mode awilix invokes the factory with the
     // cradle proxy; pino then does `typeof stream.emit === 'function'` on whatever it was
     // given. If the cradle ever reaches pino again, that property read becomes a resolution
     // of a registration named `emit` and this fails the way production did.
     const container = await getContainer();
 
-    const destination = (container.cradle.logger as unknown as WithDestination)[
-      symbols.streamSym
-    ];
+    const destination = (container.cradle.logger as unknown as WithDestination)[symbols.streamSym];
 
     expect(destination).not.toBe(container.cradle);
     expect(() => container.cradle.logger).not.toThrow();
   });
 
-  it('logs the default auth.user.created subscriber through the real logger', async () => {
+  it("logs the default auth.user.created subscriber through the real logger", async () => {
     // The end-to-end path the app actually takes: an emitted domain event reaching stdout.
     const container = await getContainer();
     const lines = captureLines(container.cradle.logger);
 
-    await container.cradle.eventBus.emit('auth.user.created', {
-      userId: 'user-1',
-      email: 'ada@devmentor.test',
+    await container.cradle.eventBus.emit("auth.user.created", {
+      userId: "user-1",
+      email: "ada@devmentor.test",
     });
 
-    expect(JSON.parse(lines.join(''))).toMatchObject({
-      userId: 'user-1',
-      msg: 'auth.user.created',
+    expect(JSON.parse(lines.join(""))).toMatchObject({
+      userId: "user-1",
+      msg: "auth.user.created",
     });
   });
 });

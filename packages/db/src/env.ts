@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /**
  * Database environment schema. This is the *only* place in the `db` package that
@@ -8,18 +8,18 @@ import { z } from 'zod';
  */
 const dbEnvSchema = z.object({
   DATABASE_URL: z.string().url().optional(),
-  DB_HOST: z.string().default('127.0.0.1'),
+  DB_HOST: z.string().default("127.0.0.1"),
   DB_PORT: z.coerce.number().int().positive().default(5432),
-  DB_NAME: z.string().default('devmentor'),
-  DB_USER: z.string().default('devmentor'),
-  DB_PASSWORD: z.string().default('devmentor'),
+  DB_NAME: z.string().default("devmentor"),
+  DB_USER: z.string().default("devmentor"),
+  DB_PASSWORD: z.string().default("devmentor"),
   DB_POOL_MIN: z.coerce.number().int().nonnegative().default(2),
   DB_POOL_MAX: z.coerce.number().int().positive().default(10),
   DB_POOL_IDLE_MS: z.coerce.number().int().positive().default(30_000),
   DB_DEBUG: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform((v) => v === 'true'),
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
   /**
    * Whether the Migrator may write `migrations/devmentor.json`. On by default — that
    * snapshot is a committed artifact `migration:create` diffs against — and turned off
@@ -35,9 +35,9 @@ const dbEnvSchema = z.object({
    * is declared here and consumed by `createOrmConfig`.
    */
   DB_MIGRATIONS_SNAPSHOT: z
-    .enum(['true', 'false'])
-    .default('true')
-    .transform((v) => v === 'true'),
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
 });
 
 export type DbEnv = z.infer<typeof dbEnvSchema>;

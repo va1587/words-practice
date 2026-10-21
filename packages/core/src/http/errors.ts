@@ -29,7 +29,7 @@ export type FieldErrors = Record<string, string[]>;
  * `code` instead — it is the published contract (`BACKWARD_COMPATIBILITY.md` §1) and it is a
  * string, so it crosses too.
  */
-const APP_ERROR_BRAND: unique symbol = Symbol.for('devmentor.http.app-error');
+const APP_ERROR_BRAND: unique symbol = Symbol.for("devmentor.http.app-error");
 
 export class AppError extends Error {
   /** See `APP_ERROR_BRAND`. Present on every subclass, by construction. */
@@ -79,38 +79,38 @@ export class AppError extends Error {
 }
 
 export class BadRequestError extends AppError {
-  constructor(message = 'Bad request', options?: { cause?: unknown }) {
-    super(message, 400, 'bad_request', options);
+  constructor(message = "Bad request", options?: { cause?: unknown }) {
+    super(message, 400, "bad_request", options);
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = 'Authentication required') {
-    super(message, 401, 'unauthorized');
+  constructor(message = "Authentication required") {
+    super(message, 401, "unauthorized");
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = 'You do not have access to this resource') {
-    super(message, 403, 'forbidden');
+  constructor(message = "You do not have access to this resource") {
+    super(message, 403, "forbidden");
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(message = 'Resource not found') {
-    super(message, 404, 'not_found');
+  constructor(message = "Resource not found") {
+    super(message, 404, "not_found");
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message = 'Conflict with the current state of the resource') {
-    super(message, 409, 'conflict');
+  constructor(message = "Conflict with the current state of the resource") {
+    super(message, 409, "conflict");
   }
 }
 
 export class ValidationError extends AppError {
-  constructor(message = 'Validation failed', fieldErrors?: FieldErrors) {
-    super(message, 422, 'validation_failed', { fieldErrors });
+  constructor(message = "Validation failed", fieldErrors?: FieldErrors) {
+    super(message, 422, "validation_failed", { fieldErrors });
   }
 }
 
@@ -125,8 +125,7 @@ export class ValidationError extends AppError {
  * nothing about *why* the attempt was refused, so it reads the same for a user who
  * mistyped their password five times and for the attacker sharing their office IP.
  */
-export const RATE_LIMITED_MESSAGE =
-  'Too many attempts. Please wait a few minutes and try again.';
+export const RATE_LIMITED_MESSAGE = "Too many attempts. Please wait a few minutes and try again.";
 
 /**
  * The caller has spent its allowance of attempts for this window (platform primitives
@@ -140,12 +139,12 @@ export const RATE_LIMITED_MESSAGE =
  */
 export class TooManyRequestsError extends AppError {
   constructor(retryAfterSeconds: number, message = RATE_LIMITED_MESSAGE) {
-    super(message, 429, 'rate_limited', {
+    super(message, 429, "rate_limited", {
       retryAfterSeconds,
       // Seconds, the delta-seconds form of `Retry-After`, rather than an HTTP-date: a
       // date would be read against the *client's* clock, and this bound is measured
       // against the server's.
-      headers: { 'Retry-After': String(retryAfterSeconds) },
+      headers: { "Retry-After": String(retryAfterSeconds) },
     });
   }
 }
@@ -162,10 +161,10 @@ export class TooManyRequestsError extends AppError {
  */
 export class ServiceUnavailableError extends AppError {
   constructor(
-    message = 'This part of the service is temporarily unavailable. Please try again.',
+    message = "This part of the service is temporarily unavailable. Please try again.",
     options?: { cause?: unknown; headers?: Record<string, string> },
   ) {
-    super(message, 503, 'service_unavailable', options);
+    super(message, 503, "service_unavailable", options);
   }
 }
 

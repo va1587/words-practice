@@ -39,9 +39,9 @@ do not define backend policy.
 ## Package use
 
 ```tsx
-import { Button, Input, MentorProfileCard } from '@devmentor/ui';
-import { CrudForm, DataTable, AppShell } from '@devmentor/ui/backend';
-import '@devmentor/ui/tokens.css';
+import { Button, Input, MentorProfileCard } from "@devmentor/ui";
+import { CrudForm, DataTable, AppShell } from "@devmentor/ui/backend";
+import "@devmentor/ui/tokens.css";
 ```
 
 ## Checks

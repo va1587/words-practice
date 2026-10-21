@@ -1,4 +1,4 @@
-import type { Role } from '@devmentor/db';
+import type { Role } from "@devmentor/db";
 
 /**
  * Registry of domain events. Event IDs follow `concept.entity.action` (past tense);
@@ -9,7 +9,7 @@ import type { Role } from '@devmentor/db';
  * cache invalidation). There is no queue or background worker in this project.
  */
 export interface EventMap {
-  'auth.user.created': { userId: string; email: string };
+  "auth.user.created": { userId: string; email: string };
   /**
    * `users.roles` was rewritten. Emitted by the opportunistic operator reconciliation and
    * by `grantRole`/`revokeRole`; `reason` says which, because only the grant paths bump
@@ -20,11 +20,11 @@ export interface EventMap {
    * in-process, its realistic subscriber writes a pino line to an ephemeral log, and it
    * exists to make the cache update *observable*, nothing more.
    */
-  'auth.user.roles_changed': {
+  "auth.user.roles_changed": {
     userId: string;
     roles: readonly Role[];
     previousRoles: readonly Role[];
-    reason: 'reconciled' | 'granted' | 'revoked';
+    reason: "reconciled" | "granted" | "revoked";
   };
 }
 

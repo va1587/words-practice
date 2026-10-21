@@ -65,27 +65,17 @@ const eslintConfig = defineConfig([
   },
   // ui is presentational — no domain/data imports, and no framework. `react` is allowed:
   // it is a React component library.
-  boundary(["packages/ui/**/*.{ts,tsx}"], [
-    "@devmentor/core",
-    "@devmentor/db",
-    "@devmentor/app",
-    "next",
-  ]),
+  boundary(
+    ["packages/ui/**/*.{ts,tsx}"],
+    ["@devmentor/core", "@devmentor/db", "@devmentor/app", "next"],
+  ),
   // db is the leaf — knows nothing about the rest, and nothing about rendering.
-  boundary(["packages/db/**/*.{ts,tsx}"], [
-    "@devmentor/core",
-    "@devmentor/ui",
-    "@devmentor/app",
-    "next",
-    "react",
-  ]),
+  boundary(
+    ["packages/db/**/*.{ts,tsx}"],
+    ["@devmentor/core", "@devmentor/ui", "@devmentor/app", "next", "react"],
+  ),
   // core may use db, but not the UI, the host app, or a framework.
-  boundary(["packages/core/**/*.{ts,tsx}"], [
-    "@devmentor/ui",
-    "@devmentor/app",
-    "next",
-    "react",
-  ]),
+  boundary(["packages/core/**/*.{ts,tsx}"], ["@devmentor/ui", "@devmentor/app", "next", "react"]),
   globalIgnores([
     ".next/**",
     "**/.next/**",

@@ -1,24 +1,24 @@
-import type { EntityManager } from '@mikro-orm/core';
-import { Seeder } from '@mikro-orm/seeder';
-import type { Role } from '../entities/auth/roles';
-import { User } from '../entities/auth/user.entity';
-import { MentorProfile } from '../entities/mentors/mentor-profile.entity';
-import { SEED_PASSWORD_HASH } from './seed-password';
+import type { EntityManager } from "@mikro-orm/core";
+import { Seeder } from "@mikro-orm/seeder";
+import type { Role } from "../entities/auth/roles";
+import { User } from "../entities/auth/user.entity";
+import { MentorProfile } from "../entities/mentors/mentor-profile.entity";
+import { SEED_PASSWORD_HASH } from "./seed-password";
 
 /**
  * Email of Ada Lovelace, the admin-list fixture. `User.email` is unique, so it identifies
  * the seed row. Not the mentor a mock sign-in reaches — see `SEED_USERS` below.
  */
-export const SEED_MENTOR_EMAIL = 'ada@devmentor.dev';
+export const SEED_MENTOR_EMAIL = "ada@devmentor.dev";
 
 /** Email of the sample mentee — `<login>@devmentor.test` for the default mock persona. */
-export const SEED_MENTEE_EMAIL = 'mock-mentee@devmentor.test';
+export const SEED_MENTEE_EMAIL = "mock-mentee@devmentor.test";
 
 /** Email of the mentor a mock GitHub sign-in as `mock-mentor` resolves to. */
-export const SEED_MOCK_MENTOR_EMAIL = 'mock-mentor@devmentor.test';
+export const SEED_MOCK_MENTOR_EMAIL = "mock-mentor@devmentor.test";
 
 /** Email of the sample operator — the address `.github/workflows/ci.yml` allowlists. */
-export const SEED_OPERATOR_EMAIL = 'mock-operator@devmentor.test';
+export const SEED_OPERATOR_EMAIL = "mock-operator@devmentor.test";
 
 interface SeedUser {
   email: string;
@@ -70,20 +70,20 @@ interface SeedUser {
 const SEED_USERS: readonly SeedUser[] = [
   {
     email: SEED_MENTOR_EMAIL,
-    displayName: 'Ada Lovelace',
-    roles: ['mentor'],
-    githubLogin: 'ada',
+    displayName: "Ada Lovelace",
+    roles: ["mentor"],
+    githubLogin: "ada",
     profile: {
-      headline: 'Systems & algorithms mentor',
-      bio: 'Helping engineers reason about complexity.',
+      headline: "Systems & algorithms mentor",
+      bio: "Helping engineers reason about complexity.",
       yearsOfExperience: 12,
     },
   },
   {
     email: SEED_MENTEE_EMAIL,
-    displayName: 'Mock Mentee',
-    roles: ['mentee'],
-    githubLogin: 'mock-mentee',
+    displayName: "Mock Mentee",
+    roles: ["mentee"],
+    githubLogin: "mock-mentee",
     password: true,
   },
   {
@@ -92,12 +92,12 @@ const SEED_USERS: readonly SeedUser[] = [
     // actually sign in as. The headline differs from Ada's so an assertion on either row
     // stays unambiguous.
     email: SEED_MOCK_MENTOR_EMAIL,
-    displayName: 'Mock Mentor',
-    roles: ['mentor'],
-    githubLogin: 'mock-mentor',
+    displayName: "Mock Mentor",
+    roles: ["mentor"],
+    githubLogin: "mock-mentor",
     profile: {
-      headline: 'Mock mentor for sign-in scenarios',
-      bio: 'Seeded so a mock GitHub sign-in lands on a mentor that already has a profile.',
+      headline: "Mock mentor for sign-in scenarios",
+      bio: "Seeded so a mock GitHub sign-in lands on a mentor that already has a profile.",
       yearsOfExperience: 5,
     },
   },
@@ -105,9 +105,9 @@ const SEED_USERS: readonly SeedUser[] = [
     // The operator also holds `mentor`: the two are independent assignments, and seeding
     // them together keeps a regression that erases one of them visible.
     email: SEED_OPERATOR_EMAIL,
-    displayName: 'Mock Operator',
-    roles: ['operator', 'mentor'],
-    githubLogin: 'mock-operator',
+    displayName: "Mock Operator",
+    roles: ["operator", "mentor"],
+    githubLogin: "mock-operator",
     password: true,
   },
 ];

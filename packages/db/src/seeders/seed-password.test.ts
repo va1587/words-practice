@@ -1,6 +1,6 @@
-import { scryptSync, timingSafeEqual } from 'node:crypto';
-import { describe, expect, it } from 'vitest';
-import { SEED_PASSWORD, SEED_PASSWORD_HASH } from './seed-password';
+import { scryptSync, timingSafeEqual } from "node:crypto";
+import { describe, expect, it } from "vitest";
+import { SEED_PASSWORD, SEED_PASSWORD_HASH } from "./seed-password";
 
 /**
  * The `db`-side half of the seeded-credential guard: this file proves the constant is
@@ -30,13 +30,13 @@ function decode(hash: string): {
   salt: Buffer;
   digest: Buffer;
 } {
-  const [empty, algorithm, parameters, salt, digest] = hash.split('$');
-  expect(empty).toBe('');
-  expect(algorithm).toBe('scrypt');
+  const [empty, algorithm, parameters, salt, digest] = hash.split("$");
+  expect(empty).toBe("");
+  expect(algorithm).toBe("scrypt");
 
   const values = Object.fromEntries(
-    (parameters as string).split(',').map((pair) => {
-      const [key, value] = pair.split('=');
+    (parameters as string).split(",").map((pair) => {
+      const [key, value] = pair.split("=");
       return [key, Number(value)];
     }),
   );
@@ -46,8 +46,8 @@ function decode(hash: string): {
     r: values.r as number,
     p: values.p as number,
     dk: values.dk as number,
-    salt: Buffer.from(salt as string, 'base64'),
-    digest: Buffer.from(digest as string, 'base64'),
+    salt: Buffer.from(salt as string, "base64"),
+    digest: Buffer.from(digest as string, "base64"),
   };
 }
 
@@ -56,18 +56,18 @@ function derive(password: string, hash: string): Buffer {
   return scryptSync(password, salt, dk, { N: 2 ** ln, r, p, maxmem: MAXMEM });
 }
 
-describe('the seeded password', () => {
-  it('is obviously not a production secret and fits the register schema bounds', () => {
+describe("the seeded password", () => {
+  it("is obviously not a production secret and fits the register schema bounds", () => {
     // The personas are `mock-*@devmentor.test` on a throwaway database. A seeded password
     // that reads like a real one invites someone to reuse it somewhere it matters.
-    expect(SEED_PASSWORD).toBe('mock-password-not-a-secret');
+    expect(SEED_PASSWORD).toBe("mock-password-not-a-secret");
     // `registerSchema` is `min(12).max(72)`, so the same value can be registered as well as
     // verified — a fixture that could not pass validation would be a trap for the harness.
     expect(SEED_PASSWORD.length).toBeGreaterThanOrEqual(12);
-    expect(Buffer.byteLength(SEED_PASSWORD, 'utf8')).toBeLessThanOrEqual(72);
+    expect(Buffer.byteLength(SEED_PASSWORD, "utf8")).toBeLessThanOrEqual(72);
   });
 
-  it('carries its own scrypt parameters, so tuning them cannot invalidate the hash', () => {
+  it("carries its own scrypt parameters, so tuning them cannot invalidate the hash", () => {
     const { ln, r, p, dk, salt, digest } = decode(SEED_PASSWORD_HASH);
 
     // OWASP's N=2^17, r=8, p=1 — the parameters the spec fixes for `PasswordService`. They
@@ -80,13 +80,13 @@ describe('the seeded password', () => {
     expect(digest).toHaveLength(dk);
   });
 
-  it('re-derives from SEED_PASSWORD with the parameters it encodes', () => {
+  it("re-derives from SEED_PASSWORD with the parameters it encodes", () => {
     const derived = derive(SEED_PASSWORD, SEED_PASSWORD_HASH);
 
     expect(timingSafeEqual(derived, decode(SEED_PASSWORD_HASH).digest)).toBe(true);
   });
 
-  it('does not re-derive from a different password', () => {
+  it("does not re-derive from a different password", () => {
     // Without this the assertion above would still pass against a hash of anything at all,
     // and the documented plaintext could quietly stop being the one that works.
     const derived = derive(`${SEED_PASSWORD}!`, SEED_PASSWORD_HASH);

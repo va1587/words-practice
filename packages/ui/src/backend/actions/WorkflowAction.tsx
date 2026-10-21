@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useCallback, useState } from 'react';
-import { Button, type ButtonProps } from '../../components/ui/button';
-import { apiCall } from '../api/apiCall';
-import { ErrorMessage } from '../feedback/ErrorMessage';
+import { useCallback, useState } from "react";
+import { Button, type ButtonProps } from "../../components/ui/button";
+import { apiCall } from "../api/apiCall";
+import { ErrorMessage } from "../feedback/ErrorMessage";
 
 export interface WorkflowActionProps {
   /** API path, called through `apiCall` (never a raw `fetch`), so CSRF rides along. */
   endpoint: string;
-  method?: 'POST' | 'PUT' | 'DELETE';
+  method?: "POST" | "PUT" | "DELETE";
   /** JSON body. Omit it for an action whose only argument is the session. */
   body?: unknown;
   label: string;
   /** Label while the request is in flight. Defaults to `<label>…`. */
   pendingLabel?: string;
-  variant?: ButtonProps['variant'];
+  variant?: ButtonProps["variant"];
   /** Called with the envelope's `data` after a success, before anything is re-rendered. */
   onSuccess?: (data: unknown) => void;
 }
@@ -39,7 +39,7 @@ export interface WorkflowActionProps {
  */
 export function WorkflowAction({
   endpoint,
-  method = 'POST',
+  method = "POST",
   body,
   label,
   pendingLabel,
@@ -69,7 +69,7 @@ export function WorkflowAction({
       // `apiCall` turns a network failure into an envelope, so reaching here means
       // `onSuccess` threw. Report it rather than leaving an unhandled rejection and a
       // button that silently did nothing.
-      setError('We could not complete the request. Try again.');
+      setError("We could not complete the request. Try again.");
     } finally {
       setPending(false);
     }
@@ -84,7 +84,7 @@ export function WorkflowAction({
         aria-busy={pending}
         onClick={() => void run()}
       >
-        {pending ? pendingLabel ?? `${label}…` : label}
+        {pending ? (pendingLabel ?? `${label}…`) : label}
       </Button>
       {error !== null ? <ErrorMessage message={error} /> : null}
     </>

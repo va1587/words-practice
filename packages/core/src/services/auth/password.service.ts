@@ -1,8 +1,8 @@
-import { randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from 'node:crypto';
-import { promisify } from 'node:util';
-import type { AppEnv } from '../../config/env';
-import type { Logger } from '../../logger';
-import { ServiceUnavailableError } from '../../http/errors';
+import { randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from "node:crypto";
+import { promisify } from "node:util";
+import type { AppEnv } from "../../config/env";
+import type { Logger } from "../../logger";
+import { ServiceUnavailableError } from "../../http/errors";
 
 /**
  * Password hashing — platform primitives **B9**.
@@ -58,7 +58,7 @@ const SALT_LENGTH = 16;
 const MAX_MEMORY_BYTES = 256 * 1024 * 1024;
 
 /** The algorithm tag in the encoded hash. A second algorithm would add a second tag. */
-const ALGORITHM_ID = 'scrypt';
+const ALGORITHM_ID = "scrypt";
 
 /**
  * The whole stored form: `$scrypt$ln=17,r=8,p=1,dk=32$<salt>$<digest>`.
@@ -98,7 +98,7 @@ type EncodedMatch = [
 
 /** Said to a caller the gate turned away. Deliberately vague about why. */
 const GATE_SATURATED =
-  'The server is briefly at capacity for password checks. Please try again in a moment.';
+  "The server is briefly at capacity for password checks. Please try again in a moment.";
 
 /**
  * `promisify` rather than a hand-rolled wrapper — see `derive`. The signature is pinned
@@ -117,7 +117,7 @@ const scryptAsync = promisify(scrypt) as (
  * decodes an unpadded string fine, so only the encoding side needs to say so.
  */
 function encodeBase64(value: Buffer): string {
-  return value.toString('base64').replace(/=+$/, '');
+  return value.toString("base64").replace(/=+$/, "");
 }
 
 /**
@@ -179,9 +179,9 @@ function parseEncodedHash(encoded: string): ParsedHash | null {
 
   return {
     params: { N, r, p },
-    salt: Buffer.from(salt, 'base64'),
+    salt: Buffer.from(salt, "base64"),
     keyLength: Number(declaredKeyLength),
-    digest: Buffer.from(digest, 'base64'),
+    digest: Buffer.from(digest, "base64"),
   };
 }
 
@@ -264,10 +264,7 @@ export class PasswordService {
 
   constructor({ env, logger }: { env: AppEnv; logger: Logger }) {
     this.logger = logger;
-    this.gate = new HashConcurrencyGate(
-      env.PASSWORD_HASH_CONCURRENCY,
-      env.PASSWORD_HASH_WAIT_MS,
-    );
+    this.gate = new HashConcurrencyGate(env.PASSWORD_HASH_CONCURRENCY, env.PASSWORD_HASH_WAIT_MS);
     this.work = {
       hash: (plaintext) => this.hashHeld(plaintext),
       verify: (plaintext, storedHash) => this.verifyHeld(plaintext, storedHash),
@@ -361,8 +358,8 @@ export class PasswordService {
       // than a thrown 500 because the caller is a sign-in attempt: the honest answer to
       // "is this the right password" for an unreadable hash is "no".
       this.logger.warn(
-        { reason: 'unparseable' },
-        'stored password hash is not in the expected format; treating it as no match',
+        { reason: "unparseable" },
+        "stored password hash is not in the expected format; treating it as no match",
       );
       return false;
     }
@@ -374,8 +371,8 @@ export class PasswordService {
       // Parameters that are well-formed but that scrypt refuses — `N` of 1, a zero
       // block size, a zero key length. Same treatment as an unparseable hash.
       this.logger.warn(
-        { reason: 'rejected-parameters' },
-        'stored password hash names parameters scrypt refuses; treating it as no match',
+        { reason: "rejected-parameters" },
+        "stored password hash names parameters scrypt refuses; treating it as no match",
       );
       return false;
     }
@@ -386,8 +383,8 @@ export class PasswordService {
     // wrong password, and reporting it early leaks nothing an attacker did not supply.
     if (candidate.length !== parsed.digest.length) {
       this.logger.warn(
-        { reason: 'digest-length' },
-        'stored password hash does not carry the digest length it declares; treating it as no match',
+        { reason: "digest-length" },
+        "stored password hash does not carry the digest length it declares; treating it as no match",
       );
       return false;
     }

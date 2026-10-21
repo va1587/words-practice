@@ -3,6 +3,7 @@
 Document type: the founders' own discovery board; business-model positions, not evidence.
 
 ## Revenue Streams
+
 - Session commission: 15–20% of every booked 25/50-min session.
 - Vault subscriptions: 20–30% platform cut of each mentor's monthly vault price.
 - Async Q&A: platform cut of each paid question, or bundled into vault tiers.
@@ -14,6 +15,7 @@ Document type: the founders' own discovery board; business-model positions, not 
 - Later: combined vault and AI synthesis as premium tier with revenue share.
 
 ## Cost Factors
+
 - Develop: engineering time for marketplace, booking, payments, vault, MCP.
 - Develop: LLM inference for vault answers, scales with questions asked.
 - Develop: hosting, database, storage for notes, video/meeting links.
@@ -29,6 +31,7 @@ Document type: the founders' own discovery board; business-model positions, not 
 - Service: legal — terms, IP ownership of notes, GDPR, recordings consent.
 
 ## Channels
+
 - Mentors first: hand-pick 50 senior devs from Brave Courses, conference speakers, tech Twitter/LinkedIn, invite-only.
 - Mentors bring users: every mentor gets a vault landing page and share links, their audience is the first customer base.
 - Developer channels: dev communities (10xDevs, Mega Dev, AITL), newsletters, YouTube devs as mentors.

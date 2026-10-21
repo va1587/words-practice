@@ -1,4 +1,5 @@
 # Workshop — 2026-08-26, founders (2) and one advisor
+
 - Decision the session had to produce: what is the smallest product that earns for a mentor without a call.
 - Decider: founder A.
 - Constraints: 25 hours of build time for the MVP; no payments provider integration beyond Stripe; no video.

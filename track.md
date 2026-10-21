@@ -7,6 +7,7 @@ Branch: `feat/lesson-08`
 Legend: `[ ]` todo · `[~]` in progress · `[x]` done (committed)
 
 Rules applied to every task:
+
 - every new/changed production file is added to `coverage.include` in `vitest.config.mts`
   **in the same task**, with unit tests at 100% statements/branches/functions/lines;
 - `npm run typecheck`, `npm run lint`, `npm run test:unit:coverage` pass before commit;
@@ -38,9 +39,9 @@ and `*.test.tsx` files run under per-file `// @vitest-environment jsdom`.
 Spec steps 3–17. Unblocks E02+.
 
 - [x] **T2.1** Clock (B1) — `core/src/time/clock.ts`, registered in `container.ts` + `cradle.ts`.
-      *Note: `packages/core/src/container/` has no test seam today (`build()` calls
+      _Note: `packages/core/src/container/` has no test seam today (`build()` calls
       `getOrm()` at the top). T2.9 needs one for the adapter-selection assertion — build
-      it there.*
+      it there._
 - [x] **T2.2** `ServiceUnavailableError` (503) + optional `headers` on `AppError` (B6),
       `core/src/http/return-to.ts` `safeReturnTo` (B7), `core/src/http/outbound.ts`
       `fetchJson` with a 10s timeout (B20). `BACKWARD_COMPATIBILITY.md` §1 row for the 503.
@@ -70,7 +71,7 @@ Spec steps 3–17. Unblocks E02+.
   - The membership CHECK is generated from `ROLES` automatically
     (`"roles" <@ array['mentee'::text, …]`). The non-empty half goes at entity level with an
     explicit name: `checks: [{ name: 'users_roles_non_empty', expression: 'cardinality("roles") >= 1' }]`.
-    A second `.check()` on the *property* collides — both get the conventional name
+    A second `.check()` on the _property_ collides — both get the conventional name
     `users_roles_check` and `schema.create()` dies.
   - **`array_length("roles", 1) >= 1` does NOT reject `'{}'`** (`array_length` of an empty
     array is `NULL`, and a CHECK passes on `NULL`). Verified: an empty-array insert was
@@ -85,8 +86,10 @@ Spec steps 3–17. Unblocks E02+.
   - `Session.roles: readonly [Role, ...Role[]]` needs an explicit runtime narrowing —
     `Role[]` is not assignable to a non-empty tuple. That narrowing is the natural home for
     clause 30b's internal error (T2.7).
+
   </details>
-- [x] **T2.4b** *(follow-up to T2.4, decided by the user 2026-09-09)* Seed a fourth persona,
+
+- [x] **T2.4b** _(follow-up to T2.4, decided by the user 2026-09-09)_ Seed a fourth persona,
       `mock-mentor@devmentor.test` with `['mentor']`, as the row the harness signs in as.
       **Ada keeps `ada@devmentor.dev` and stays a mentor, but is the admin-list fixture only** —
       no login can produce her address, so she is deliberately not linkable by the mock
@@ -112,21 +115,22 @@ Spec steps 3–17. Unblocks E02+.
 - [x] **T2.10** Remove `POST /api/users` and `user-create.schema.ts`; guard `GET` twice
       (route `authorize` + `UserService.list`); typed `create` input.
 - [x] **T2.11** Routes — `api/auth/github`, `api/auth/github/callback`, `api/auth/logout`.
-      *Resolved:* edge case 3 got the new `?error=email` code, shared with edge case 4
+      _Resolved:_ edge case 3 got the new `?error=email` code, shared with edge case 4
       (indistinguishable to the caller, same remedy). The vocabulary is now the exported
       `SignInErrorCode` union in `packages/app/src/lib/sign-in-redirect.ts` —
       **T2.13's sign-in page must render `email`**, with copy covering both directions
       (verify a primary address on GitHub; confirm any DevMentor registration for it).
       It must not echo the service's message — that is server text.
-      *Also:* `homeFor` already exists in `packages/app/src/lib/session.ts`; T2.12 adds the
+      _Also:_ `homeFor` already exists in `packages/app/src/lib/session.ts`; T2.12 adds the
       guards alongside it and must not duplicate the priority logic.
 
   **T2.13 MUST FIX (blocking, from T2.11):** `MockGithubIdentityAdapter.authorizeUrl`
   builds the callback URL from `env.APP_URL`, so with the default `http://localhost:3000`
   an integration sign-in bounces to port 3000 instead of the harness's random port and
   never comes back. `tests/integration/environment.ts` builds the child environment
-  *before* the port is picked, so this needs reordering, not just a new variable. Not
+  _before_ the port is picked, so this needs reordering, not just a new variable. Not
   fixable from the route side.
+
 - [x] **T2.12** `app/src/lib/session.ts` (F3) page guards + `homeFor`, the sign-out
       `WorkflowAction` (F4), and the ESLint third-party boundary patterns.
 - [x] **T2.13** Pages — `(auth)/sign-in`, `(mentee)` home, `(mentor)` home, guards on the
@@ -149,23 +153,22 @@ Spec steps 3–17. Unblocks E02+.
   names at depth ≤ 3, so `code`, `state`, `url`, `path`, `secret`, `accessToken` and
   `set-cookie` are not redacted, and `err.cause.headers.authorization` (depth 4) is out of
   reach. Redaction is a backstop, not a substitute for not logging the value.
-- **Two E02 specs now contradict D26.** `2026-09-08-mentors-become-bookable.md` (lines 492,
-  781) and `2026-09-08-mentor-page.md` (lines 36, 69) carry acceptance criteria asserting
+- **Two E02 specs now contradict D26.** `2026-09-08-mentors-become-bookable.md` (lines 492, 781) and `2026-09-08-mentor-page.md` (lines 36, 69) carry acceptance criteria asserting
   that no rating, review or ranking appears in any markup. D26 permits the presentational
   components, so those negative tests will fail. Reconcile before E02 starts.
 - **The E02 design handoff's "search" half is still unrecorded.**
-  `2026-09-09-e02-design-handoff.md` notes that reviews *and search* were kept at the user's
+  `2026-09-09-e02-design-handoff.md` notes that reviews _and search_ were kept at the user's
   request and need a superseding record. D26 covers reviews only — D21/R13 still forbid
   search and ranking, deliberately untouched.
 
-- **`getContainer()` caches a *rejected* build promise on `globalThis`.** `getOrm()`
+- **`getContainer()` caches a _rejected_ build promise on `globalThis`.** `getOrm()`
   deliberately does not cache a failed connection so the app recovers when the database
   comes back, but the container cache defeats that: one transient outage at the first
   request poisons the container for the life of the process. Pre-existing; T2.3 made it
-  more visible by adding a config throw to the same path (permanent caching is *correct*
+  more visible by adding a config throw to the same path (permanent caching is _correct_
   for a config error, wrong for the DB case). Not fixed — out of scope for E01.
 - **An orphaned migration snapshot is tracked and gets rewritten by test runs.**
-  `packages/db/migrations/.snapshot-devmentor.json` is MikroORM's *default* name, committed
+  `packages/db/migrations/.snapshot-devmentor.json` is MikroORM's _default_ name, committed
   at bootstrap before `snapshotName: 'devmentor'` was set in `packages/db/src/config.ts`.
   It is tracked, orphaned, and still describes the pre-`auth-identity` `users` table. Worse,
   `tests/integration/environment.ts` sets `MIKRO_ORM_MIGRATIONS_SNAPSHOT_NAME='.snapshot-devmentor'`
@@ -189,27 +192,27 @@ Spec steps 18–20. Must not modify the guard calls added in Phase 2.
 
 - [x] **T3.1** `AppShell` (F2) — already present from the design handoff; verify against the
       F2 contract, cover it, and document the three-surface taxonomy (F1) in `AGENTS.md`.
-      *Audit result: F2-compliant, no code change needed. Two divergences kept deliberately
+      _Audit result: F2-compliant, no code change needed. Two divergences kept deliberately
       (optional `actions`, `className`) as supersets of F2's sketch matching house
       convention. Note the primitives spec's F2 entry wrongly calls `link "Users"` a §7
       surface — it is not, and the shell cannot satisfy it either way, since the link comes
-      from the caller's `nav` slot. That obligation is T3.2's.*
-      *Follow-up, not done: the topbar label is the hardcoded "Your DevMentor workspace",
+      from the caller's `nav` slot. That obligation is T3.2's._
+      _Follow-up, not done: the topbar label is the hardcoded "Your DevMentor workspace",
       so all three signed-in surfaces show the same chrome copy. F2 asks for no page-title
-      slot; worth revisiting if the ported layouts want one.*
+      slot; worth revisiting if the ported layouts want one._
 - [x] **T3.2** `app/src/lib/nav.ts` — combined-role navigation; port the three signed-in
       layouts to `AppShell`, preserving the accessible `link "Users"`.
-      *`Session` carries `userId` and `roles` but no display name, which `AppShell` needs.
+      _`Session` carries `userId` and `roles` but no display name, which `AppShell` needs.
       Read by id in `lib/workspace-user.ts` rather than widening `Session` — that would put
       a diff hunk in `core/src/http/auth.ts`, the strongest `risk-high` signal, to save one
-      indexed lookup on an already-dynamic request. Revisit if the extra query shows up.*
+      indexed lookup on an already-dynamic request. Revisit if the extra query shows up._
 - [x] **T3.3** `tests/integration/assertions.ts` (`expectAbsent`, F7) +
       `roles.integration.test.ts`, including the R07 "no become-a-mentor affordance"
       negative assertion.
-      *`expectAbsent` takes a **mandatory** positive control, so a caller cannot forget it.
+      _`expectAbsent` takes a **mandatory** positive control, so a caller cannot forget it.
       Names match exactly, not by substring: AppShell's topbar "Your DevMentor workspace"
       contains the nav label "Mentor workspace", so a substring default would break the
-      mentee negative assertions.*
+      mentee negative assertions._
 
 **Manual checkpoint 3:** the shell renders for each role, navigation shows only permitted
 surfaces, no "become a mentor" path anywhere.

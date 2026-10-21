@@ -7,17 +7,17 @@ import {
   withScope,
   GITHUB_CALLBACK_PATH,
   type Cradle,
-} from '@devmentor/core';
-import { homeFor } from '../../../../../lib/session';
+} from "@devmentor/core";
+import { homeFor } from "../../../../../lib/session";
 import {
   redirectTo,
   signInCancelled,
   signInError,
   signInErrorCodeFor,
-} from '../../../../../lib/sign-in-redirect';
+} from "../../../../../lib/sign-in-redirect";
 
 // Reads a cookie, verifies a token, writes to the database and sets a cookie.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * The GitHub OAuth callback — where a sign-in actually happens.
@@ -64,37 +64,37 @@ async function completeSignIn(
 ): Promise<Response> {
   const query = new URL(req.url).searchParams;
 
-  const refusal = query.get('error');
+  const refusal = query.get("error");
   if (refusal !== null) {
-    return refusal === 'access_denied'
+    return refusal === "access_denied"
       ? signInCancelled(clearState)
-      : signInError('unavailable', clearState);
+      : signInError("unavailable", clearState);
   }
 
-  const state = query.get('state');
+  const state = query.get("state");
   const bound = readOauthStateCookie(req);
   // Equality first. A missing cookie is the ordinary shape of this failure — a stale tab,
   // a browser that dropped it, or a callback nobody in this browser ever started.
   if (state === null || bound === null || state !== bound) {
-    return signInError('state', clearState);
+    return signInError("state", clearState);
   }
 
   // Then the signature, the audience and the expiry, in `TokenService`. `null` covers all
   // three, plus a value we never minted.
   const claims = await tokenService.verifyPurposeToken({
     token: state,
-    purpose: 'oauth-state',
+    purpose: "oauth-state",
   });
   if (claims === null) {
-    return signInError('state', clearState);
+    return signInError("state", clearState);
   }
 
-  const code = query.get('code');
+  const code = query.get("code");
   if (code === null) {
     // State checked out but GitHub sent no code: our flow, their problem. Retryable, so
     // `unavailable` rather than `state`, which would tell the user to distrust their own
     // browser over something that happened at the provider.
-    return signInError('unavailable', clearState);
+    return signInError("unavailable", clearState);
   }
 
   const identity = await githubIdentity.fetchIdentity(await githubIdentity.exchangeCode(code));
@@ -105,8 +105,5 @@ async function completeSignIn(
   // start route and has been signed ever since, so this is belt and braces — but the
   // fallback is the part that earns its keep: an empty subject means "no particular
   // destination", which is the role home, decided in the one place that decides it.
-  return redirectTo(safeReturnTo(claims.subject, homeFor(user.roles)), [
-    cookie,
-    ...clearState,
-  ]);
+  return redirectTo(safeReturnTo(claims.subject, homeFor(user.roles)), [cookie, ...clearState]);
 }

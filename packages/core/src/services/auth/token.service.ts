@@ -1,7 +1,7 @@
-import { SignJWT, jwtVerify } from 'jose';
-import type { AppEnv } from '../../config/env';
-import type { Clock } from '../../time/clock';
-import { signingKey, verificationKeys } from './session-secret';
+import { SignJWT, jwtVerify } from "jose";
+import type { AppEnv } from "../../config/env";
+import type { Clock } from "../../time/clock";
+import { signingKey, verificationKeys } from "./session-secret";
 
 /**
  * Purpose-bound, stateless tokens — platform primitives **B5**.
@@ -46,7 +46,7 @@ import { signingKey, verificationKeys } from './session-secret';
  * *type-safely tested* without a second member. Reaching for a cast in that test would
  * be testing a hole in the type, not the behaviour.
  */
-export type TokenPurpose = 'oauth-state' | 'email-verify';
+export type TokenPurpose = "oauth-state" | "email-verify";
 
 export interface SignPurposeTokenInput {
   /** Becomes the `aud` claim, and the only audience `verifyPurposeToken` will accept. */
@@ -75,15 +75,14 @@ export interface PurposeTokenClaims {
 }
 
 /** `HS256` and nothing else — see the note on the allowlist in `verifyPurposeToken`. */
-const ALGORITHM = 'HS256';
+const ALGORITHM = "HS256";
 
 /**
  * Said when the secret is missing. Deliberately says nothing about the value — only
  * that it is unset — and names the capability that is down, because the same secret
  * failing during sign-in produces a different sentence (see `session.service.ts`).
  */
-const SECRET_UNAVAILABLE =
-  'Signed links are unavailable because SESSION_SECRET is not configured.';
+const SECRET_UNAVAILABLE = "Signed links are unavailable because SESSION_SECRET is not configured.";
 
 export class TokenService {
   private readonly env: AppEnv;
@@ -98,11 +97,7 @@ export class TokenService {
    * Sign a purpose token. Async because `jose` signs through WebCrypto, which has no
    * synchronous path; B5 sketched a `string` return before that constraint was known.
    */
-  async signPurposeToken({
-    purpose,
-    subject,
-    ttlSeconds,
-  }: SignPurposeTokenInput): Promise<string> {
+  async signPurposeToken({ purpose, subject, ttlSeconds }: SignPurposeTokenInput): Promise<string> {
     // `iat`/`exp` come from the injected clock, never `Date.now()` — that is what makes
     // the expiry boundary testable without sleeping, and what keeps a fake clock in a
     // test honest end to end.
@@ -156,7 +151,7 @@ export class TokenService {
         // `sub` is optional in the JWT spec, so a token could verify while carrying no
         // subject (or a non-string one). We signed it, but it is not one of ours.
         // Note the `typeof` test: `''` is a legitimate subject and must not fail here.
-        if (typeof payload.sub !== 'string') {
+        if (typeof payload.sub !== "string") {
           return null;
         }
 

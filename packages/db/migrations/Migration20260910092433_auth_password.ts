@@ -1,4 +1,4 @@
-import { Migration } from '@mikro-orm/migrations';
+import { Migration } from "@mikro-orm/migrations";
 
 /**
  * The password credential column on `users` (E01 Slice 4).
@@ -22,8 +22,7 @@ import { Migration } from '@mikro-orm/migrations';
  * account working, which is why Slice 4 reverts before Slice 2 when both must go.
  */
 export class Migration20260910092433_auth_password extends Migration {
-
-  override name = 'Migration20260910092433_auth_password';
+  override name = "Migration20260910092433_auth_password";
 
   override up(): void | Promise<void> {
     this.addSql(`alter table "users" add "password_hash" text null;`);
@@ -32,5 +31,4 @@ export class Migration20260910092433_auth_password extends Migration {
   override down(): void | Promise<void> {
     this.addSql(`alter table "users" drop column "password_hash";`);
   }
-
 }

@@ -1,8 +1,8 @@
-import { z } from 'zod';
-import { withRequestScope } from '../container/container';
-import type { Cradle } from '../container/cradle';
-import { apiHandler, type ApiRouteContext } from './apiHandler';
-import { BadRequestError, type FieldErrors, ValidationError } from './errors';
+import { z } from "zod";
+import { withRequestScope } from "../container/container";
+import type { Cradle } from "../container/cradle";
+import { apiHandler, type ApiRouteContext } from "./apiHandler";
+import { BadRequestError, type FieldErrors, ValidationError } from "./errors";
 
 /**
  * The service shape a CRUD route drives. Every method is optional except `list` — a
@@ -36,7 +36,7 @@ export interface MakeCrudRouteOptions<Entity, CreateInput, UpdateInput> {
 function flattenZodError(error: z.ZodError): FieldErrors {
   const fieldErrors: FieldErrors = {};
   for (const issue of error.issues) {
-    const key = issue.path.length ? issue.path.join('.') : '_root';
+    const key = issue.path.length ? issue.path.join(".") : "_root";
     (fieldErrors[key] ??= []).push(issue.message);
   }
   return fieldErrors;
@@ -46,17 +46,17 @@ async function readJsonBody(req: Request): Promise<unknown> {
   try {
     return await req.json();
   } catch {
-    throw new BadRequestError('Request body must be valid JSON');
+    throw new BadRequestError("Request body must be valid JSON");
   }
 }
 
 function parseWith<T>(schema: z.ZodType<T> | undefined, data: unknown): T {
   if (!schema) {
-    throw new BadRequestError('This operation is not supported');
+    throw new BadRequestError("This operation is not supported");
   }
   const result = schema.safeParse(data);
   if (!result.success) {
-    throw new ValidationError('Validation failed', flattenZodError(result.error));
+    throw new ValidationError("Validation failed", flattenZodError(result.error));
   }
   return result.data;
 }
@@ -86,7 +86,7 @@ export async function parseJsonBody<T>(req: Request, schema: z.ZodType<T>): Prom
 export function makeCrudRoute<Entity, CreateInput = never, UpdateInput = never>(
   options: MakeCrudRouteOptions<Entity, CreateInput, UpdateInput>,
 ) {
-  const idParam = options.idParam ?? 'id';
+  const idParam = options.idParam ?? "id";
 
   async function idFrom(ctx: ApiRouteContext): Promise<string | undefined> {
     // Collection routes (e.g. `/api/users`) are non-dynamic, so Next provides no
@@ -112,7 +112,7 @@ export function makeCrudRoute<Entity, CreateInput = never, UpdateInput = never>(
       const service = options.resolve(cradle);
       const id = await idFrom(ctx);
       if (id !== undefined) {
-        if (!service.get) throw new BadRequestError('This operation is not supported');
+        if (!service.get) throw new BadRequestError("This operation is not supported");
         return service.get(id);
       }
       return service.list();
@@ -122,7 +122,7 @@ export function makeCrudRoute<Entity, CreateInput = never, UpdateInput = never>(
   const POST = apiHandler((req) =>
     run(req, async (cradle) => {
       const service = options.resolve(cradle);
-      if (!service.create) throw new BadRequestError('This operation is not supported');
+      if (!service.create) throw new BadRequestError("This operation is not supported");
       return service.create(parseWith(options.createSchema, await readJsonBody(req)));
     }),
   );
@@ -131,8 +131,8 @@ export function makeCrudRoute<Entity, CreateInput = never, UpdateInput = never>(
     run(req, async (cradle) => {
       const service = options.resolve(cradle);
       const id = await idFrom(ctx);
-      if (id === undefined) throw new BadRequestError('Missing resource id');
-      if (!service.update) throw new BadRequestError('This operation is not supported');
+      if (id === undefined) throw new BadRequestError("Missing resource id");
+      if (!service.update) throw new BadRequestError("This operation is not supported");
       return service.update(id, parseWith(options.updateSchema, await readJsonBody(req)));
     }),
   );
@@ -141,8 +141,8 @@ export function makeCrudRoute<Entity, CreateInput = never, UpdateInput = never>(
     run(req, async (cradle) => {
       const service = options.resolve(cradle);
       const id = await idFrom(ctx);
-      if (id === undefined) throw new BadRequestError('Missing resource id');
-      if (!service.delete) throw new BadRequestError('This operation is not supported');
+      if (id === undefined) throw new BadRequestError("Missing resource id");
+      if (!service.delete) throw new BadRequestError("This operation is not supported");
       await service.delete(id);
       return { id };
     }),

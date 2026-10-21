@@ -7,6 +7,7 @@ Issue: #19 (E06-S01, epik #18). Autorytet produktowy: `.ai/specs/product-brief.m
 Deweloper i mentor muszą mieć konto: deweloper, żeby wysłać pytanie (D04), a mentor, żeby założyć profil. Dziś aplikacja nie ma logowania: `readSession` w `packages/core/src/http/auth.ts` zawsze zwraca `null`, więc każda chroniona trasa odmawia.
 
 Proponujemy:
+
 - rejestrację i logowanie e-mailem i hasłem (D07), bez weryfikacji e-maila;
 - sesje przechowywane w bazie, z losowym tokenem w cookie `devmentor_session`;
 - wylogowanie, które unieważnia sesję;
@@ -26,12 +27,14 @@ Rolę administratora dodaje #20 (E06-S02), a reset hasła to osobna, późniejsz
 ## 📝 Proposed Solution
 
 Rozstrzygnięte pytania (mkz, 2026-10-19, rekomendacje agenta zaakceptowane):
+
 - **Q1, reset hasła:** osobna historia później. Do tego czasu reset robi się ręcznie, poza aplikacją. Powód: reset wymaga dostawcy e-maili, którego jeszcze nie wybrano.
 - **Q2, weryfikacja e-maila:** brak. Konto działa od razu, zgodnie z A01. Koszt: ktoś może założyć konto na cudzy adres.
 - **Q3, role:** sesja niesie `userId`, a „jest mentorem” znaczy „ma profil” i sprawdza to serwis. Typ `Role` i funkcja `requireRole` są przestarzałe od tej specyfikacji (zob. Risks). Flagę `isAdmin` dodaje #20.
 - **Q4, sesje:** przechowywane w bazie, bo dają się unieważnić. Logowanie odblokowuje pieniądze (E03), więc skradzioną sesję trzeba móc odciąć.
 
 Odrzucone alternatywy:
+
 - **Podpisane, bezstanowe cookie (JWT/HMAC):** wybór Q4.
 - **Biblioteka do auth (Auth.js, Lucia):** dodaje zależność z własnym modelem danych i adapterem MikroORM. Tymczasem potrzebujemy tylko e-maila i hasła, a reguły dostępu już mamy w `auth.ts`.
 - **`argon2` lub `bcrypt` jako zależność:** wbudowany w Node `crypto.scrypt` jest funkcją wolną i odporną na ataki pamięciowe. Nie dodaje natywnego skryptu instalacyjnego (`allowScripts`) ani wyjątku od `min-release-age`.
@@ -58,6 +61,7 @@ Na rynku Auth.js i Lucia trzymają sesję w bazie z tokenem w cookie `HttpOnly` 
   - eksportowany `requireCsrf(req)`: dla metod innych niż `GET`/`HEAD` brak nagłówka `x-devmentor-request` daje 403 (§7). Wywołują go `requireSession` i trzy trasy auth, które nie mają sesji i nie przechodzą przez `requireSession`.
 
   Specyfikacja profilu mentora używa obu i zależy od tego PR.
+
 - **`app`:**
   - trasy `packages/app/src/app/api/auth/register/route.ts`, `.../login/route.ts` i `.../logout/route.ts`, wszystkie na `apiHandler` + `parseBody`;
   - strony `/login` i `/register`.
@@ -67,18 +71,18 @@ Na rynku Auth.js i Lucia trzymają sesję w bazie z tokenem w cookie `HttpOnly` 
 
 **`User`** (`users`), zmiana addytywna:
 
-| Pole (kolumna) | Typ | Uwagi |
-|---|---|---|
+| Pole (kolumna)                   | Typ                | Uwagi                                                                                                                                                                                                                           |
+| -------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `passwordHash` (`password_hash`) | `string`, nullable | Format `scrypt$N$r$p$salt$hash` (base64). Nullable, bo istniejący użytkownik z seedera i użytkownicy z `POST /api/users` nie mają hasła; logowanie na takie konto kończy się ogólnym błędem. Nigdy nie trafia do DTO ani logów. |
 
 **`Session`** (`sessions`), nowa encja:
 
-| Pole (kolumna) | Typ | Uwagi |
-|---|---|---|
-| `id` i znaczniki czasu | z `baseProperties` | |
-| `user` (`user_id`) | FK do `users`, `on delete cascade`, indeks | |
-| `tokenHash` (`token_hash`) | `string`, unikalny | SHA-256 tokenu. Sam token (32 losowe bajty, base64url) istnieje tylko w cookie. |
-| `expiresAt` (`expires_at`) | `timestamptz` | `createdAt + SESSION_TTL_DAYS`. Okno ważności jest stałe, nie przesuwa się przy aktywności. |
+| Pole (kolumna)             | Typ                                        | Uwagi                                                                                       |
+| -------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `id` i znaczniki czasu     | z `baseProperties`                         |                                                                                             |
+| `user` (`user_id`)         | FK do `users`, `on delete cascade`, indeks |                                                                                             |
+| `tokenHash` (`token_hash`) | `string`, unikalny                         | SHA-256 tokenu. Sam token (32 losowe bajty, base64url) istnieje tylko w cookie.             |
+| `expiresAt` (`expires_at`) | `timestamptz`                              | `createdAt + SESSION_TTL_DAYS`. Okno ważności jest stałe, nie przesuwa się przy aktywności. |
 
 - E-mail normalizujemy: `trim` i małe litery. Istniejący unikalny indeks na `users.email` zostaje.
 - `displayName` (wymagane w `User`) dostaje przy rejestracji wartość lokalnej części e-maila, a użytkownik może go zmienić później. Dzięki temu rejestracja ma tylko dwa pola.
@@ -104,11 +108,11 @@ Model jest mały, więc widok HTML pominąłem.
 
 Wszystkie trasy zwracają kopertę `{ ok, data }` / `{ ok, error }` i jako pierwsze wywołują `requireCsrf`, czyli wymagają nagłówka `x-devmentor-request`. Dotyczy to także logowania, co chroni przed login CSRF.
 
-| Trasa | Wejście | Sukces | Błędy |
-|---|---|---|---|
-| `POST /api/auth/register` | `{ email: string (email, ≤ 254), password: string (12–128) }` | `201 { ok: true, data: { userId, email } }` i `Set-Cookie` | `422` (walidacja), `409 email_taken`, `403` (brak nagłówka CSRF) |
-| `POST /api/auth/login` | `{ email, password }` | `200 { ok: true, data: { userId, email } }` i `Set-Cookie` | `401 invalid_credentials`, jeden komunikat dla złego e-maila, złego hasła i konta bez hasła; `422`, `403` |
-| `POST /api/auth/logout` | brak | `200`, usunięcie wiersza sesji i cookie z `Max-Age=0` | idempotentne; bez sesji też `200` |
+| Trasa                     | Wejście                                                       | Sukces                                                     | Błędy                                                                                                     |
+| ------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `POST /api/auth/register` | `{ email: string (email, ≤ 254), password: string (12–128) }` | `201 { ok: true, data: { userId, email } }` i `Set-Cookie` | `422` (walidacja), `409 email_taken`, `403` (brak nagłówka CSRF)                                          |
+| `POST /api/auth/login`    | `{ email, password }`                                         | `200 { ok: true, data: { userId, email } }` i `Set-Cookie` | `401 invalid_credentials`, jeden komunikat dla złego e-maila, złego hasła i konta bez hasła; `422`, `403` |
+| `POST /api/auth/logout`   | brak                                                          | `200`, usunięcie wiersza sesji i cookie z `Max-Age=0`      | idempotentne; bez sesji też `200`                                                                         |
 
 - **Cookie `devmentor_session`:**
   - `HttpOnly`, `SameSite=Lax`, `Path=/`;

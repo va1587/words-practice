@@ -1,4 +1,4 @@
-import { readCookie, serializeCookie, type CookieEnv } from '../../http/cookies';
+import { readCookie, serializeCookie, type CookieEnv } from "../../http/cookies";
 
 /**
  * The `devmentor_oauth_state` cookie: the browser-bound half of the OAuth state check.
@@ -23,7 +23,7 @@ import { readCookie, serializeCookie, type CookieEnv } from '../../http/cookies'
  * A §7 protected surface only in the weak sense: renaming it while a sign-in is in flight
  * fails that sign-in with `?error=state`, and the user simply starts again.
  */
-export const OAUTH_STATE_COOKIE_NAME = 'devmentor_oauth_state';
+export const OAUTH_STATE_COOKIE_NAME = "devmentor_oauth_state";
 
 /**
  * Ten minutes — the cookie's `Max-Age` and the state token's `exp`, deliberately the same
@@ -54,7 +54,7 @@ export function issueOauthStateCookie(state: string, env: CookieEnv): string {
 export function clearOauthStateCookie(env: CookieEnv): string {
   return serializeCookie({
     name: OAUTH_STATE_COOKIE_NAME,
-    value: '',
+    value: "",
     maxAgeSeconds: 0,
     env,
   });

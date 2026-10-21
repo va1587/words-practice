@@ -1,10 +1,10 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   emailSchema,
   isWithinPasswordByteCap,
   PASSWORD_TOO_LONG_MESSAGE,
   returnToSchema,
-} from './fields';
+} from "./fields";
 
 /**
  * The body of `POST /api/auth/login` — parsed by the route and by the sign-in `CrudForm`,
@@ -40,7 +40,7 @@ export const loginSchema = z.object({
   // no minimum still has to make, and the only one whose default message ("Invalid input:
   // expected string, received undefined") would reach a user through `CrudForm`.
   password: z
-    .string({ error: 'Enter your password.' })
+    .string({ error: "Enter your password." })
     .refine(isWithinPasswordByteCap, PASSWORD_TOO_LONG_MESSAGE),
   returnTo: returnToSchema,
 });

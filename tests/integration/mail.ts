@@ -1,7 +1,7 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { MAIL_SENT_MESSAGE } from '@devmentor/core';
-import { integrationArtifactsDirectory } from './agent-browser';
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { MAIL_SENT_MESSAGE } from "@devmentor/core";
+import { integrationArtifactsDirectory } from "./agent-browser";
 
 /**
  * Reading the mail the app sent, without a mailbox.
@@ -23,7 +23,7 @@ import { integrationArtifactsDirectory } from './agent-browser';
  * than there so the writer and the reader cannot drift onto two different paths — a drift
  * whose only symptom would be a scenario that waits out its timeout for mail that was sent.
  */
-export const appLogPath = resolve(integrationArtifactsDirectory, 'app.log');
+export const appLogPath = resolve(integrationArtifactsDirectory, "app.log");
 
 /** One captured message, exactly the fields `LogMailerAdapter` emits. */
 export interface CapturedMail {
@@ -72,7 +72,7 @@ function parseCapturedMail(line: string, to: string): CapturedMail | undefined {
     return undefined;
   }
 
-  if (typeof record !== 'object' || record === null) {
+  if (typeof record !== "object" || record === null) {
     return undefined;
   }
 
@@ -83,7 +83,7 @@ function parseCapturedMail(line: string, to: string): CapturedMail | undefined {
   // A `mail.sent` line missing either field is a capture this helper cannot honour, so it
   // is skipped and the wait continues rather than returning a half-built message that would
   // fail an assertion somewhere unrelated.
-  if (typeof subject !== 'string' || typeof text !== 'string') {
+  if (typeof subject !== "string" || typeof text !== "string") {
     return undefined;
   }
   return { to, subject, text };
@@ -99,20 +99,20 @@ function parseCapturedMail(line: string, to: string): CapturedMail | undefined {
  * removes the whole class of "sometimes the JSON is truncated" flake.
  */
 function capturedMailIn(content: string, to: string): CapturedMail[] {
-  const lines = content.split('\n');
+  const lines = content.split("\n");
   lines.pop();
   return lines.flatMap((line) => parseCapturedMail(line, to) ?? []);
 }
 
 async function readLog(logPath: string): Promise<string> {
   try {
-    return await readFile(logPath, 'utf8');
+    return await readFile(logPath, "utf8");
   } catch (error) {
     // Absent is "nothing logged yet", not a failure: a poll may start before the app has
     // flushed its first byte. Anything else — a permission problem, a directory — is a real
     // fault and must not be swallowed into a timeout that blames the mail.
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return '';
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return "";
     }
     throw error;
   }
@@ -155,7 +155,7 @@ export async function waitForMail(
       throw new Error(
         `Timed out after ${timeoutMs}ms waiting for ${minCount} message(s) to ${to}: ` +
           `${matches.length} found in ${logPath}. If the app is running with the real ` +
-          'mailer, set MAILER_ADAPTER=log and INTEGRATION_TEST_RUN=1 for the run.',
+          "mailer, set MAILER_ADAPTER=log and INTEGRATION_TEST_RUN=1 for the run.",
       );
     }
 

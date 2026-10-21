@@ -1,5 +1,5 @@
-import { MikroORM } from '@mikro-orm/postgresql';
-import { createOrmConfig } from './config';
+import { MikroORM } from "@mikro-orm/postgresql";
+import { createOrmConfig } from "./config";
 
 /**
  * Lazily-initialised singleton ORM. Cached on `globalThis` so Next.js hot-reload in
@@ -33,9 +33,7 @@ export function getOrm(): Promise<MikroORM> {
 }
 
 /** Report whether the database is reachable, without throwing. */
-export async function checkDbConnection(): Promise<
-  { ok: true } | { ok: false; reason: string }
-> {
+export async function checkDbConnection(): Promise<{ ok: true } | { ok: false; reason: string }> {
   try {
     const orm = await getOrm();
     const result = await orm.checkConnection();
@@ -55,4 +53,4 @@ export async function closeOrm(): Promise<void> {
 }
 
 export { MikroORM };
-export type { EntityManager } from '@mikro-orm/postgresql';
+export type { EntityManager } from "@mikro-orm/postgresql";

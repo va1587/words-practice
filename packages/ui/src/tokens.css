@@ -1,20 +1,22 @@
-@import '@fontsource-variable/inter';
-@import './align-tokens.css';
-@import './align-components.css';
-@import './form-components.css';
-@import './supporting-components.css';
-@import './layout-components.css';
-@import './product-patterns.css';
-@import './session-transcript.css';
-@import './mentor-reviews.css';
-@import './components/mentors/mentor-search.css';
-@import './components/mentors/mentor-onboarding.css';
-@import './components/auth/auth.css';
-@import './overlays.css';
-@import './foundations.css';
+@import "@fontsource-variable/inter";
+@import "./align-tokens.css";
+@import "./align-components.css";
+@import "./form-components.css";
+@import "./supporting-components.css";
+@import "./layout-components.css";
+@import "./product-patterns.css";
+@import "./session-transcript.css";
+@import "./mentor-reviews.css";
+@import "./components/mentors/mentor-search.css";
+@import "./components/mentors/mentor-onboarding.css";
+@import "./components/auth/auth.css";
+@import "./overlays.css";
+@import "./foundations.css";
 
 /* Compatibility aliases for current consumers. Source: Align UI Blue/Gray. */
-:root, .dark, [data-align-accent] {
+:root,
+.dark,
+[data-align-accent] {
   --radius: var(--dm-radius-10);
   --background: var(--dm-bg-white-0);
   --foreground: var(--dm-text-strong-950);

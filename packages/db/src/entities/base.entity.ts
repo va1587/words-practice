@@ -1,4 +1,4 @@
-import { defineEntity } from '@mikro-orm/core';
+import { defineEntity } from "@mikro-orm/core";
 
 const p = defineEntity.properties;
 
@@ -18,9 +18,7 @@ export const baseProperties = {
     .uuid()
     .onCreate(() => crypto.randomUUID())
     .primary(),
-  createdAt: p
-    .datetime()
-    .onCreate(() => new Date()),
+  createdAt: p.datetime().onCreate(() => new Date()),
   updatedAt: p
     .datetime()
     .onCreate(() => new Date())

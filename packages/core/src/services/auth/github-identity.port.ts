@@ -28,7 +28,7 @@
  * bounces the browser straight back to it in place of a round trip to github.com. Two
  * hand-written copies would drift, and the drift would only show up as a failed sign-in.
  */
-export const GITHUB_CALLBACK_PATH = '/api/auth/github/callback';
+export const GITHUB_CALLBACK_PATH = "/api/auth/github/callback";
 
 /**
  * A GitHub account, reduced to what sign-in needs and already proven by the provider.

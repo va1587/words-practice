@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { CrudForm, type CrudField } from '@devmentor/ui/backend';
-import { loginSchema } from '@devmentor/core/validators/auth/login.schema';
-import { registerSchema } from '@devmentor/core/validators/auth/register.schema';
+import { useState } from "react";
+import { CrudForm, type CrudField } from "@devmentor/ui/backend";
+import { loginSchema } from "@devmentor/core/validators/auth/login.schema";
+import { registerSchema } from "@devmentor/core/validators/auth/register.schema";
 // Type-only, so it is erased at compile time and the container, pino and MikroORM behind
 // `@devmentor/core`'s root export never reach this bundle.
-import type { UserDto } from '@devmentor/core';
-import { homeFor } from '../lib/home-for';
+import type { UserDto } from "@devmentor/core";
+import { homeFor } from "../lib/home-for";
 
 /**
  * The email half of `/sign-in` and `/register` — D07's fallback to GitHub, in one component
@@ -34,7 +34,7 @@ import { homeFor } from '../lib/home-for';
  * validates it again before it goes into a link (edge case 22).
  */
 
-export type EmailAuthMode = 'sign-in' | 'register';
+export type EmailAuthMode = "sign-in" | "register";
 
 export interface EmailAuthFormProps {
   mode: EmailAuthMode;
@@ -43,40 +43,40 @@ export interface EmailAuthFormProps {
 }
 
 const PASSWORD_FIELD: CrudField = {
-  name: 'password',
-  label: 'Password',
-  type: 'password',
+  name: "password",
+  label: "Password",
+  type: "password",
   required: true,
   // `current-password` on sign-in, `new-password` on registration. Getting this backwards is
   // how a password manager offers to autofill an old credential into a "choose a password"
   // field, or offers to generate a new one where the account's existing password belongs.
-  autoComplete: 'current-password',
+  autoComplete: "current-password",
 };
 
 const EMAIL_FIELD: CrudField = {
-  name: 'email',
-  label: 'Email address',
-  type: 'email',
+  name: "email",
+  label: "Email address",
+  type: "email",
   required: true,
-  autoComplete: 'email',
+  autoComplete: "email",
 };
 
 const SIGN_IN_FIELDS: CrudField[] = [EMAIL_FIELD, PASSWORD_FIELD];
 
 const REGISTER_FIELDS: CrudField[] = [
-  { name: 'displayName', label: 'Display name', required: true, autoComplete: 'nickname' },
+  { name: "displayName", label: "Display name", required: true, autoComplete: "nickname" },
   EMAIL_FIELD,
   {
     ...PASSWORD_FIELD,
-    autoComplete: 'new-password',
-    description: 'Use at least 12 characters.',
+    autoComplete: "new-password",
+    description: "Use at least 12 characters.",
   },
 ];
 
 /** Where `POST /api/auth/register` sends the verification link. See that route on `?returnTo`. */
 function registerEndpoint(returnTo: string): string {
-  return returnTo === ''
-    ? '/api/auth/register'
+  return returnTo === ""
+    ? "/api/auth/register"
     : `/api/auth/register?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
@@ -92,8 +92,8 @@ export function EmailAuthForm({ mode, returnTo }: EmailAuthFormProps) {
           address. The link works for 24 hours and signs you in.
         </p>
         <p>
-          Nothing arrived? Look in the spam folder, then register the same address again to get
-          a new link.
+          Nothing arrived? Look in the spam folder, then register the same address again to get a
+          new link.
         </p>
       </div>
     );
@@ -102,9 +102,9 @@ export function EmailAuthForm({ mode, returnTo }: EmailAuthFormProps) {
   return (
     <fieldset className="dm-account-email">
       <legend className="dm-account-legend">
-        {mode === 'register' ? 'Create an account with email' : 'Sign in with email'}
+        {mode === "register" ? "Create an account with email" : "Sign in with email"}
       </legend>
-      {mode === 'register' ? (
+      {mode === "register" ? (
         <CrudForm
           schema={registerSchema}
           fields={REGISTER_FIELDS}
@@ -124,7 +124,7 @@ export function EmailAuthForm({ mode, returnTo }: EmailAuthFormProps) {
             // them again to somebody who now has a session. `returnTo` was validated by the
             // page; `homeFor` decides the default from the roles the route just returned, so
             // an operator does not land on `/home` only to be redirected off it.
-            window.location.assign(returnTo === '' ? homeFor((data as UserDto).roles) : returnTo);
+            window.location.assign(returnTo === "" ? homeFor((data as UserDto).roles) : returnTo);
           }}
         />
       )}

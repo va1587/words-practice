@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   emailSchema,
   isWithinPasswordByteCap,
@@ -6,7 +6,7 @@ import {
   PASSWORD_TOO_LONG_MESSAGE,
   PASSWORD_TOO_SHORT_MESSAGE,
   returnToSchema,
-} from './fields';
+} from "./fields";
 
 /**
  * The body of `POST /api/auth/register` — one schema, two call sites. The route parses
@@ -31,10 +31,10 @@ import {
  * nothing else in the system has to agree about its spelling.
  */
 const displayNameSchema = z
-  .string({ error: 'Enter the name you want other people to see.' })
+  .string({ error: "Enter the name you want other people to see." })
   .trim()
-  .min(1, 'Enter the name you want other people to see.')
-  .max(120, 'This name is too long. The limit is 120 characters.');
+  .min(1, "Enter the name you want other people to see.")
+  .max(120, "This name is too long. The limit is 120 characters.");
 
 export const registerSchema = z.object({
   email: emailSchema,
@@ -42,7 +42,7 @@ export const registerSchema = z.object({
   // `password` key at all. Zod's default for it reads "Invalid input: expected string,
   // received undefined", and `CrudForm` renders whatever comes back verbatim.
   password: z
-    .string({ error: 'Choose a password.' })
+    .string({ error: "Choose a password." })
     .min(PASSWORD_MIN_CHARACTERS, PASSWORD_TOO_SHORT_MESSAGE)
     .refine(isWithinPasswordByteCap, PASSWORD_TOO_LONG_MESSAGE),
   displayName: displayNameSchema,

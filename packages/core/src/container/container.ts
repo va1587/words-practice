@@ -5,26 +5,26 @@ import {
   createContainer,
   InjectionMode,
   type AwilixContainer,
-} from 'awilix';
-import { getOrm } from '@devmentor/db';
-import { getEnv, type AppEnv } from '../config/env';
-import { createLogger } from '../logger';
-import { EventBus } from '../events/event-bus';
-import { systemClock } from '../time/clock';
-import { EmailVerificationService } from '../services/auth/email-verification.service';
-import { PasswordService } from '../services/auth/password.service';
-import { SessionService } from '../services/auth/session.service';
-import { TokenService } from '../services/auth/token.service';
-import { UserService } from '../services/auth/user.service';
-import { GithubIdentityAdapter } from '../services/auth/adapters/github-identity';
-import { MockGithubIdentityAdapter } from '../services/auth/adapters/mock-github-identity';
-import type { GithubIdentityPort } from '../services/auth/github-identity.port';
-import { LogMailerAdapter } from '../services/notifications/adapters/log-mailer';
-import { ResendMailerAdapter } from '../services/notifications/adapters/resend-mailer';
-import type { Mailer } from '../services/notifications/mailer.port';
-import { resolveSessionFromCookie } from '../http/auth';
-import { RateLimiter } from '../http/rate-limit';
-import type { Cradle } from './cradle';
+} from "awilix";
+import { getOrm } from "@devmentor/db";
+import { getEnv, type AppEnv } from "../config/env";
+import { createLogger } from "../logger";
+import { EventBus } from "../events/event-bus";
+import { systemClock } from "../time/clock";
+import { EmailVerificationService } from "../services/auth/email-verification.service";
+import { PasswordService } from "../services/auth/password.service";
+import { SessionService } from "../services/auth/session.service";
+import { TokenService } from "../services/auth/token.service";
+import { UserService } from "../services/auth/user.service";
+import { GithubIdentityAdapter } from "../services/auth/adapters/github-identity";
+import { MockGithubIdentityAdapter } from "../services/auth/adapters/mock-github-identity";
+import type { GithubIdentityPort } from "../services/auth/github-identity.port";
+import { LogMailerAdapter } from "../services/notifications/adapters/log-mailer";
+import { ResendMailerAdapter } from "../services/notifications/adapters/resend-mailer";
+import type { Mailer } from "../services/notifications/mailer.port";
+import { resolveSessionFromCookie } from "../http/auth";
+import { RateLimiter } from "../http/rate-limit";
+import type { Cradle } from "./cradle";
 
 /**
  * The root container is cached on `globalThis` so Next.js HMR reuses a single
@@ -49,15 +49,15 @@ const globalForContainer = globalThis as unknown as {
  * `.ai/lessons.md`.
  */
 function assertProductionSecrets(env: AppEnv): void {
-  if (env.NODE_ENV !== 'production') {
+  if (env.NODE_ENV !== "production") {
     return;
   }
 
   if (!env.SESSION_SECRET) {
     throw new Error(
-      'SESSION_SECRET is required when NODE_ENV=production: it signs every session ' +
-        'cookie, so the app cannot authenticate anyone without it. Set it to at least ' +
-        '32 characters of random data in the deployment environment.',
+      "SESSION_SECRET is required when NODE_ENV=production: it signs every session " +
+        "cookie, so the app cannot authenticate anyone without it. Set it to at least " +
+        "32 characters of random data in the deployment environment.",
     );
   }
 
@@ -74,12 +74,12 @@ function assertProductionSecrets(env: AppEnv): void {
   // the app with `NODE_ENV=production` and no mail account at all, which is legitimate
   // precisely because `INTEGRATION_TEST_RUN=1` says so. One flag must never be enough — see
   // `selectMailer`, which makes the same selection from the same pair.
-  if (!env.MAIL_API_KEY && !(env.MAILER_ADAPTER === 'log' && env.INTEGRATION_TEST_RUN)) {
+  if (!env.MAIL_API_KEY && !(env.MAILER_ADAPTER === "log" && env.INTEGRATION_TEST_RUN)) {
     throw new Error(
-      'MAIL_API_KEY is required when NODE_ENV=production: registration cannot report ' +
-        'success without delivering a verification link, so every sign-up would fail with ' +
-        '503 without it. Set it to the Resend API key (and MAIL_FROM to the verified ' +
-        'sender address) in the deployment environment.',
+      "MAIL_API_KEY is required when NODE_ENV=production: registration cannot report " +
+        "success without delivering a verification link, so every sign-up would fail with " +
+        "503 without it. Set it to the Resend API key (and MAIL_FROM to the verified " +
+        "sender address) in the deployment environment.",
     );
   }
 }
@@ -102,14 +102,14 @@ function assertProductionSecrets(env: AppEnv): void {
  * route (B6).
  */
 function selectGithubIdentity({ env, logger }: Cradle): GithubIdentityPort {
-  if (env.AUTH_IDENTITY_ADAPTER === 'mock' && env.INTEGRATION_TEST_RUN) {
+  if (env.AUTH_IDENTITY_ADAPTER === "mock" && env.INTEGRATION_TEST_RUN) {
     // Loud, once, on first resolution. The combination is legitimate only inside the
     // harness, and an operator who somehow reaches it in a real process must not have to
     // infer it from a sign-in that accepts anybody.
     logger.warn(
-      { adapter: 'mock' },
-      'the mock GitHub identity adapter is active: sign-in accepts any login without ' +
-        'contacting GitHub',
+      { adapter: "mock" },
+      "the mock GitHub identity adapter is active: sign-in accepts any login without " +
+        "contacting GitHub",
     );
     // No dependencies: the mock redirects the browser to its own origin-relative callback,
     // so unlike the real adapter it needs nothing from `env` — see `authorizeUrl` there.
@@ -142,23 +142,23 @@ function selectGithubIdentity({ env, logger }: Cradle): GithubIdentityPort {
  *    (`assertProductionSecrets`).
  */
 function selectMailer({ env, logger }: Cradle): Mailer {
-  if (env.MAILER_ADAPTER === 'log' && env.INTEGRATION_TEST_RUN) {
+  if (env.MAILER_ADAPTER === "log" && env.INTEGRATION_TEST_RUN) {
     // Loud, once, on first resolution — the same reason the mock identity adapter is loud.
     // An operator who somehow reaches this in a real process must not have to infer it from
     // verification emails that never arrive.
     logger.warn(
-      { adapter: 'log' },
-      'the log mailer is active: every email is written to this log instead of being ' +
-        'delivered, and the log therefore contains live verification links',
+      { adapter: "log" },
+      "the log mailer is active: every email is written to this log instead of being " +
+        "delivered, and the log therefore contains live verification links",
     );
     return new LogMailerAdapter({ logger });
   }
 
-  if (env.MAILER_ADAPTER === undefined && env.NODE_ENV === 'development') {
+  if (env.MAILER_ADAPTER === undefined && env.NODE_ENV === "development") {
     logger.warn(
-      { adapter: 'log' },
-      'no MAILER_ADAPTER is set, so emails are written to this log instead of being ' +
-        'delivered; set MAILER_ADAPTER=resend with MAIL_API_KEY and MAIL_FROM to send them',
+      { adapter: "log" },
+      "no MAILER_ADAPTER is set, so emails are written to this log instead of being " +
+        "delivered; set MAILER_ADAPTER=resend with MAIL_API_KEY and MAIL_FROM to send them",
     );
     return new LogMailerAdapter({ logger });
   }
@@ -260,15 +260,15 @@ async function build(): Promise<AwilixContainer<Cradle>> {
 
   // Default in-process subscribers. Concept side effects (send a message, invalidate
   // a cache) register here; for now we just log so the event path is observable.
-  container.cradle.eventBus.on('auth.user.created', ({ userId }) => {
-    container.cradle.logger.info({ userId }, 'auth.user.created');
+  container.cradle.eventBus.on("auth.user.created", ({ userId }) => {
+    container.cradle.logger.info({ userId }, "auth.user.created");
   });
   container.cradle.eventBus.on(
-    'auth.user.roles_changed',
+    "auth.user.roles_changed",
     ({ userId, roles, previousRoles, reason }) => {
       container.cradle.logger.info(
         { userId, roles, previousRoles, reason },
-        'auth.user.roles_changed',
+        "auth.user.roles_changed",
       );
     },
   );

@@ -1,22 +1,22 @@
-import { describe, expect, it } from 'vitest';
-import { GITHUB_CALLBACK_PATH, type GithubIdentity } from './github-identity.port';
-import type { GithubIdentityInput } from './user.service';
+import { describe, expect, it } from "vitest";
+import { GITHUB_CALLBACK_PATH, type GithubIdentity } from "./github-identity.port";
+import type { GithubIdentityInput } from "./user.service";
 
-describe('the GitHub identity port', () => {
-  it('names the callback path the app mounts the route at', () => {
+describe("the GitHub identity port", () => {
+  it("names the callback path the app mounts the route at", () => {
     // Both adapters build this into a URL — the real one as GitHub's `redirect_uri`, the
     // mock as the address it bounces the browser to — and the route (step 14) is mounted
     // at `app/api/auth/github/callback/route.ts`. A change here without the matching
     // directory rename breaks sign-in in a way no type checks.
-    expect(GITHUB_CALLBACK_PATH).toBe('/api/auth/github/callback');
+    expect(GITHUB_CALLBACK_PATH).toBe("/api/auth/github/callback");
   });
 
-  it('produces an identity `findOrCreateFromGithub` accepts', () => {
+  it("produces an identity `findOrCreateFromGithub` accepts", () => {
     const identity: GithubIdentity = {
-      githubId: '42',
-      githubLogin: 'ada',
-      email: 'ada@devmentor.dev',
-      displayName: 'Ada Lovelace',
+      githubId: "42",
+      githubLogin: "ada",
+      email: "ada@devmentor.dev",
+      displayName: "Ada Lovelace",
       avatarUrl: null,
     };
 

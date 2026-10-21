@@ -18,11 +18,13 @@ Mentor, czyli senior, który dziś odpowiada za darmo na powtarzające się pyta
 Rozszerzamy istniejącą encję `MentorProfile` addytywnie, czyli tylko nowymi kolumnami. Dokładamy własną trasę „mój profil” (`/api/mentors/me`) i stronę panelu mentora z formularzem `CrudForm`. Zalogowany użytkownik zakłada profil za pierwszym zapisem i edytuje go kolejnymi.
 
 Odrzucone alternatywy:
+
 - **Nowa encja zamiast rozszerzenia.** Dublowałaby relację 1:1 z `User`, którą już mamy.
 - **`makeCrudRoute` dla `/api/mentors`.** Fabryka wymaga `list()` oraz zasobu adresowanego przez `id`, a „mój profil” jest pojedynczym zasobem właściciela sesji. Wystawienie `list()` otworzyłoby katalog bez zakresu E01-S02. Dlatego trasa używa `apiHandler` bezpośrednio, bez gołego `try/catch`, z błędami `AppError`. Parsowanie ciała i walidacja zod (`readJsonBody`, `parseWith`, `flattenZodError`) są dziś prywatne w `makeCrudRoute.ts`. Wyciągamy je do eksportowanego helpera `parseBody(req, schema)` w `packages/core/src/http`, używanego przez fabrykę i nową trasę, zamiast pisać walidację drugi raz.
 - **Rola „mentor” nadawana przy rejestracji.** Q2 przesądza, że profil może założyć każdy zalogowany użytkownik (do katalogu trafia po akceptacji). Dlatego trasa wymaga tylko sesji (`requireSession`), a nie roli (`requireRole`).
 
 Rozstrzygnięte pytania (mkz, 2026-10-19):
+
 - **Q1:** logowanie dostaje osobną specyfikację i historię, zrobione przed #10.
 - **Q2:** wariant (c) — profil może założyć każdy zalogowany użytkownik, ale w katalogu pojawia się dopiero po ręcznej akceptacji przez mkz (R06). Zmienione z (a) podczas przepytywania 2026-10-19: bez ocen i bez weryfikacji publiczny katalog odstraszał mentorów z wywiadów 2026-09-03.
 - **Q3:** jedna waluta dla całej platformy, EUR.
@@ -43,6 +45,7 @@ Rozstrzygnięte pytania (mkz, 2026-10-19):
   - transformacja wartości per pole (`fromValue`/`toPayload`), potrzebna do zamiany euro ↔ eurocenty.
 
   Bez osobnych, ręcznie pisanych komponentów formularza.
+
 - **`app`, nowa grupa tras:** folder `mentor/` jeszcze nie istnieje. To nowy panel persony, który stosuje zasady panelu `/admin`: komponenty shadcn z `@devmentor/ui`, nie sam Tailwind.
 - **Zależność od przyszłej pracy:** specyfikacja logowania musi dostarczyć działające `readSession`, zwracające `userId`. Do tego czasu trasa odmawia każdemu (401), zgodnie z obecnym fail-closed.
 - **Brak nowego zdarzenia.** Zdarzenie `mentors.profile.updated` bez konsumenta byłoby nowym chronionym kontraktem (`BACKWARD_COMPATIBILITY.md` §6), którego nic nie używa. Odkładamy je do E01-S02, jeśli katalog go będzie potrzebował.
@@ -51,14 +54,14 @@ Rozstrzygnięte pytania (mkz, 2026-10-19):
 
 Zmiana w `MentorProfile` (`mentor_profiles`). Wszystkie nowe kolumny są dopuszczające `NULL` albo mają wartość domyślną, bo istniejące wiersze, w tym rekord z seedera `Ada Lovelace`, ich nie mają (`BACKWARD_COMPATIBILITY.md` §3).
 
-| Pole (kolumna) | Typ | Uwagi |
-|---|---|---|
-| `publicWorkUrl` (`public_work_url`) | `string`, nullable | Wymagane przy zapisie przez API (walidacja zod, tylko `https://`). Nullable w bazie ze względu na istniejące wiersze. |
-| `bio` (istniejące) | `text`, nullable | Używane jako „opis dorobku”, bez zmiany nazwy kolumny. |
-| `technologies` (`technologies`) | `text[]`, default `{}` | Wartości tylko ze stałej listy `TECHNOLOGIES`: `typescript`, `react`, `python`, `ai-agents`, `node`, `other`. Lista żyje w kodzie, a nie w bazie, więc rozszerzenie nie wymaga migracji. |
-| `price25Cents` (`price_25_cents`) | `integer`, nullable | Cena w eurocentach. Wymagana przy zapisie przez API. |
-| `price50Cents` (`price_50_cents`) | `integer`, nullable | Jak wyżej. |
-| `approvedAt` (`approved_at`) | `timestamptz`, nullable | `NULL` = profil czeka na akceptację i nie jest widoczny w katalogu (R06). Ustawiane wyłącznie przez akceptację, nigdy przez `PUT /api/mentors/me`. |
+| Pole (kolumna)                      | Typ                     | Uwagi                                                                                                                                                                                    |
+| ----------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `publicWorkUrl` (`public_work_url`) | `string`, nullable      | Wymagane przy zapisie przez API (walidacja zod, tylko `https://`). Nullable w bazie ze względu na istniejące wiersze.                                                                    |
+| `bio` (istniejące)                  | `text`, nullable        | Używane jako „opis dorobku”, bez zmiany nazwy kolumny.                                                                                                                                   |
+| `technologies` (`technologies`)     | `text[]`, default `{}`  | Wartości tylko ze stałej listy `TECHNOLOGIES`: `typescript`, `react`, `python`, `ai-agents`, `node`, `other`. Lista żyje w kodzie, a nie w bazie, więc rozszerzenie nie wymaga migracji. |
+| `price25Cents` (`price_25_cents`)   | `integer`, nullable     | Cena w eurocentach. Wymagana przy zapisie przez API.                                                                                                                                     |
+| `price50Cents` (`price_50_cents`)   | `integer`, nullable     | Jak wyżej.                                                                                                                                                                               |
+| `approvedAt` (`approved_at`)        | `timestamptz`, nullable | `NULL` = profil czeka na akceptację i nie jest widoczny w katalogu (R06). Ustawiane wyłącznie przez akceptację, nigdy przez `PUT /api/mentors/me`.                                       |
 
 - `headline` i `yearsOfExperience` zostają bez zmian. `headline` jest częścią `UserDto` i asercji testu integracyjnego, więc jego usunięcie byłoby zmianą łamiącą.
 - Waluta nie jest kolumną, bo EUR jest stałą platformy (Q3). Kwoty trzymamy w liczbach całkowitych eurocentów, nigdy we float.
@@ -81,6 +84,7 @@ Mapa danych sprowadza się do jednej zmienionej encji i jej istniejącej relacji
 ## 📝 API Contracts
 
 `GET /api/mentors/me`, wymaga sesji:
+
 - `200 { ok: true, data: MentorProfileDto }`, gdy profil istnieje;
 - `404`, gdy profilu nie ma;
 - `401` bez sesji.

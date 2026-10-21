@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createLoggerTo, type Logger } from '../../../logger';
-import { LogMailerAdapter, MAIL_SENT_MESSAGE } from './log-mailer';
+import { describe, expect, it, vi } from "vitest";
+import { createLoggerTo, type Logger } from "../../../logger";
+import { LogMailerAdapter, MAIL_SENT_MESSAGE } from "./log-mailer";
 
 /**
  * This adapter is tested through a **real pino logger** rather than a spy, because its
@@ -24,9 +24,9 @@ function capture(): { lines: string[]; write(chunk: string): void } {
 }
 
 const MESSAGE = {
-  to: 'ada@devmentor.dev',
-  subject: 'Confirm your DevMentor email address',
-  text: 'Open https://devmentor.example/api/auth/verify-email?token=live-token-value',
+  to: "ada@devmentor.dev",
+  subject: "Confirm your DevMentor email address",
+  text: "Open https://devmentor.example/api/auth/verify-email?token=live-token-value",
 };
 
 /** Send one message through a real logger and hand back what landed on the stream. */
@@ -46,20 +46,20 @@ async function sentRecords(
   };
 }
 
-describe('LogMailerAdapter', () => {
-  it('emits exactly one structured line per message', async () => {
-    const { raw } = await sentRecords(MESSAGE, { ...MESSAGE, subject: 'Second' });
+describe("LogMailerAdapter", () => {
+  it("emits exactly one structured line per message", async () => {
+    const { raw } = await sentRecords(MESSAGE, { ...MESSAGE, subject: "Second" });
 
     expect(raw).toHaveLength(2);
     // One record per `write`, each a complete JSON line — which is what lets the reader
     // drop a partially written trailing segment and parse everything before it.
     for (const line of raw) {
-      expect(line.endsWith('\n')).toBe(true);
+      expect(line.endsWith("\n")).toBe(true);
       expect(() => JSON.parse(line) as unknown).not.toThrow();
     }
   });
 
-  it('carries the msg and the three fields waitForMail reads', async () => {
+  it("carries the msg and the three fields waitForMail reads", async () => {
     const { parsed } = await sentRecords(MESSAGE);
 
     expect(parsed[0]).toMatchObject({
@@ -70,13 +70,13 @@ describe('LogMailerAdapter', () => {
     });
   });
 
-  it('names the message `mail.sent`, which the harness matches on', async () => {
+  it("names the message `mail.sent`, which the harness matches on", async () => {
     // A magic string shared across a package boundary. If this changes, `waitForMail` stops
     // matching and every mail-dependent scenario times out instead of failing usefully.
-    expect(MAIL_SENT_MESSAGE).toBe('mail.sent');
+    expect(MAIL_SENT_MESSAGE).toBe("mail.sent");
   });
 
-  it('logs at info, so the default LOG_LEVEL emits it', async () => {
+  it("logs at info, so the default LOG_LEVEL emits it", async () => {
     // `LOG_LEVEL` defaults to `info`. At `debug` the record would be silently dropped and
     // the capture would be empty with nothing to explain why.
     const { parsed } = await sentRecords(MESSAGE);
@@ -84,7 +84,7 @@ describe('LogMailerAdapter', () => {
     expect(parsed[0]?.level).toBe(30);
   });
 
-  it('writes the body verbatim, token and all', async () => {
+  it("writes the body verbatim, token and all", async () => {
     // **This is the whole point of the adapter, and it is the reason it is only ever
     // selected by `MAILER_ADAPTER=log` + `INTEGRATION_TEST_RUN=1` or by `development`.**
     // pino's `redact` cannot censor a token inside a URL — it matches key names — so this
@@ -92,10 +92,10 @@ describe('LogMailerAdapter', () => {
     // in the adapter.
     const { raw } = await sentRecords(MESSAGE);
 
-    expect(raw[0]).toContain('live-token-value');
+    expect(raw[0]).toContain("live-token-value");
   });
 
-  it('resolves rather than reporting a failure, because the log is the delivery', async () => {
+  it("resolves rather than reporting a failure, because the log is the delivery", async () => {
     const logger = { info: vi.fn() } as unknown as Logger;
 
     await expect(new LogMailerAdapter({ logger }).send(MESSAGE)).resolves.toBeUndefined();

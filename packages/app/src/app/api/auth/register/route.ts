@@ -4,10 +4,10 @@ import {
   parseJsonBody,
   registerSchema,
   withScope,
-} from '@devmentor/core';
+} from "@devmentor/core";
 
 // Reads a request body, consumes a rate-limit counter, hashes, writes a row and sends mail.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * `POST /api/auth/register` — create an account with an email address and a password (#13).
@@ -67,7 +67,7 @@ export const POST = apiHandler(async (req) => {
 
     return userService.registerWithPassword({
       ...input,
-      returnTo: input.returnTo ?? new URL(req.url).searchParams.get('returnTo'),
+      returnTo: input.returnTo ?? new URL(req.url).searchParams.get("returnTo"),
       clientIp,
     });
   });

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import type { ReactNode } from 'react';
-import { cn } from '../../lib/utils';
-import { Button } from '../../components/ui/button';
-import { LoadingMessage } from '../feedback/LoadingMessage';
-import { ErrorMessage } from '../feedback/ErrorMessage';
-import { EmptyState } from '../feedback/EmptyState';
+import type { ReactNode } from "react";
+import { cn } from "../../lib/utils";
+import { Button } from "../../components/ui/button";
+import { LoadingMessage } from "../feedback/LoadingMessage";
+import { ErrorMessage } from "../feedback/ErrorMessage";
+import { EmptyState } from "../feedback/EmptyState";
 
 export interface Column<Row> {
   /** Property key on the row; also the default cell value when `render` is omitted. */
@@ -48,10 +48,10 @@ export function DataTable<Row>({
   getRowId,
   loading = false,
   error = null,
-  emptyMessage = 'Nothing here yet.',
+  emptyMessage = "Nothing here yet.",
   rowActions,
   pagination,
-  caption = 'Records',
+  caption = "Records",
   emptyDescription,
   emptyAction,
   onRetry,
@@ -60,7 +60,18 @@ export function DataTable<Row>({
     return <LoadingMessage />;
   }
   if (error) {
-    return <ErrorMessage message={error} action={onRetry ? <Button intent="neutral" appearance="stroke" size="sm" onClick={onRetry}>Try again</Button> : undefined} />;
+    return (
+      <ErrorMessage
+        message={error}
+        action={
+          onRetry ? (
+            <Button intent="neutral" appearance="stroke" size="sm" onClick={onRetry}>
+              Try again
+            </Button>
+          ) : undefined
+        }
+      />
+    );
   }
   if (!rows || rows.length === 0) {
     return <EmptyState title={emptyMessage} description={emptyDescription} action={emptyAction} />;
@@ -88,12 +99,10 @@ export function DataTable<Row>({
                   <td key={column.key} className={cn(column.className)}>
                     {column.render
                       ? column.render(row)
-                      : String((row as Record<string, unknown>)[column.key] ?? '')}
+                      : String((row as Record<string, unknown>)[column.key] ?? "")}
                   </td>
                 ))}
-                {rowActions ? (
-                  <td className="dm-table-actions">{rowActions(row)}</td>
-                ) : null}
+                {rowActions ? <td className="dm-table-actions">{rowActions(row)}</td> : null}
               </tr>
             ))}
           </tbody>

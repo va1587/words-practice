@@ -1,4 +1,4 @@
-import { isValidElement, type ReactElement, type ReactNode } from 'react';
+import { isValidElement, type ReactElement, type ReactNode } from "react";
 
 /**
  * Two functions for asserting on what a Server Component returned.
@@ -31,7 +31,7 @@ export function elements(node: ReactNode): ReactElement[] {
  * purpose: assert those on the prop, where the page actually wrote them.
  */
 export function text(node: ReactNode): string {
-  return leaves(node).join(' ');
+  return leaves(node).join(" ");
 }
 
 function visit(node: ReactNode, found: ReactElement[]): void {
@@ -53,7 +53,7 @@ function leaves(node: ReactNode): string[] {
   if (Array.isArray(node)) {
     return node.flatMap((child) => leaves(child));
   }
-  if (typeof node === 'string' || typeof node === 'number') {
+  if (typeof node === "string" || typeof node === "number") {
     return [String(node)];
   }
   if (!isValidElement(node)) {

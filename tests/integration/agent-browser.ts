@@ -1,21 +1,18 @@
-import { execFile } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { promisify } from 'node:util';
-import { SESSION_COOKIE_NAME } from '@devmentor/core';
+import { execFile } from "node:child_process";
+import { mkdir, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { promisify } from "node:util";
+import { SESSION_COOKIE_NAME } from "@devmentor/core";
 
 const execFileAsync = promisify(execFile);
-const cliPath = resolve('node_modules/agent-browser/bin/agent-browser.js');
+const cliPath = resolve("node_modules/agent-browser/bin/agent-browser.js");
 
-export const integrationArtifactsDirectory = resolve('test-results/integration');
+export const integrationArtifactsDirectory = resolve("test-results/integration");
 
-export async function runAgentBrowser(
-  session: string,
-  ...args: string[]
-): Promise<string> {
+export async function runAgentBrowser(session: string, ...args: string[]): Promise<string> {
   const { stdout } = await execFileAsync(
     process.execPath,
-    [cliPath, '--session', session, ...args],
+    [cliPath, "--session", session, ...args],
     {
       cwd: process.cwd(),
       maxBuffer: 10 * 1024 * 1024,
@@ -27,7 +24,7 @@ export async function runAgentBrowser(
 
 export async function closeAgentBrowser(session: string): Promise<void> {
   try {
-    await runAgentBrowser(session, 'close');
+    await runAgentBrowser(session, "close");
   } catch {
     // Cleanup is best-effort; the original test/setup failure remains authoritative.
   }
@@ -41,8 +38,8 @@ export async function captureBrowserFailure(
   const outputs: string[] = [];
 
   for (const [label, command] of [
-    ['errors', ['errors']],
-    ['console', ['console']],
+    ["errors", ["errors"]],
+    ["console", ["console"]],
   ] as const) {
     try {
       outputs.push(`${label}:\n${await runAgentBrowser(session, ...command)}`);
@@ -54,9 +51,9 @@ export async function captureBrowserFailure(
   try {
     await runAgentBrowser(
       session,
-      'screenshot',
+      "screenshot",
       resolve(integrationArtifactsDirectory, `${artifactPrefix}-failure.png`),
-      '--full',
+      "--full",
     );
   } catch (error) {
     outputs.push(`screenshot: unable to collect (${String(error)})`);
@@ -64,8 +61,8 @@ export async function captureBrowserFailure(
 
   await writeFile(
     resolve(integrationArtifactsDirectory, `${artifactPrefix}-diagnostics.txt`),
-    `${outputs.join('\n\n')}\n`,
-    'utf8',
+    `${outputs.join("\n\n")}\n`,
+    "utf8",
   );
 }
 
@@ -96,23 +93,19 @@ function signInUrl(baseUrl: string, login: string): string {
  * fail somewhere further along — as a redirect back to `/sign-in`, or as a timed-out `wait`.
  * Asserting the jar here fails at the cause instead.
  */
-export async function signInAs(
-  session: string,
-  baseUrl: string,
-  login: string,
-): Promise<string> {
-  await runAgentBrowser(session, 'open', signInUrl(baseUrl, login));
+export async function signInAs(session: string, baseUrl: string, login: string): Promise<string> {
+  await runAgentBrowser(session, "open", signInUrl(baseUrl, login));
 
-  const jar = await runAgentBrowser(session, 'cookies');
+  const jar = await runAgentBrowser(session, "cookies");
   if (!jar.includes(SESSION_COOKIE_NAME)) {
     throw new Error(
       `Signing in as ${login} stored no ${SESSION_COOKIE_NAME} cookie. The app sets it with ` +
-        'Secure, which a browser keeps over plain HTTP only for a trustworthy origin: check ' +
-        `that the app is served from loopback. Cookie jar: ${jar || '(empty)'}`,
+        "Secure, which a browser keeps over plain HTTP only for a trustworthy origin: check " +
+        `that the app is served from loopback. Cookie jar: ${jar || "(empty)"}`,
     );
   }
 
-  return runAgentBrowser(session, 'get', 'url');
+  return runAgentBrowser(session, "get", "url");
 }
 
 /**
@@ -126,8 +119,8 @@ export async function signInAs(
 export async function signInCookieHeader(baseUrl: string, login: string): Promise<string> {
   const jar = new Map<string, string>();
 
-  const start = await fetch(signInUrl(baseUrl, login), { redirect: 'manual' });
-  const authorizeUrl = start.headers.get('location');
+  const start = await fetch(signInUrl(baseUrl, login), { redirect: "manual" });
+  const authorizeUrl = start.headers.get("location");
   storeCookies(start, jar);
   if (start.status !== 302 || authorizeUrl === null) {
     throw new Error(`Starting a mock sign-in answered ${start.status} with no redirect.`);
@@ -136,7 +129,7 @@ export async function signInCookieHeader(baseUrl: string, login: string): Promis
   // The mock adapter answers with a relative `Location` on purpose (see `authorizeUrl` in
   // mock-github-identity.ts); resolve it against the app's origin the way a browser would.
   const callback = await fetch(new URL(authorizeUrl, baseUrl), {
-    redirect: 'manual',
+    redirect: "manual",
     headers: { cookie: cookieHeader(jar) },
   });
   const issued = callback.headers
@@ -147,7 +140,7 @@ export async function signInCookieHeader(baseUrl: string, login: string): Promis
   if (issued === undefined) {
     throw new Error(
       `The callback for ${login} issued no session cookie; it redirected to ` +
-        `${String(callback.headers.get('location'))}.`,
+        `${String(callback.headers.get("location"))}.`,
     );
   }
   // Production is what the harness runs the app as, and `Secure` is what that must produce.
@@ -161,11 +154,11 @@ export async function signInCookieHeader(baseUrl: string, login: string): Promis
 /** Fold a response's `Set-Cookie` headers into the jar, dropping the ones being expired. */
 function storeCookies(response: Response, jar: Map<string, string>): void {
   for (const header of response.headers.getSetCookie()) {
-    const [pair = ''] = header.split(';');
-    const separator = pair.indexOf('=');
+    const [pair = ""] = header.split(";");
+    const separator = pair.indexOf("=");
     const name = pair.slice(0, separator).trim();
     const value = pair.slice(separator + 1);
-    if (value === '') {
+    if (value === "") {
       jar.delete(name);
     } else {
       jar.set(name, value);
@@ -174,5 +167,5 @@ function storeCookies(response: Response, jar: Map<string, string>): void {
 }
 
 function cookieHeader(jar: Map<string, string>): string {
-  return [...jar].map(([name, value]) => `${name}=${value}`).join('; ');
+  return [...jar].map(([name, value]) => `${name}=${value}`).join("; ");
 }

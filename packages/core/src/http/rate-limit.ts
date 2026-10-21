@@ -1,8 +1,8 @@
-import { createHash } from 'node:crypto';
-import type { EntityManager } from '@devmentor/db';
-import type { Logger } from '../logger';
-import type { Clock } from '../time/clock';
-import { TooManyRequestsError } from './errors';
+import { createHash } from "node:crypto";
+import type { EntityManager } from "@devmentor/db";
+import type { Logger } from "../logger";
+import type { Clock } from "../time/clock";
+import { TooManyRequestsError } from "./errors";
 
 /**
  * Brute-force rate limiting — platform primitives **B8**.
@@ -68,10 +68,10 @@ const LONGEST_WINDOW_MS = Math.max(
 );
 
 /** Which action is being limited. Part of the key, so the buckets never mix. */
-export type RateLimitScope = 'sign-in' | 'register' | 'verify-resend';
+export type RateLimitScope = "sign-in" | "register" | "verify-resend";
 
 /** What the bucket is keyed on. */
-export type RateLimitKind = 'ip' | 'email';
+export type RateLimitKind = "ip" | "email";
 
 /**
  * Build a bucket key: `<scope>:<kind>:<sha256hex of the lower-cased identifier>`.
@@ -107,7 +107,7 @@ export function rateLimitKey(
   if (identifier === null) {
     return null;
   }
-  const digest = createHash('sha256').update(identifier.toLowerCase()).digest('hex');
+  const digest = createHash("sha256").update(identifier.toLowerCase()).digest("hex");
   return `${scope}:${kind}:${digest}`;
 }
 
@@ -123,9 +123,9 @@ function withoutClientIp(logger: Logger, reason: string): null {
     noClientIpWarned = true;
     logger.warn(
       { reason },
-      'no client IP could be derived from x-forwarded-for: per-IP rate limiting is ' +
-        'disabled for this process and only the per-email limits apply. Set ' +
-        'TRUSTED_PROXY_HOPS to the number of reverse proxies in front of this app.',
+      "no client IP could be derived from x-forwarded-for: per-IP rate limiting is " +
+        "disabled for this process and only the per-email limits apply. Set " +
+        "TRUSTED_PROXY_HOPS to the number of reverse proxies in front of this app.",
     );
   }
   return null;
@@ -163,19 +163,19 @@ export function clientIpFromHeaders(
   { trustedProxyHops, logger }: { trustedProxyHops: number; logger: Logger },
 ): string | null {
   if (trustedProxyHops < 1) {
-    return withoutClientIp(logger, 'no-trusted-proxy-hops');
+    return withoutClientIp(logger, "no-trusted-proxy-hops");
   }
 
-  const forwarded = headers.get('x-forwarded-for');
-  const entries = (forwarded ?? '')
-    .split(',')
+  const forwarded = headers.get("x-forwarded-for");
+  const entries = (forwarded ?? "")
+    .split(",")
     .map((entry) => entry.trim())
     .filter((entry) => entry.length > 0);
 
   // Nth from the right, 1-indexed: `trustedProxyHops = 1` is the last entry.
   const candidate = entries[entries.length - trustedProxyHops];
   if (candidate === undefined) {
-    return withoutClientIp(logger, 'header-shorter-than-trusted-hops');
+    return withoutClientIp(logger, "header-shorter-than-trusted-hops");
   }
   return candidate;
 }

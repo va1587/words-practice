@@ -1,4 +1,4 @@
-import type { ApiResult, FieldErrors } from './types';
+import type { ApiResult, FieldErrors } from "./types";
 
 /**
  * The one sanctioned place a `fetch()` to `/api/*` happens. No component calls
@@ -6,13 +6,13 @@ import type { ApiResult, FieldErrors } from './types';
  * `ApiResult<T>`; `apiCallOrThrow` is for call sites that prefer throwing over
  * branching on `ok`.
  */
-export interface ApiCallOptions extends Omit<RequestInit, 'body'> {
+export interface ApiCallOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
 }
 
 // CSRF: a custom header a plain HTML form post can't set. Combined with SameSite
 // cookies this is the minimum bar for state-changing routes.
-const CSRF_HEADER = 'x-devmentor-request';
+const CSRF_HEADER = "x-devmentor-request";
 
 async function readJsonSafe(res: Response): Promise<unknown> {
   const text = await res.text();
@@ -27,7 +27,7 @@ async function readJsonSafe(res: Response): Promise<unknown> {
 }
 
 function isEnvelope<T>(value: unknown): value is ApiResult<T> {
-  return typeof value === 'object' && value !== null && 'ok' in value;
+  return typeof value === "object" && value !== null && "ok" in value;
 }
 
 export async function apiCall<T>(
@@ -36,10 +36,10 @@ export async function apiCall<T>(
 ): Promise<ApiResult<T>> {
   const { body, headers, method, ...rest } = options;
   const init: RequestInit = {
-    method: method ?? (body !== undefined ? 'POST' : 'GET'),
+    method: method ?? (body !== undefined ? "POST" : "GET"),
     headers: {
-      'content-type': 'application/json',
-      [CSRF_HEADER]: '1',
+      "content-type": "application/json",
+      [CSRF_HEADER]: "1",
       ...headers,
     },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
@@ -53,8 +53,8 @@ export async function apiCall<T>(
     return {
       ok: false,
       error: {
-        code: 'network_error',
-        message: error instanceof Error ? error.message : 'Network request failed',
+        code: "network_error",
+        message: error instanceof Error ? error.message : "Network request failed",
       },
     };
   }
@@ -65,7 +65,7 @@ export async function apiCall<T>(
   }
   return {
     ok: false,
-    error: { code: 'invalid_response', message: `Unexpected response (HTTP ${res.status})` },
+    error: { code: "invalid_response", message: `Unexpected response (HTTP ${res.status})` },
   };
 }
 
@@ -76,7 +76,7 @@ export class ApiError extends Error {
 
   constructor(error: { code: string; message: string; fieldErrors?: FieldErrors }) {
     super(error.message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.code = error.code;
     this.fieldErrors = error.fieldErrors;
   }

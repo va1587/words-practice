@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { ROLES, type Role } from '@devmentor/db';
-import { navLinksFor } from './nav';
+import { describe, expect, it } from "vitest";
+import { ROLES, type Role } from "@devmentor/db";
+import { navLinksFor } from "./nav";
 
 /**
  * Navigation is pure data, so this is an ordinary `node` test: no DOM, no renderer, and
@@ -23,57 +23,57 @@ function roleCombinations(): Role[][] {
   return combinations;
 }
 
-describe('navLinksFor', () => {
-  it('gives a mentee their sessions and nothing else', () => {
-    expect(navLinksFor(['mentee'])).toEqual([{ href: '/home', label: 'My sessions' }]);
+describe("navLinksFor", () => {
+  it("gives a mentee their sessions and nothing else", () => {
+    expect(navLinksFor(["mentee"])).toEqual([{ href: "/home", label: "My sessions" }]);
   });
 
-  it('gives a mentor the mentor workspace and nothing else', () => {
-    expect(navLinksFor(['mentor'])).toEqual([{ href: '/mentor', label: 'Mentor workspace' }]);
+  it("gives a mentor the mentor workspace and nothing else", () => {
+    expect(navLinksFor(["mentor"])).toEqual([{ href: "/mentor", label: "Mentor workspace" }]);
   });
 
-  it('gives an operator the dashboard and the users list', () => {
-    expect(navLinksFor(['operator'])).toEqual([
-      { href: '/admin', label: 'Dashboard' },
-      { href: '/admin/users', label: 'Users' },
+  it("gives an operator the dashboard and the users list", () => {
+    expect(navLinksFor(["operator"])).toEqual([
+      { href: "/admin", label: "Dashboard" },
+      { href: "/admin/users", label: "Users" },
     ]);
   });
 
-  it('keeps the accessible name the admin integration test asserts on', () => {
-    expect(navLinksFor(['operator']).map((link) => link.label)).toContain('Users');
+  it("keeps the accessible name the admin integration test asserts on", () => {
+    expect(navLinksFor(["operator"]).map((link) => link.label)).toContain("Users");
   });
 
-  it('unions the surfaces of a user holding operator and mentor', () => {
+  it("unions the surfaces of a user holding operator and mentor", () => {
     // The seeded `mock-operator`: two independent assignments, both surfaces reachable
     // without signing out.
-    expect(navLinksFor(['operator', 'mentor']).map((link) => link.href)).toEqual([
-      '/admin',
-      '/admin/users',
-      '/mentor',
+    expect(navLinksFor(["operator", "mentor"]).map((link) => link.href)).toEqual([
+      "/admin",
+      "/admin/users",
+      "/mentor",
     ]);
   });
 
-  it('unions all three surfaces and opens on the operator home', () => {
-    expect(navLinksFor(['mentee', 'mentor', 'operator']).map((link) => link.href)).toEqual([
-      '/admin',
-      '/admin/users',
-      '/mentor',
-      '/home',
+  it("unions all three surfaces and opens on the operator home", () => {
+    expect(navLinksFor(["mentee", "mentor", "operator"]).map((link) => link.href)).toEqual([
+      "/admin",
+      "/admin/users",
+      "/mentor",
+      "/home",
     ]);
   });
 
-  it('orders by role priority rather than by the order the roles arrived in', () => {
-    expect(navLinksFor(['mentee', 'mentor'])).toEqual(navLinksFor(['mentor', 'mentee']));
-    expect(navLinksFor(['mentee', 'mentor'])[0]?.href).toBe('/mentor');
+  it("orders by role priority rather than by the order the roles arrived in", () => {
+    expect(navLinksFor(["mentee", "mentor"])).toEqual(navLinksFor(["mentor", "mentee"]));
+    expect(navLinksFor(["mentee", "mentor"])[0]?.href).toBe("/mentor");
   });
 
-  it('never repeats a link for a repeated role', () => {
-    expect(navLinksFor(['mentor', 'mentor'])).toEqual([
-      { href: '/mentor', label: 'Mentor workspace' },
+  it("never repeats a link for a repeated role", () => {
+    expect(navLinksFor(["mentor", "mentor"])).toEqual([
+      { href: "/mentor", label: "Mentor workspace" },
     ]);
   });
 
-  it('gives every declared role a surface', () => {
+  it("gives every declared role a surface", () => {
     // Guards the second half of the table: `Record<Role, …>` makes a new role a compile
     // error at the link list, but nothing type-checks its placement in the order array,
     // and a role missing from there would contribute no links at all.
@@ -82,8 +82,8 @@ describe('navLinksFor', () => {
     }
   });
 
-  it('exposes no route that would grant a role, for any combination of roles (R07)', () => {
-    const permitted = ['/admin', '/admin/users', '/mentor', '/home'];
+  it("exposes no route that would grant a role, for any combination of roles (R07)", () => {
+    const permitted = ["/admin", "/admin/users", "/mentor", "/home"];
 
     for (const roles of roleCombinations()) {
       const links = navLinksFor(roles);
@@ -91,7 +91,7 @@ describe('navLinksFor', () => {
       expect(links.length).toBeGreaterThan(0);
       for (const link of links) {
         expect(permitted).toContain(link.href);
-        expect(link.label.toLowerCase()).not.toContain('become');
+        expect(link.label.toLowerCase()).not.toContain("become");
       }
     }
   });

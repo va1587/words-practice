@@ -1,5 +1,5 @@
-import type { Logger } from '../../../logger';
-import type { Mailer, MailMessage } from '../mailer.port';
+import type { Logger } from "../../../logger";
+import type { Mailer, MailMessage } from "../mailer.port";
 
 /**
  * The mailer that delivers nothing and writes the message to the application log instead
@@ -40,7 +40,7 @@ import type { Mailer, MailMessage } from '../mailer.port';
  * two hand-written copies of a magic string would drift into a test that hangs for 10
  * seconds and then reports "no mail" about mail that was sent.
  */
-export const MAIL_SENT_MESSAGE = 'mail.sent';
+export const MAIL_SENT_MESSAGE = "mail.sent";
 
 export class LogMailerAdapter implements Mailer {
   private readonly logger: Logger;

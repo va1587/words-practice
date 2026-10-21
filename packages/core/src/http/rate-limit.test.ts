@@ -1,11 +1,11 @@
-import { createHash } from 'node:crypto';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EntityManager } from '@devmentor/db';
-import type { AppEnv } from '../config/env';
-import type { Logger } from '../logger';
-import type { Clock } from '../time/clock';
-import { PasswordService } from '../services/auth/password.service';
-import { RATE_LIMITED_MESSAGE, ServiceUnavailableError, TooManyRequestsError } from './errors';
+import { createHash } from "node:crypto";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { EntityManager } from "@devmentor/db";
+import type { AppEnv } from "../config/env";
+import type { Logger } from "../logger";
+import type { Clock } from "../time/clock";
+import { PasswordService } from "../services/auth/password.service";
+import { RATE_LIMITED_MESSAGE, ServiceUnavailableError, TooManyRequestsError } from "./errors";
 import {
   RateLimiter,
   REGISTRATION_IP_POLICY,
@@ -14,7 +14,7 @@ import {
   VERIFICATION_RESEND_EMAIL_POLICY,
   rateLimitKey,
   type RateLimitPolicy,
-} from './rate-limit';
+} from "./rate-limit";
 
 /**
  * **What is proven here and what is proven against a real database.**
@@ -38,7 +38,7 @@ import {
  */
 
 const HOUR_MS = 60 * 60 * 1000;
-const NOW = new Date('2026-09-10T12:00:00.000Z');
+const NOW = new Date("2026-09-10T12:00:00.000Z");
 const clock: Clock = { now: () => NOW };
 
 /** The counter store, plus the `em` the limiter talks to. */
@@ -68,164 +68,162 @@ function makeLogger() {
 
 /** `identifier` hashed the way a key is expected to hash it. */
 function sha256Hex(identifier: string): string {
-  return createHash('sha256').update(identifier).digest('hex');
+  return createHash("sha256").update(identifier).digest("hex");
 }
 
-describe('rateLimitKey', () => {
-  it('is <scope>:<kind>:<sha256hex of the lower-cased identifier>', () => {
-    expect(rateLimitKey('sign-in', 'email', 'ada@devmentor.dev')).toBe(
-      `sign-in:email:${sha256Hex('ada@devmentor.dev')}`,
+describe("rateLimitKey", () => {
+  it("is <scope>:<kind>:<sha256hex of the lower-cased identifier>", () => {
+    expect(rateLimitKey("sign-in", "email", "ada@devmentor.dev")).toBe(
+      `sign-in:email:${sha256Hex("ada@devmentor.dev")}`,
     );
   });
 
-  it('never puts the raw identifier anywhere in the key', () => {
-    const email = 'ada.lovelace@devmentor.dev';
-    const ip = '203.0.113.7';
+  it("never puts the raw identifier anywhere in the key", () => {
+    const email = "ada.lovelace@devmentor.dev";
+    const ip = "203.0.113.7";
 
-    const emailKey = rateLimitKey('sign-in', 'email', email) as string;
-    const ipKey = rateLimitKey('sign-in', 'ip', ip) as string;
+    const emailKey = rateLimitKey("sign-in", "email", email) as string;
+    const ipKey = rateLimitKey("sign-in", "ip", ip) as string;
 
     // The whole point of the hash: an operator reading `auth_rate_limits` learns which
     // buckets are hot and nothing about who is in them.
     expect(emailKey).not.toContain(email);
-    expect(emailKey).not.toContain('ada');
-    expect(emailKey).not.toContain('devmentor.dev');
-    expect(emailKey).not.toContain('@');
+    expect(emailKey).not.toContain("ada");
+    expect(emailKey).not.toContain("devmentor.dev");
+    expect(emailKey).not.toContain("@");
     expect(ipKey).not.toContain(ip);
-    expect(ipKey).not.toContain('203');
+    expect(ipKey).not.toContain("203");
     // And what is left is a scope, a kind and 64 hex characters.
     expect(emailKey).toMatch(/^sign-in:email:[0-9a-f]{64}$/);
     expect(ipKey).toMatch(/^sign-in:ip:[0-9a-f]{64}$/);
   });
 
-  it('lower-cases before hashing, so capitalisation is not a bypass', () => {
-    expect(rateLimitKey('sign-in', 'email', 'ADA@Devmentor.DEV')).toBe(
-      rateLimitKey('sign-in', 'email', 'ada@devmentor.dev'),
+  it("lower-cases before hashing, so capitalisation is not a bypass", () => {
+    expect(rateLimitKey("sign-in", "email", "ADA@Devmentor.DEV")).toBe(
+      rateLimitKey("sign-in", "email", "ada@devmentor.dev"),
     );
   });
 
-  it('keeps kinds and scopes in separate buckets', () => {
+  it("keeps kinds and scopes in separate buckets", () => {
     // Same identifier string, three different buckets: an IP that happened to look like
     // an email would still not share a counter with it, and a registration attempt does
     // not spend a sign-in allowance.
-    const asEmail = rateLimitKey('sign-in', 'email', 'shared');
-    const asIp = rateLimitKey('sign-in', 'ip', 'shared');
-    const onRegister = rateLimitKey('register', 'ip', 'shared');
+    const asEmail = rateLimitKey("sign-in", "email", "shared");
+    const asIp = rateLimitKey("sign-in", "ip", "shared");
+    const onRegister = rateLimitKey("register", "ip", "shared");
 
     expect(new Set([asEmail, asIp, onRegister]).size).toBe(3);
   });
 
-  it('answers null for a null identifier, which is the skipped per-IP key', () => {
-    expect(rateLimitKey('sign-in', 'ip', null)).toBeNull();
+  it("answers null for a null identifier, which is the skipped per-IP key", () => {
+    expect(rateLimitKey("sign-in", "ip", null)).toBeNull();
   });
 });
 
-describe('clientIpFromHeaders', () => {
+describe("clientIpFromHeaders", () => {
   // A fresh module per case: the "warned once" flag is module-level *by design* (once per
   // process, not once per request), so it has to be reset the way a process resets it.
-  let subject: typeof import('./rate-limit');
+  let subject: typeof import("./rate-limit");
   let logger: Logger;
   let warn: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     vi.resetModules();
-    subject = await import('./rate-limit');
+    subject = await import("./rate-limit");
     logger = makeLogger();
     warn = logger.warn as unknown as ReturnType<typeof vi.fn>;
   });
 
   function headers(forwarded?: string): Headers {
-    return new Headers(forwarded === undefined ? {} : { 'x-forwarded-for': forwarded });
+    return new Headers(forwarded === undefined ? {} : { "x-forwarded-for": forwarded });
   }
 
-  it('trusts nothing at 0 hops, even when the header is present', () => {
+  it("trusts nothing at 0 hops, even when the header is present", () => {
     // The default. Without a proxy in front, `x-forwarded-for` is whatever the client
     // typed, so there is no address here worth counting against.
     expect(
-      subject.clientIpFromHeaders(headers('203.0.113.7'), { trustedProxyHops: 0, logger }),
+      subject.clientIpFromHeaders(headers("203.0.113.7"), { trustedProxyHops: 0, logger }),
     ).toBeNull();
   });
 
-  it('takes the rightmost entry at 1 hop', () => {
+  it("takes the rightmost entry at 1 hop", () => {
     expect(
-      subject.clientIpFromHeaders(headers('198.51.100.1'), { trustedProxyHops: 1, logger }),
-    ).toBe('198.51.100.1');
+      subject.clientIpFromHeaders(headers("198.51.100.1"), { trustedProxyHops: 1, logger }),
+    ).toBe("198.51.100.1");
     expect(warn).not.toHaveBeenCalled();
   });
 
-  it('takes the second-from-right entry at 2 hops', () => {
+  it("takes the second-from-right entry at 2 hops", () => {
     expect(
-      subject.clientIpFromHeaders(headers('203.0.113.7, 198.51.100.1, 10.0.0.9'), {
+      subject.clientIpFromHeaders(headers("203.0.113.7, 198.51.100.1, 10.0.0.9"), {
         trustedProxyHops: 2,
         logger,
       }),
-    ).toBe('198.51.100.1');
+    ).toBe("198.51.100.1");
   });
 
-  it('ignores a value the client forged to the left of the trusted entry', () => {
+  it("ignores a value the client forged to the left of the trusted entry", () => {
     // The attack the right-to-left count exists to stop: a client that sets its own
     // `x-forwarded-for` gets that value *prepended to*, never substituted for, what the
     // proxy appends. Reading the leftmost entry — the conventional "original client"
     // position — would hand every request a bucket of its own choosing.
-    const forged = '9.9.9.9, 8.8.8.8, 7.7.7.7';
+    const forged = "9.9.9.9, 8.8.8.8, 7.7.7.7";
     const real = subject.clientIpFromHeaders(headers(`${forged}, 198.51.100.1`), {
       trustedProxyHops: 1,
       logger,
     });
 
-    expect(real).toBe('198.51.100.1');
-    expect(real).not.toBe('9.9.9.9');
+    expect(real).toBe("198.51.100.1");
+    expect(real).not.toBe("9.9.9.9");
   });
 
-  it('tolerates whitespace and empty entries', () => {
+  it("tolerates whitespace and empty entries", () => {
     expect(
-      subject.clientIpFromHeaders(headers('  203.0.113.7 , , 198.51.100.1  '), {
+      subject.clientIpFromHeaders(headers("  203.0.113.7 , , 198.51.100.1  "), {
         trustedProxyHops: 1,
         logger,
       }),
-    ).toBe('198.51.100.1');
+    ).toBe("198.51.100.1");
   });
 
-  it('answers null when the header is absent', () => {
-    expect(
-      subject.clientIpFromHeaders(headers(), { trustedProxyHops: 1, logger }),
-    ).toBeNull();
+  it("answers null when the header is absent", () => {
+    expect(subject.clientIpFromHeaders(headers(), { trustedProxyHops: 1, logger })).toBeNull();
   });
 
-  it('answers null when the chain is shorter than the trusted hop count', () => {
+  it("answers null when the chain is shorter than the trusted hop count", () => {
     // Two proxies configured, one entry present: the request did not arrive the
     // configured way, so nothing in the header is at a known position.
     expect(
-      subject.clientIpFromHeaders(headers('198.51.100.1'), { trustedProxyHops: 2, logger }),
+      subject.clientIpFromHeaders(headers("198.51.100.1"), { trustedProxyHops: 2, logger }),
     ).toBeNull();
   });
 
-  it('warns exactly once per process, whatever the reason', () => {
+  it("warns exactly once per process, whatever the reason", () => {
     // Edge case 17b. Three refusals, two different reasons, one log line: the warning is
     // an operator's cue to set TRUSTED_PROXY_HOPS, not a per-request event.
-    subject.clientIpFromHeaders(headers('203.0.113.7'), { trustedProxyHops: 0, logger });
+    subject.clientIpFromHeaders(headers("203.0.113.7"), { trustedProxyHops: 0, logger });
     subject.clientIpFromHeaders(headers(), { trustedProxyHops: 1, logger });
-    subject.clientIpFromHeaders(headers('a'), { trustedProxyHops: 4, logger });
+    subject.clientIpFromHeaders(headers("a"), { trustedProxyHops: 4, logger });
 
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(
-      { reason: 'no-trusted-proxy-hops' },
-      expect.stringContaining('TRUSTED_PROXY_HOPS'),
+      { reason: "no-trusted-proxy-hops" },
+      expect.stringContaining("TRUSTED_PROXY_HOPS"),
     );
   });
 
-  it('names the reason it could not derive an address', () => {
-    subject.clientIpFromHeaders(headers('198.51.100.1'), { trustedProxyHops: 3, logger });
+  it("names the reason it could not derive an address", () => {
+    subject.clientIpFromHeaders(headers("198.51.100.1"), { trustedProxyHops: 3, logger });
 
     expect(warn).toHaveBeenCalledWith(
-      { reason: 'header-shorter-than-trusted-hops' },
+      { reason: "header-shorter-than-trusted-hops" },
       expect.any(String),
     );
   });
 });
 
-describe('the policies', () => {
-  it('are the table the spec fixes', () => {
+describe("the policies", () => {
+  it("are the table the spec fixes", () => {
     expect(SIGN_IN_IP_POLICY).toEqual({ limit: 10, windowMs: 15 * 60_000 });
     expect(SIGN_IN_EMAIL_POLICY).toEqual({ limit: 5, windowMs: 15 * 60_000 });
     expect(REGISTRATION_IP_POLICY).toEqual({ limit: 5, windowMs: HOUR_MS });
@@ -233,10 +231,10 @@ describe('the policies', () => {
   });
 });
 
-describe('RateLimiter.consume', () => {
-  const KEY = 'sign-in:email:abc';
+describe("RateLimiter.consume", () => {
+  const KEY = "sign-in:email:abc";
 
-  it('passes every attempt up to and including the limit', async () => {
+  it("passes every attempt up to and including the limit", async () => {
     const { em, execute } = countingEm();
     const limiter = new RateLimiter({ em, clock });
 
@@ -247,7 +245,7 @@ describe('RateLimiter.consume', () => {
     expect(execute).toHaveBeenCalledTimes(5);
   });
 
-  it('refuses the attempt after the limit with a 429 carrying retryAfterSeconds', async () => {
+  it("refuses the attempt after the limit with a 429 carrying retryAfterSeconds", async () => {
     const { em } = countingEm();
     const limiter = new RateLimiter({ em, clock });
     const policy: RateLimitPolicy = { limit: 2, windowMs: 15 * 60_000 };
@@ -260,13 +258,13 @@ describe('RateLimiter.consume', () => {
     expect(refusal).toBeInstanceOf(TooManyRequestsError);
     const error = refusal as TooManyRequestsError;
     expect(error.status).toBe(429);
-    expect(error.code).toBe('rate_limited');
+    expect(error.code).toBe("rate_limited");
     expect(error.retryAfterSeconds).toBe(42);
-    expect(error.headers).toEqual({ 'Retry-After': '42' });
+    expect(error.headers).toEqual({ "Retry-After": "42" });
     expect(error.message).toBe(RATE_LIMITED_MESSAGE);
   });
 
-  it('keeps counting past the limit and never refunds a spent attempt', async () => {
+  it("keeps counting past the limit and never refunds a spent attempt", async () => {
     const { em, counts } = countingEm();
     const limiter = new RateLimiter({ em, clock });
     const policy: RateLimitPolicy = { limit: 1, windowMs: 15 * 60_000 };
@@ -280,11 +278,11 @@ describe('RateLimiter.consume', () => {
     expect(counts.get(KEY)).toBe(3);
   });
 
-  it('keeps the per-IP and per-email buckets independent', async () => {
+  it("keeps the per-IP and per-email buckets independent", async () => {
     const { em, counts } = countingEm();
     const limiter = new RateLimiter({ em, clock });
-    const ipKey = rateLimitKey('sign-in', 'ip', '198.51.100.1');
-    const emailKey = rateLimitKey('sign-in', 'email', 'ada@devmentor.dev');
+    const ipKey = rateLimitKey("sign-in", "ip", "198.51.100.1");
+    const emailKey = rateLimitKey("sign-in", "email", "ada@devmentor.dev");
 
     // Spend the whole per-email allowance.
     for (let attempt = 0; attempt < SIGN_IN_EMAIL_POLICY.limit; attempt += 1) {
@@ -301,7 +299,7 @@ describe('RateLimiter.consume', () => {
     expect(counts.get(ipKey as string)).toBe(1);
   });
 
-  it('charges nothing at all for a null key', async () => {
+  it("charges nothing at all for a null key", async () => {
     // The no-derivable-IP case: the per-IP bucket does not exist, so no statement runs
     // and no row is created for a key of `"null"` or `""`.
     const { em, execute } = countingEm();
@@ -312,7 +310,7 @@ describe('RateLimiter.consume', () => {
     expect(execute).not.toHaveBeenCalled();
   });
 
-  it('issues one statement that upserts, rolls the window over and prunes', async () => {
+  it("issues one statement that upserts, rolls the window over and prunes", async () => {
     const { em, execute } = countingEm();
     const limiter = new RateLimiter({ em, clock });
 
@@ -322,7 +320,7 @@ describe('RateLimiter.consume', () => {
     // One statement, not three: a read-then-write would let two concurrent attempts both
     // read the same count and both write the same increment.
     expect(sql).toContain('on conflict ("key") do update set');
-    expect(sql).toContain('returning');
+    expect(sql).toContain("returning");
     // The rollover lives in the same statement, as a CASE rather than a prior SELECT.
     expect(sql).toContain('case when "auth_rate_limits"."window_start" <= ? then 1');
     // The prune rides along as a data-modifying CTE, and never touches our own row.
@@ -330,7 +328,7 @@ describe('RateLimiter.consume', () => {
     expect(sql).toContain('where "window_start" < ? and "key" <> ?');
   });
 
-  it('hands PostgreSQL the window boundary, the prune boundary and the clock instant', async () => {
+  it("hands PostgreSQL the window boundary, the prune boundary and the clock instant", async () => {
     const { em, execute } = countingEm();
     const limiter = new RateLimiter({ em, clock });
 
@@ -353,9 +351,9 @@ describe('RateLimiter.consume', () => {
     ]);
   });
 
-  it('takes the instant from the injected clock, never from the host', async () => {
+  it("takes the instant from the injected clock, never from the host", async () => {
     const { em, execute } = countingEm();
-    const other = new Date('2019-01-01T00:00:00.000Z');
+    const other = new Date("2019-01-01T00:00:00.000Z");
     const limiter = new RateLimiter({ em, clock: { now: () => other } });
 
     await limiter.consume(KEY, SIGN_IN_EMAIL_POLICY);
@@ -363,7 +361,7 @@ describe('RateLimiter.consume', () => {
     expect(execute.mock.calls[0]![1]).toContain(other);
   });
 
-  it('prunes by the longest window even when this policy is the shortest', async () => {
+  it("prunes by the longest window even when this policy is the shortest", async () => {
     // Sign-in's window is fifteen minutes, but a registration counter is live for an
     // hour. Pruning at fifteen minutes would hand every registration bucket a free reset
     // four times an hour.
@@ -380,7 +378,7 @@ describe('RateLimiter.consume', () => {
   });
 });
 
-describe('the gate → limit → hash ordering', () => {
+describe("the gate → limit → hash ordering", () => {
   /**
    * Edge case 18, asserted rather than described.
    *
@@ -400,11 +398,11 @@ describe('the gate → limit → hash ordering', () => {
     });
   }
 
-  it('does not increment a counter when the hashing gate turns the request away', async () => {
+  it("does not increment a counter when the hashing gate turns the request away", async () => {
     const passwordService = makeGate();
     const { em, counts, execute } = countingEm();
     const limiter = new RateLimiter({ em, clock });
-    const key = rateLimitKey('sign-in', 'email', 'ada@devmentor.dev');
+    const key = rateLimitKey("sign-in", "email", "ada@devmentor.dev");
 
     let releaseFirst!: () => void;
     const firstIsHolding = new Promise<void>((resolve) => {
@@ -415,7 +413,7 @@ describe('the gate → limit → hash ordering', () => {
     const first = passwordService.withSlot(async () => {
       await limiter.consume(key, SIGN_IN_EMAIL_POLICY);
       await firstIsHolding;
-      return 'held';
+      return "held";
     });
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(counts.get(key as string)).toBe(1);
@@ -424,7 +422,7 @@ describe('the gate → limit → hash ordering', () => {
     await expect(
       passwordService.withSlot(async () => {
         await limiter.consume(key, SIGN_IN_EMAIL_POLICY);
-        return 'never';
+        return "never";
       }),
     ).rejects.toThrow(ServiceUnavailableError);
 
@@ -432,22 +430,22 @@ describe('the gate → limit → hash ordering', () => {
     expect(execute).toHaveBeenCalledTimes(1);
 
     releaseFirst();
-    await expect(first).resolves.toBe('held');
+    await expect(first).resolves.toBe("held");
   });
 
-  it('still spends the attempt when the credential check itself fails', async () => {
+  it("still spends the attempt when the credential check itself fails", async () => {
     // The other half of the ordering: once the slot is held, the counter is charged
     // *before* any credential work, so a wrong password costs an attempt and the counter
     // never reveals whether the address exists.
     const passwordService = makeGate();
     const { em, counts } = countingEm();
     const limiter = new RateLimiter({ em, clock });
-    const key = rateLimitKey('sign-in', 'email', 'nobody@devmentor.dev');
+    const key = rateLimitKey("sign-in", "email", "nobody@devmentor.dev");
 
     await expect(
       passwordService.withSlot(async (work) => {
         await limiter.consume(key, SIGN_IN_EMAIL_POLICY);
-        return work.verify('whatever', null);
+        return work.verify("whatever", null);
       }),
     ).resolves.toBe(false);
 

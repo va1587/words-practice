@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AppEnv } from '../config/env';
-import type { Cradle } from '../container/cradle';
-import { SessionService } from '../services/auth/session.service';
-import type { Clock } from '../time/clock';
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { AppEnv } from "../config/env";
+import type { Cradle } from "../container/cradle";
+import { SessionService } from "../services/auth/session.service";
+import type { Clock } from "../time/clock";
 import {
   assertOwnership,
   CSRF_HEADER,
@@ -11,8 +11,8 @@ import {
   requireSession,
   resolveSessionFromCookie,
   type Session,
-} from './auth';
-import { ForbiddenError, UnauthorizedError } from './errors';
+} from "./auth";
+import { ForbiddenError, UnauthorizedError } from "./errors";
 
 /**
  * The session guard is tested against a **real** `SessionService`, not a stub that returns
@@ -23,8 +23,8 @@ import { ForbiddenError, UnauthorizedError } from './errors';
  * non-empty role invariant — is exercised through that real verification path.
  */
 
-const SECRET = 'a'.repeat(32);
-const START = new Date('2026-09-09T10:00:00.000Z');
+const SECRET = "a".repeat(32);
+const START = new Date("2026-09-09T10:00:00.000Z");
 
 /** Mutable so a case can move past the 24 h boundary without sleeping. */
 let now: Date;
@@ -32,7 +32,7 @@ const clock: Clock = { now: () => now };
 
 function env(overrides: Partial<AppEnv> = {}): AppEnv {
   return {
-    NODE_ENV: 'test',
+    NODE_ENV: "test",
     SESSION_SECRET: SECRET,
     OPERATOR_EMAILS: [],
     ...overrides,
@@ -49,10 +49,10 @@ type StoredUser = {
 
 function user(overrides: Partial<StoredUser> = {}): StoredUser {
   return {
-    id: 'user-1',
-    email: 'ada@devmentor.dev',
-    roles: ['mentee'],
-    emailVerifiedAt: new Date('2026-09-01T00:00:00.000Z'),
+    id: "user-1",
+    email: "ada@devmentor.dev",
+    roles: ["mentee"],
+    emailVerifiedAt: new Date("2026-09-01T00:00:00.000Z"),
     sessionVersion: 0,
     ...overrides,
   };
@@ -81,11 +81,11 @@ async function issueToken(overrides: Partial<StoredUser> = {}): Promise<string> 
     id: row.id,
     sessionVersion: row.sessionVersion,
   });
-  return cookie.slice(cookie.indexOf('=') + 1, cookie.indexOf(';'));
+  return cookie.slice(cookie.indexOf("=") + 1, cookie.indexOf(";"));
 }
 
-function requestWith(cookieHeader: string | null, method = 'GET'): Request {
-  return new Request('http://devmentor.test/api/users', {
+function requestWith(cookieHeader: string | null, method = "GET"): Request {
+  return new Request("http://devmentor.test/api/users", {
     method,
     ...(cookieHeader === null ? {} : { headers: { cookie: cookieHeader } }),
   });
@@ -98,28 +98,28 @@ beforeEach(() => {
   sessionService = new SessionService({ env: env(), clock });
 });
 
-describe('resolveSessionFromCookie', () => {
-  it('answers null for no cookie at all, without touching the database', async () => {
+describe("resolveSessionFromCookie", () => {
+  it("answers null for no cookie at all, without touching the database", async () => {
     await expect(resolveSessionFromCookie(null, cradle())).resolves.toBeNull();
     expect(findOne).not.toHaveBeenCalled();
   });
 
-  it('answers null for a cookie value that is not a token we issued', async () => {
-    await expect(resolveSessionFromCookie('not-a-jwt', cradle())).resolves.toBeNull();
+  it("answers null for a cookie value that is not a token we issued", async () => {
+    await expect(resolveSessionFromCookie("not-a-jwt", cradle())).resolves.toBeNull();
     expect(findOne).not.toHaveBeenCalled();
   });
 
-  it('resolves a valid cookie to the stored identity', async () => {
+  it("resolves a valid cookie to the stored identity", async () => {
     const token = await issueToken();
 
     await expect(resolveSessionFromCookie(token, cradle())).resolves.toEqual({
-      userId: 'user-1',
-      roles: ['mentee'],
+      userId: "user-1",
+      roles: ["mentee"],
     });
     expect(findOne).toHaveBeenCalledOnce();
   });
 
-  it('answers null for an expired cookie', async () => {
+  it("answers null for an expired cookie", async () => {
     // Edge case 10: the browser is redirected to sign-in; nothing of the user's is
     // rendered first, so this must not arrive as an exception.
     const token = await issueToken();
@@ -129,12 +129,12 @@ describe('resolveSessionFromCookie', () => {
     expect(findOne).not.toHaveBeenCalled();
   });
 
-  it('answers null for a tampered cookie', async () => {
+  it("answers null for a tampered cookie", async () => {
     const token = await issueToken();
-    const [header, , signature] = token.split('.');
+    const [header, , signature] = token.split(".");
     const forgedPayload = Buffer.from(
-      JSON.stringify({ sub: 'someone-else', sv: 0, aud: 'session' }),
-    ).toString('base64url');
+      JSON.stringify({ sub: "someone-else", sv: 0, aud: "session" }),
+    ).toString("base64url");
 
     await expect(
       resolveSessionFromCookie(`${header}.${forgedPayload}.${signature}`, cradle()),
@@ -142,14 +142,14 @@ describe('resolveSessionFromCookie', () => {
     expect(findOne).not.toHaveBeenCalled();
   });
 
-  it('answers null when the user the cookie names no longer exists', async () => {
+  it("answers null when the user the cookie names no longer exists", async () => {
     const token = await issueToken();
     storedUser = null;
 
     await expect(resolveSessionFromCookie(token, cradle())).resolves.toBeNull();
   });
 
-  it('answers null when the stored session version has moved on', async () => {
+  it("answers null when the stored session version has moved on", async () => {
     // Edge case 11: sign-out bumped the column, so a copied cookie dies on its next
     // guarded request.
     const token = await issueToken({ sessionVersion: 3 });
@@ -158,54 +158,54 @@ describe('resolveSessionFromCookie', () => {
     await expect(resolveSessionFromCookie(token, cradle())).resolves.toBeNull();
   });
 
-  it('returns the stored roles rather than anything carried in the token', async () => {
+  it("returns the stored roles rather than anything carried in the token", async () => {
     const token = await issueToken();
-    storedUser = user({ roles: ['mentee', 'mentor'] });
+    storedUser = user({ roles: ["mentee", "mentor"] });
 
     await expect(resolveSessionFromCookie(token, cradle())).resolves.toEqual({
-      userId: 'user-1',
-      roles: ['mentee', 'mentor'],
+      userId: "user-1",
+      roles: ["mentee", "mentor"],
     });
   });
 
-  it('grants operator live to an allowlisted address whose stored set lacks it', async () => {
+  it("grants operator live to an allowlisted address whose stored set lacks it", async () => {
     // Edge case 25 through the guard: added to `OPERATOR_EMAILS`, effective next request.
     const token = await issueToken();
-    storedUser = user({ roles: ['mentee', 'mentor'] });
+    storedUser = user({ roles: ["mentee", "mentor"] });
 
     const session = await resolveSessionFromCookie(
       token,
-      cradle({ env: env({ OPERATOR_EMAILS: ['ada@devmentor.dev'] }) }),
+      cradle({ env: env({ OPERATOR_EMAILS: ["ada@devmentor.dev"] }) }),
     );
 
-    expect(session).toEqual({ userId: 'user-1', roles: ['mentee', 'mentor', 'operator'] });
+    expect(session).toEqual({ userId: "user-1", roles: ["mentee", "mentor", "operator"] });
   });
 
-  it('revokes a stored operator role the moment the address leaves the allowlist', async () => {
+  it("revokes a stored operator role the moment the address leaves the allowlist", async () => {
     // Edge case 24, and the reason a role copy in the token was rejected outright.
     const token = await issueToken();
-    storedUser = user({ roles: ['mentee', 'operator'] });
+    storedUser = user({ roles: ["mentee", "operator"] });
 
     const session = await resolveSessionFromCookie(
       token,
-      cradle({ env: env({ OPERATOR_EMAILS: ['founder@devmentor.dev'] }) }),
+      cradle({ env: env({ OPERATOR_EMAILS: ["founder@devmentor.dev"] }) }),
     );
 
-    expect(session).toEqual({ userId: 'user-1', roles: ['mentee'] });
+    expect(session).toEqual({ userId: "user-1", roles: ["mentee"] });
   });
 
-  it('does not write the reconciled role set back to the row', async () => {
+  it("does not write the reconciled role set back to the row", async () => {
     // Persisting the cache, emitting `auth.user.roles_changed` and the grant/revoke
     // operations all belong to `UserService`. The guard derives and nothing else.
     const token = await issueToken();
-    storedUser = user({ roles: ['mentee', 'operator'] });
+    storedUser = user({ roles: ["mentee", "operator"] });
 
     await resolveSessionFromCookie(token, cradle());
 
-    expect(storedUser.roles).toEqual(['mentee', 'operator']);
+    expect(storedUser.roles).toEqual(["mentee", "operator"]);
   });
 
-  it('throws an internal error, not a 401, for an empty stored role set', async () => {
+  it("throws an internal error, not a 401, for an empty stored role set", async () => {
     // Edge case 30b. A 401 would loop a valid user through sign-in and hide the data bug.
     const token = await issueToken();
     storedUser = user({ roles: [] });
@@ -216,7 +216,7 @@ describe('resolveSessionFromCookie', () => {
     await expect(failure).rejects.not.toBeInstanceOf(UnauthorizedError);
   });
 
-  it('reports the empty stored set even when the address is allowlisted', async () => {
+  it("reports the empty stored set even when the address is allowlisted", async () => {
     // The live derivation would otherwise paper over the corruption by adding `operator`.
     const token = await issueToken();
     storedUser = user({ roles: [] });
@@ -224,36 +224,31 @@ describe('resolveSessionFromCookie', () => {
     await expect(
       resolveSessionFromCookie(
         token,
-        cradle({ env: env({ OPERATOR_EMAILS: ['ada@devmentor.dev'] }) }),
+        cradle({ env: env({ OPERATOR_EMAILS: ["ada@devmentor.dev"] }) }),
       ),
     ).rejects.toThrow(/has no roles/);
   });
 
-  it('throws an internal error when revocation leaves no role at all', async () => {
+  it("throws an internal error when revocation leaves no role at all", async () => {
     // A row holding only the operator cache is corrupt in the same way: D19 grants
     // operator on top of a base role, never instead of one.
     const token = await issueToken();
-    storedUser = user({ roles: ['operator'] });
+    storedUser = user({ roles: ["operator"] });
 
-    await expect(resolveSessionFromCookie(token, cradle())).rejects.toThrow(
-      /has no roles/,
-    );
+    await expect(resolveSessionFromCookie(token, cradle())).rejects.toThrow(/has no roles/);
   });
 });
 
-describe('requireSession', () => {
-  it('returns the session a valid cookie resolves to', async () => {
+describe("requireSession", () => {
+  it("returns the session a valid cookie resolves to", async () => {
     const token = await issueToken();
 
-    const session = await requireSession(
-      requestWith(`devmentor_session=${token}`),
-      cradle(),
-    );
+    const session = await requireSession(requestWith(`devmentor_session=${token}`), cradle());
 
-    expect(session).toEqual({ userId: 'user-1', roles: ['mentee'] });
+    expect(session).toEqual({ userId: "user-1", roles: ["mentee"] });
   });
 
-  it('reads the session cookie past unrelated cookies on the same header', async () => {
+  it("reads the session cookie past unrelated cookies on the same header", async () => {
     const token = await issueToken();
 
     const session = await requireSession(
@@ -261,24 +256,24 @@ describe('requireSession', () => {
       cradle(),
     );
 
-    expect(session).toEqual({ userId: 'user-1', roles: ['mentee'] });
+    expect(session).toEqual({ userId: "user-1", roles: ["mentee"] });
   });
 
-  it('throws 401 when the request carries no cookie header', async () => {
+  it("throws 401 when the request carries no cookie header", async () => {
     await expect(requireSession(requestWith(null), cradle())).rejects.toBeInstanceOf(
       UnauthorizedError,
     );
     expect(findOne).not.toHaveBeenCalled();
   });
 
-  it('throws 401 when other cookies are present but the session one is not', async () => {
+  it("throws 401 when other cookies are present but the session one is not", async () => {
     await expect(
-      requireSession(requestWith('theme=dark; consent=1'), cradle()),
+      requireSession(requestWith("theme=dark; consent=1"), cradle()),
     ).rejects.toBeInstanceOf(UnauthorizedError);
     expect(findOne).not.toHaveBeenCalled();
   });
 
-  it('throws 401 when the named user is gone', async () => {
+  it("throws 401 when the named user is gone", async () => {
     const token = await issueToken();
     storedUser = null;
 
@@ -287,7 +282,7 @@ describe('requireSession', () => {
     ).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
-  it('throws 401 on a session version mismatch', async () => {
+  it("throws 401 on a session version mismatch", async () => {
     const token = await issueToken({ sessionVersion: 1 });
     storedUser = user({ sessionVersion: 2 });
 
@@ -296,11 +291,11 @@ describe('requireSession', () => {
     ).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
-  it('reuses the scope’s resolution when the scope was opened for this request', async () => {
+  it("reuses the scope’s resolution when the scope was opened for this request", async () => {
     // The property B2's "one indexed primary-key lookup" cost claim rests on: the scoped
     // key already holds the answer, so the guard must not perform a second lookup.
     const token = await issueToken();
-    const cached: Session = { userId: 'user-1', roles: ['mentee', 'operator'] };
+    const cached: Session = { userId: "user-1", roles: ["mentee", "operator"] };
     const scope = cradle({
       sessionCookie: token,
       session: Promise.resolve(cached),
@@ -312,101 +307,96 @@ describe('requireSession', () => {
     expect(findOne).not.toHaveBeenCalled();
   });
 
-  it('resolves independently when the scope was opened for something else', async () => {
+  it("resolves independently when the scope was opened for something else", async () => {
     // A plain `withScope` holds no cookie. Answering from its `null` session would deny a
     // perfectly good request; answering from a *different* request's cookie would be far
     // worse, so the guard compares before it trusts.
     const token = await issueToken();
     const scope = cradle({
-      sessionCookie: 'a-different-request-cookie',
+      sessionCookie: "a-different-request-cookie",
       session: Promise.resolve(null),
     });
 
-    await expect(
-      requireSession(requestWith(`devmentor_session=${token}`), scope),
-    ).resolves.toEqual({ userId: 'user-1', roles: ['mentee'] });
+    await expect(requireSession(requestWith(`devmentor_session=${token}`), scope)).resolves.toEqual(
+      { userId: "user-1", roles: ["mentee"] },
+    );
     expect(findOne).toHaveBeenCalledOnce();
   });
 
-  it('throws 401 when the scope resolved to no session', async () => {
+  it("throws 401 when the scope resolved to no session", async () => {
     await expect(
       requireSession(requestWith(null), cradle({ sessionCookie: null })),
-    ).rejects.toThrow('Authentication required');
+    ).rejects.toThrow("Authentication required");
   });
 });
 
-describe('requireRole', () => {
-  const session: Session = { userId: 'user-1', roles: ['mentee', 'operator'] };
+describe("requireRole", () => {
+  const session: Session = { userId: "user-1", roles: ["mentee", "operator"] };
 
-  it('returns the session when the role is held', () => {
-    expect(requireRole(session, 'operator')).toBe(session);
+  it("returns the session when the role is held", () => {
+    expect(requireRole(session, "operator")).toBe(session);
   });
 
-  it('tests membership, not the first role', () => {
-    expect(requireRole(session, 'mentee')).toBe(session);
+  it("tests membership, not the first role", () => {
+    expect(requireRole(session, "mentee")).toBe(session);
   });
 
-  it('throws 403 when the role is not held', () => {
-    expect(() => requireRole(session, 'mentor')).toThrow(ForbiddenError);
+  it("throws 403 when the role is not held", () => {
+    expect(() => requireRole(session, "mentor")).toThrow(ForbiddenError);
   });
 
-  it('throws 403 for a single-role session missing the required role', () => {
-    expect(() => requireRole({ userId: 'u', roles: ['mentee'] }, 'operator')).toThrow(
-      'You do not have access to this resource',
+  it("throws 403 for a single-role session missing the required role", () => {
+    expect(() => requireRole({ userId: "u", roles: ["mentee"] }, "operator")).toThrow(
+      "You do not have access to this resource",
     );
   });
 });
 
-describe('assertOwnership', () => {
-  const session: Session = { userId: 'user-1', roles: ['mentee'] };
+describe("assertOwnership", () => {
+  const session: Session = { userId: "user-1", roles: ["mentee"] };
 
-  it('passes when the session owns the resource', () => {
-    expect(() => assertOwnership(session, 'user-1')).not.toThrow();
+  it("passes when the session owns the resource", () => {
+    expect(() => assertOwnership(session, "user-1")).not.toThrow();
   });
 
-  it('throws 403 for someone else’s resource', () => {
-    expect(() => assertOwnership(session, 'user-2')).toThrow(ForbiddenError);
+  it("throws 403 for someone else’s resource", () => {
+    expect(() => assertOwnership(session, "user-2")).toThrow(ForbiddenError);
   });
 });
 
-describe('requireCsrfHeader', () => {
-  it('exposes the header name the client sends', () => {
-    expect(CSRF_HEADER).toBe('x-devmentor-request');
+describe("requireCsrfHeader", () => {
+  it("exposes the header name the client sends", () => {
+    expect(CSRF_HEADER).toBe("x-devmentor-request");
   });
 
-  it.each(['GET', 'HEAD', 'OPTIONS'])('exempts %s, which cannot change state', (method) => {
+  it.each(["GET", "HEAD", "OPTIONS"])("exempts %s, which cannot change state", (method) => {
     expect(() => requireCsrfHeader(requestWith(null, method))).not.toThrow();
   });
 
-  it.each(['POST', 'PUT', 'PATCH', 'DELETE'])(
-    'refuses %s without the header',
-    (method) => {
-      expect(() => requireCsrfHeader(requestWith(null, method))).toThrow(ForbiddenError);
-    },
-  );
-
-  it('names the header in the refusal so the fix is obvious', () => {
-    expect(() => requireCsrfHeader(requestWith(null, 'POST'))).toThrow(
-      /x-devmentor-request/,
-    );
+  it.each(["POST", "PUT", "PATCH", "DELETE"])("refuses %s without the header", (method) => {
+    expect(() => requireCsrfHeader(requestWith(null, method))).toThrow(ForbiddenError);
   });
 
-  it('accepts a mutating request that carries the header', () => {
-    const req = new Request('http://devmentor.test/api/users', {
-      method: 'POST',
-      headers: { [CSRF_HEADER]: '1' },
+  it("names the header in the refusal so the fix is obvious", () => {
+    expect(() => requireCsrfHeader(requestWith(null, "POST"))).toThrow(/x-devmentor-request/);
+  });
+
+  it("accepts a mutating request that carries the header", () => {
+    const req = new Request("http://devmentor.test/api/users", {
+      method: "POST",
+      headers: { [CSRF_HEADER]: "1" },
     });
 
     expect(() => requireCsrfHeader(req)).not.toThrow();
   });
 
-  it('accepts the header whatever its value, since only its presence is forgeable', () => {
+  it("accepts the header whatever its value, since only its presence is forgeable", () => {
     // The defence is that a cross-origin request cannot set a custom header at all: a
     // preflight is triggered and never answered, and an HTML form cannot set one. Checking
     // the value would imply a secret this design deliberately does not have.
-    const req = new Request('http://devmentor.test/api/users', {
-      method: 'DELETE',
-      headers: { [CSRF_HEADER]: '' },
+    const req = new Request("http://devmentor.test/api/users", {
+      method: "DELETE",
+      headers: { [CSRF_HEADER]: "" },
     });
 
     expect(() => requireCsrfHeader(req)).not.toThrow();

@@ -4,18 +4,18 @@ Document type: the founders' assignment of who does what, made on the board on 2
 
 Legend from the board: R responsible (does the work), A accountable (one person, answers for the result), C consulted (asked before the decision), I informed (told after).
 
-| Activity | Sponsor | Product Owner | Project Manager | Tech Lead | UX/UI | Developers | QA | Legal |
-|---|---|---|---|---|---|---|---|---|
-| Define business goal and success metrics | A | R | C | I | C | I |  | I |
-| Approve MVP scope | A | R | C | C | C | I | I |  |
-| Discovery and user interviews | I | C | I |  | A, R | I |  |  |
-| Design the mentor booking flow |  | C | I | C | A, R | C | C |  |
-| Define the payment and commission model | C | A, R | I | C | C | I |  | C |
-| Technical architecture decisions | I | C | I | A, R |  | C | I |  |
-| Implement booking and payments |  | I | I | C | I | A, R | C |  |
-| Test business rules and edge cases |  | I | I | C | I | C | A, R |  |
-| Terms of service and data processing | C | C | I | I | I |  |  | A, R |
-| Release go / no-go | A | R | R | C | I | I | C | I |
+| Activity                                 | Sponsor | Product Owner | Project Manager | Tech Lead | UX/UI | Developers | QA   | Legal |
+| ---------------------------------------- | ------- | ------------- | --------------- | --------- | ----- | ---------- | ---- | ----- |
+| Define business goal and success metrics | A       | R             | C               | I         | C     | I          |      | I     |
+| Approve MVP scope                        | A       | R             | C               | C         | C     | I          | I    |       |
+| Discovery and user interviews            | I       | C             | I               |           | A, R  | I          |      |       |
+| Design the mentor booking flow           |         | C             | I               | C         | A, R  | C          | C    |       |
+| Define the payment and commission model  | C       | A, R          | I               | C         | C     | I          |      | C     |
+| Technical architecture decisions         | I       | C             | I               | A, R      |       | C          | I    |       |
+| Implement booking and payments           |         | I             | I               | C         | I     | A, R       | C    |       |
+| Test business rules and edge cases       |         | I             | I               | C         | I     | C          | A, R |       |
+| Terms of service and data processing     | C       | C             | I               | I         | I     |            |      | A, R  |
+| Release go / no-go                       | A       | R             | R               | C         | I     | I          | C    | I     |
 
 Reading notes for the brief:
 

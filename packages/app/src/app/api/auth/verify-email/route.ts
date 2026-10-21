@@ -5,12 +5,12 @@ import {
   safeReturnTo,
   withScope,
   VERIFY_EMAIL_PATH,
-} from '@devmentor/core';
-import { homeFor } from '../../../../lib/home-for';
-import { redirectTo, signInError } from '../../../../lib/sign-in-redirect';
+} from "@devmentor/core";
+import { homeFor } from "../../../../lib/home-for";
+import { redirectTo, signInError } from "../../../../lib/sign-in-redirect";
 
 // Verifies a token, writes `email_verified_at` and sets the session cookie.
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 /**
  * `GET /api/auth/verify-email?token=…` — the link in the registration email, and the only
@@ -52,16 +52,16 @@ export const GET = apiHandler(async (req) => {
     return await withScope(async ({ emailVerificationService, sessionService }) => {
       const query = new URL(req.url).searchParams;
 
-      const account = await emailVerificationService.verify(query.get('token') ?? '');
+      const account = await emailVerificationService.verify(query.get("token") ?? "");
       if (account === null) {
-        return signInError('verification');
+        return signInError("verification");
       }
 
       const { cookie } = await sessionService.issue({
         id: account.userId,
         sessionVersion: account.sessionVersion,
       });
-      return redirectTo(safeReturnTo(query.get('returnTo'), homeFor(account.roles)), [cookie]);
+      return redirectTo(safeReturnTo(query.get("returnTo"), homeFor(account.roles)), [cookie]);
     });
   } catch (error) {
     return verificationFailed(error);
@@ -88,8 +88,8 @@ function verificationFailed(error: unknown): Response {
   if (!isAppError(error)) {
     createLogger().error(
       { err: error, route: VERIFY_EMAIL_PATH },
-      'unhandled failure while confirming an email address',
+      "unhandled failure while confirming an email address",
     );
   }
-  return signInError('verification');
+  return signInError("verification");
 }
